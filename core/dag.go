@@ -8,6 +8,11 @@ type Dag struct {
 	graph map[string][]string
 }
 
+func NewDag() *Dag {
+	d := Dag{make(map[string][]string)}
+	return &d
+}
+
 // A node has a name and 0 or more dependent nodes
 func (d *Dag) addNode(name string) {
 	deps := make([]string, 0)

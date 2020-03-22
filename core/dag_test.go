@@ -4,9 +4,8 @@ import (
 	"testing"
 )
 
-
 func TestDag(t *testing.T) {
-	d := Dag{graph: make(map[string][]string)}
+	d := NewDag()
 
 	d.addNode("a")
 	d.addNode("b")
@@ -23,17 +22,17 @@ func TestDag(t *testing.T) {
 
 	if !Equal(d.dependencies("b"), []string{"a"}) {
 		t.Errorf("d.dependencies() returned %s, expected %s",
-		d.dependencies("b"),
-		[]string{"a"})
+			d.dependencies("b"),
+			[]string{"a"})
 	}
 
 	if !Equal(d.independentNodes(), []string{"a"}) {
 		t.Errorf("d.independentNodes() returned %s, expected %s",
-		d.dependencies("b"),
-		[]string{"a"})
+			d.dependencies("b"),
+			[]string{"a"})
 	}
 
-	e := Dag{graph: make(map[string][]string)}
+	e := NewDag()
 
 	e.addNode("a")
 	e.addNode("b")

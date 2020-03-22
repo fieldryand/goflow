@@ -1,15 +1,21 @@
 package core
 
 import (
+	"log"
 	"os"
 	"sync"
-	"log"
 )
 
 type Job struct {
-	name string
-	dag *Dag
+	name  string
+	dag   *Dag
 	tasks []*Task
+}
+
+func NewJob(name string) *Job {
+	d := NewDag()
+	j := Job{name, d, make([]*Task, 0)}
+	return &j
 }
 
 func (j *Job) addTask(task *Task) {
@@ -92,9 +98,14 @@ func (j *Job) run_tasks() error {
 }
 
 type Task struct {
-	name string
-	status string
+	name     string
+	status   string
 	operator Operator
+}
+
+func NewTask(name string, op Operator) *Task {
+	t := Task{name, "None", op}
+	return &t
 }
 
 func (t *Task) run(wg *sync.WaitGroup) error {
