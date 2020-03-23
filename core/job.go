@@ -6,28 +6,28 @@ import (
 	"sync"
 )
 
-type Job struct {
+type job struct {
 	name  string
 	dag   *Dag
-	tasks []*Task
+	tasks []*task
 }
 
-func NewJob(name string) *Job {
+func Job(name string) *job {
 	d := NewDag()
-	j := Job{name, d, make([]*Task, 0)}
+	j := job{name, d, make([]*task, 0)}
 	return &j
 }
 
-func (j *Job) addTask(task *Task) {
-	j.tasks = append(j.tasks, task)
-	j.dag.addNode(task.name)
+func (j *job) addTask(t *task) {
+	j.tasks = append(j.tasks, t)
+	j.dag.addNode(t.name)
 }
 
-func (j *Job) setDownstream(ind, dep *Task) {
+func (j *job) setDownstream(ind, dep *task) {
 	j.dag.setDownstream(ind.name, dep.name)
 }
 
-func (j *Job) run() error {
+func (j *job) run() error {
 	if valid := j.dag.validate(); valid != true {
 		return &InvalidDagError{}
 	} else {
@@ -40,7 +40,7 @@ func (j *Job) run() error {
 	}
 }
 
-func (j *Job) run_tasks() error {
+func (j *job) run_tasks() error {
 	var wg sync.WaitGroup
 
 	total := len(j.tasks)
@@ -97,18 +97,18 @@ func (j *Job) run_tasks() error {
 	return nil
 }
 
-type Task struct {
+type task struct {
 	name     string
 	status   string
-	operator Operator
+	operator operator
 }
 
-func NewTask(name string, op Operator) *Task {
-	t := Task{name, "None", op}
+func Task(name string, op operator) *task {
+	t := task{name, "None", op}
 	return &t
 }
 
-func (t *Task) run(wg *sync.WaitGroup) error {
+func (t *task) run(wg *sync.WaitGroup) error {
 	defer wg.Done()
 	var (
 		logger = log.New(os.Stdout, "taskLogger:", log.Lshortfile)

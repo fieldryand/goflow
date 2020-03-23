@@ -4,9 +4,8 @@ import (
 	"testing"
 )
 
-
 func TestAddOperator(t *testing.T) {
-	ao := AddOperator{3, 2}
+	ao := AddOperator(3, 2)
 	result, _ := ao.run()
 
 	if result != 5 {
