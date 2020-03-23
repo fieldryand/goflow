@@ -1,7 +1,7 @@
 package main
 
-import "fmt"
+import "github.com/fieldryand/goflow/jobs"
 
 func main() {
-	fmt.Println("Hello, world.")
+	jobs.ExampleJob.Run()
 }

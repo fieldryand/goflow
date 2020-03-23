@@ -18,16 +18,18 @@ func Job(name string) *job {
 	return &j
 }
 
-func (j *job) addTask(t *task) {
+func (j *job) AddTask(t *task) *job {
 	j.tasks[t.name] = t
 	j.dag.addNode(t.name)
+	return j
 }
 
-func (j *job) setDownstream(ind, dep *task) {
+func (j *job) SetDownstream(ind, dep *task) *job {
 	j.dag.setDownstream(ind.name, dep.name)
+	return j
 }
 
-func (j *job) run() error {
+func (j *job) Run() error {
 	if valid := j.dag.validate(); valid != true {
 		return &InvalidDagError{}
 	} else {

@@ -8,4 +8,22 @@ For personal projects, I want the cheapest architecture possible. I want to run 
 
 ## Usage
 
-Coming soon.
+1. Clone the repo.
+2. Create a Job in the `jobs` directory. See `example_job.go` for an example.
+3. Add the job to `goflow.go`.
+4. `go run goflow.go`
+
+Output:
+```
+taskLogger:job.go:125: Task add 1 1 succeeded with result 2
+taskLogger:job.go:125: Task add 3 4 succeeded with result 7
+taskLogger:job.go:125: Task sleep 2 succeeded with result true
+taskLogger:job.go:125: Task add 2 4 succeeded with result 6
+```
+
+## TODO
+
+- webserver
+- UI
+- scheduling
+- ...
