@@ -4,30 +4,30 @@ import (
 	"time"
 )
 
-type Operator interface {
+type operator interface {
 	run() (interface{}, error)
 }
 
-type AddOperator struct{ a, b int }
+type addOperator struct{ a, b int }
 
-func NewAddOperator(a, b int) *AddOperator {
-	o := AddOperator{a, b}
+func AddOperator(a, b int) *addOperator {
+	o := addOperator{a, b}
 	return &o
 }
 
-func (addop AddOperator) run() (interface{}, error) {
+func (addop addOperator) run() (interface{}, error) {
 	result := addop.a + addop.b
 	return result, nil
 }
 
-type SleepOperator struct{ s int }
+type sleepOperator struct{ s int }
 
-func NewSleepOperator(s int) *SleepOperator {
-	o := SleepOperator{s}
+func SleepOperator(s int) *sleepOperator {
+	o := sleepOperator{s}
 	return &o
 }
 
-func (slpop SleepOperator) run() (interface{}, error) {
+func (slpop sleepOperator) run() (interface{}, error) {
 	time.Sleep(time.Duration(slpop.s) * time.Second)
 	return true, nil
 }
