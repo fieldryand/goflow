@@ -9,17 +9,17 @@ import (
 type job struct {
 	name  string
 	dag   *Dag
-	tasks []*task
+	tasks map[string]*task
 }
 
 func Job(name string) *job {
 	d := NewDag()
-	j := job{name, d, make([]*task, 0)}
+	j := job{name, d, make(map[string]*task)}
 	return &j
 }
 
 func (j *job) addTask(t *task) {
-	j.tasks = append(j.tasks, t)
+	j.tasks[t.name] = t
 	j.dag.addNode(t.name)
 }
 
@@ -49,13 +49,9 @@ func (j *job) run_tasks() error {
 
 	// Run the independent tasks
 	for _, name := range ind {
-		for _, t := range j.tasks {
-			if name == t.name {
-				wg.Add(1)
-				done += 1
-				go t.run(&wg)
-			}
-		}
+		wg.Add(1)
+		done += 1
+		go j.tasks[name].run(&wg)
 	}
 
 	wg.Wait()
@@ -67,18 +63,13 @@ func (j *job) run_tasks() error {
 		} else {
 			// for each task
 			for _, t := range j.tasks {
-				// if the status is None
-				if t.status == "None" {
+				if !t.isDone() {
 					upstream_done := true
 					// iterate over the dependencies
 					for _, us := range j.dag.dependencies(t.name) {
-						for _, tsk := range j.tasks {
-							// if the status of an upstream tsk is None, then upstream dependencies are not done
-							if tsk.status == "None" {
-								if tsk.name == us {
-									upstream_done = false
-								}
-							}
+						// if any upstream task is not done, set the flag to false
+						if !j.tasks[us].isDone() {
+							upstream_done = false
 						}
 					}
 
@@ -106,6 +97,14 @@ type task struct {
 func Task(name string, op operator) *task {
 	t := task{name, "None", op}
 	return &t
+}
+
+func (t *task) isDone() bool {
+	if t.status == "Success" || t.status == "Failed" {
+		return true
+	} else {
+		return false
+	}
 }
 
 func (t *task) run(wg *sync.WaitGroup) error {
