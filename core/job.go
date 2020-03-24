@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"sync"
@@ -29,14 +30,25 @@ func (j *job) SetDownstream(ind, dep *task) *job {
 	return j
 }
 
-func (j *job) Run() error {
-	if valid := j.dag.validate(); valid != true {
+func (j *job) Status() map[string]string {
+	s := make(map[string]string)
+	for k, v := range j.tasks {
+		s[k] = v.status
+	}
+	fmt.Println(s)
+	return s
+}
+
+func (j *job) Run(stat chan string) error {
+	if !j.dag.validate() {
+		stat <- "Failed"
 		return &InvalidDagError{}
 	} else {
 		err := j.run_tasks()
 		if err != nil {
 			return err
 		} else {
+			stat <- "Success"
 			return nil
 		}
 	}

@@ -15,10 +15,13 @@ For personal projects, I want the cheapest architecture possible. I want to run 
 
 Output:
 ```
-taskLogger:job.go:125: Task add 1 1 succeeded with result 2
-taskLogger:job.go:125: Task add 3 4 succeeded with result 7
-taskLogger:job.go:125: Task sleep 2 succeeded with result true
-taskLogger:job.go:125: Task add 2 4 succeeded with result 6
+map[add 1 1:None add 2 4:None add 3 4:None sleep 2:None]
+taskLogger:job.go:137: Task add 1 1 succeeded with result 2
+taskLogger:job.go:137: Task add 3 4 succeeded with result 7
+map[add 1 1:Success add 2 4:None add 3 4:Success sleep 2:None]
+taskLogger:job.go:137: Task sleep 2 succeeded with result true
+taskLogger:job.go:137: Task add 2 4 succeeded with result 6
+Example job finished: Success
 ```
 
 ## TODO
