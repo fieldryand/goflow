@@ -9,6 +9,6 @@ func TestAddOperator(t *testing.T) {
 	result, _ := ao.run()
 
 	if result != 5 {
-		t.Errorf("AddOperator.run() expected %d, got %d", result, 5)
+		t.Errorf("Expected %d, got %d", result, 5)
 	}
 }

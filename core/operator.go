@@ -8,6 +8,14 @@ type operator interface {
 	run() (interface{}, error)
 }
 
+type operatorError struct {
+	msg string
+}
+
+func (e *operatorError) Error() string {
+	return e.msg
+}
+
 type addOperator struct{ a, b int }
 
 func AddOperator(a, b int) *addOperator {
@@ -16,6 +24,11 @@ func AddOperator(a, b int) *addOperator {
 }
 
 func (addop addOperator) run() (interface{}, error) {
+
+	if addop.a < 0 || addop.b < 0 {
+		return 0, &operatorError{"Can't add negative numbers"}
+	}
+
 	result := addop.a + addop.b
 	return result, nil
 }
