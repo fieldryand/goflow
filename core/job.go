@@ -1,24 +1,26 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-	"sync"
 )
 
 type job struct {
-	name   string
-	logger *log.Logger
-	dag    *Dag
-	tasks  map[string]*task
+	name      string
+	logger    *log.Logger
+	dag       *Dag
+	tasks     map[string]*task
+	TaskState map[string]string
 }
 
 func Job(name string) *job {
-	d := NewDag()
-	l := log.New(os.Stdout, "jobLogger:", log.Lshortfile)
-	j := job{name, l, d, make(map[string]*task)}
+	j := job{
+		name:      name,
+		logger:    log.New(os.Stdout, "jobLogger:", log.Lshortfile),
+		dag:       NewDag(),
+		tasks:     make(map[string]*task),
+		TaskState: make(map[string]string)}
 	return &j
 }
 
@@ -26,96 +28,108 @@ type jobError struct {
 	task string
 }
 
+type writeOp struct {
+	key  string
+	val  string
+	resp chan bool
+}
+
+type ReadOp struct {
+	Resp chan map[string]string
+}
+
 func (e *jobError) Error() string {
 	return fmt.Sprintf("Job failed on task %s", e.task)
 }
 
+func (j *job) ClearState() *job {
+	for name, _ := range j.TaskState {
+		j.TaskState[name] = "None"
+	}
+	return j
+}
+
 func (j *job) AddTask(t *task) *job {
-	j.tasks[t.Name] = t
-	j.dag.addNode(t.Name)
+	j.tasks[t.name] = t
+	j.dag.addNode(t.name)
+	j.TaskState[t.name] = "None"
 	return j
 }
 
 func (j *job) SetDownstream(ind, dep *task) *job {
-	j.dag.setDownstream(ind.Name, dep.Name)
+	j.dag.setDownstream(ind.name, dep.name)
 	return j
 }
 
-func (j *job) Status() map[string]string {
-	s := make(map[string]string)
-	for k, v := range j.tasks {
-		s[k] = v.Status
-	}
-	encoded, _ := json.Marshal(s)
-	j.logger.Println("Task status:", string(encoded))
-	return s
-}
-
-func (j *job) Run(stat chan string) error {
-	if !j.dag.validate() {
-		stat <- "Failed"
-		return &InvalidDagError{}
-	} else {
-		err := j.run_tasks()
-		if err != nil {
-			j.logger.Println(err)
-			stat <- "Failed"
-			return err
-		} else {
-			stat <- "Success"
-			return nil
+func (j *job) allDone() bool {
+	done := true
+	for _, v := range j.TaskState {
+		if v == "None" || v == "Running" {
+			done = false
 		}
 	}
+	return done
 }
 
-func (j *job) run_tasks() error {
-	var wg sync.WaitGroup
-
-	total := len(j.tasks)
-	done := 0
+func (j *job) isDownstream(taskName string) bool {
 	ind := j.dag.independentNodes()
 
-	// Run the independent tasks
 	for _, name := range ind {
-		wg.Add(1)
-		done += 1
-		go j.tasks[name].run(&wg)
+		if taskName == name {
+			return false
+		}
 	}
 
-	wg.Wait()
+	return true
+}
+
+func (j *job) Run(reads chan ReadOp) error {
+	if !j.dag.validate() {
+		return &InvalidDagError{}
+	}
+
+	ind := j.dag.independentNodes()
+
+	writes := make(chan writeOp)
+
+	// Start the independent tasks
+	for _, name := range ind {
+		go j.tasks[name].run(writes)
+	}
 
 	// Run downstream tasks
 	for {
-		if done == total {
+		select {
+		case read := <-reads:
+			read.Resp <- j.TaskState
+		case write := <-writes:
+			j.TaskState[write.key] = write.val
+			if write.val == "Failure" {
+				return &jobError{write.key}
+			}
+			write.resp <- true
+		}
+		if j.allDone() {
 			break
 		} else {
 			// for each task
 			for _, t := range j.tasks {
-				if !t.isDone() {
+				if j.TaskState[t.name] == "None" && j.isDownstream(t.name) {
 					upstream_done := true
 					// iterate over the dependencies
-					for _, us := range j.dag.dependencies(t.Name) {
+					for _, us := range j.dag.dependencies(t.name) {
 						// if any upstream task is not done, set the flag to false
-						if !j.tasks[us].isDone() {
+						if j.TaskState[us] == "None" || j.TaskState[us] == "Running" {
 							upstream_done = false
 						}
 					}
 
 					if upstream_done {
-						wg.Add(1)
-						done += 1
-						go t.run(&wg)
+						j.TaskState[t.name] = "Running"
+						go t.run(writes)
 					}
 				}
 			}
-		}
-
-		wg.Wait()
-	}
-
-	for taskName, t := range j.tasks {
-		if t.Status == "Failed" {
-			return &jobError{taskName}
 		}
 	}
 
@@ -123,38 +137,31 @@ func (j *job) run_tasks() error {
 }
 
 type task struct {
-	Name     string
-	Status   string
+	name     string
 	logger   *log.Logger
 	operator operator
 }
 
 func Task(name string, op operator) *task {
 	l := log.New(os.Stdout, "taskLogger:", log.Lshortfile)
-	t := task{name, "None", l, op}
+	t := task{name, l, op}
 	return &t
 }
 
-func (t *task) isDone() bool {
-	if t.Status == "Success" || t.Status == "Failed" {
-		return true
-	} else {
-		return false
-	}
-}
-
-func (t *task) run(wg *sync.WaitGroup) error {
-	defer wg.Done()
-
+func (t *task) run(writes chan writeOp) error {
 	res, err := t.operator.run()
 
 	if err != nil {
-		t.logger.Println("Task", t.Name, "failed:", err)
-		t.Status = "Failed"
+		t.logger.Println("Task", t.name, "failed:", err)
+		write := writeOp{t.name, "Failure", make(chan bool)}
+		writes <- write
+		<-write.resp
 		return err
 	} else {
-		t.logger.Println("Task", t.Name, "succeeded with result", res)
-		t.Status = "Success"
+		t.logger.Println("Task", t.name, "succeeded with result", res)
+		write := writeOp{t.name, "Success", make(chan bool)}
+		writes <- write
+		<-write.resp
 		return nil
 	}
 }

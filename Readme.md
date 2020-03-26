@@ -13,20 +13,27 @@ For personal projects, I want the cheapest architecture possible. I want to run 
 3. Add the job to `goflow.go`.
 4. `go run goflow.go`
 
-Output:
+Run the demo with `./demo.sh`.
+
+Demo client output:
 ```
-taskLogger:job.go:156: Task add 1 1 succeeded with result 2
-taskLogger:job.go:156: Task add 3 4 succeeded with result 7
-jobLogger:job.go:50: Task status: {"add 1 1":"None","add 2 4":"None","add 3 4":"None","sleep 2":"None"}
-jobLogger:job.go:50: Task status: {"add 1 1":"Success","add 2 4":"None","add 3 4":"Success","sleep 2":"None"}
-taskLogger:job.go:156: Task sleep 2 succeeded with result true
-taskLogger:job.go:156: Task add 2 4 succeeded with result 6
-Example job finished: Success
+job submitted
+{"add 1 1":"None","add 2 4":"None","add 3 4":"None","sleep 1":"Running","sleep 2":"None"}
+{"add 1 1":"Success","add 2 4":"None","add 3 4":"Success","sleep 1":"Success","sleep 2":"Running"}
+{"add 1 1":"Success","add 2 4":"Success","add 3 4":"Success","sleep 1":"Success","sleep 2":"Success"}
+```
+
+Demo server output:
+```
+taskLogger:job.go:161: Task sleep 1 succeeded with result true
+taskLogger:job.go:161: Task add 1 1 succeeded with result 2
+taskLogger:job.go:161: Task add 3 4 succeeded with result 7
+taskLogger:job.go:161: Task sleep 2 succeeded with result true
+taskLogger:job.go:161: Task add 2 4 succeeded with result 6
 ```
 
 ## TODO
 
-- webserver
 - UI
 - scheduling
 - ...

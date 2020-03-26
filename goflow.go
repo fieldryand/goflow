@@ -1,30 +1,36 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"github.com/fieldryand/goflow/core"
 	"github.com/fieldryand/goflow/jobs"
-	"time"
+	"net/http"
 )
 
+var taskState map[string]string
+
+func submit(w http.ResponseWriter, req *http.Request) {
+	example := jobs.ExampleJob.ClearState()
+	taskState = example.TaskState
+	reads := make(chan core.ReadOp)
+	go example.Run(reads)
+	go func() {
+		read := core.ReadOp{Resp: make(chan map[string]string)}
+		reads <- read
+		taskState = <-read.Resp
+	}()
+	fmt.Fprintf(w, "job submitted\n")
+}
+
+func status(w http.ResponseWriter, req *http.Request) {
+	encoded, _ := json.Marshal(taskState)
+	fmt.Fprintf(w, string(encoded)+"\n")
+}
+
 func main() {
-	stat := make(chan string, 1)
-	example := jobs.ExampleJob
+	http.HandleFunc("/submit", submit)
+	http.HandleFunc("/status", status)
 
-	// Submit the job.
-	go example.Run(stat)
-
-	// Concurrently, get the status of the tasks.
-	// They should  all be "None."
-	go example.Status()
-
-	// Wait one second.
-	time.Sleep(time.Duration(1) * time.Second)
-
-	// Get the status again. The two tasks upstream
-	// of "sleep 2" should be "Success."
-	go example.Status()
-
-	// Print the job status.
-	jobStatus := <-stat
-	fmt.Println("Example job finished:", jobStatus)
+	http.ListenAndServe(":8090", nil)
 }
