@@ -18,7 +18,7 @@ Run the demo with `./demo.sh`.
 Demo client output:
 ```
 job submitted
-{"add 1 1":"None","add 2 4":"None","add 3 4":"None","sleep 1":"Running","sleep 2":"None"}
+{"add 1 1":"None","add 2 4":"None","add 3 4":"None","sleep 1":"None","sleep 2":"None"}
 {"add 1 1":"Success","add 2 4":"None","add 3 4":"Success","sleep 1":"Success","sleep 2":"Running"}
 {"add 1 1":"Success","add 2 4":"Success","add 3 4":"Success","sleep 1":"Success","sleep 2":"Success"}
 ```

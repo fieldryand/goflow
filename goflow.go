@@ -11,7 +11,7 @@ import (
 var taskState map[string]string
 
 func submit(w http.ResponseWriter, req *http.Request) {
-	example := jobs.ExampleJob.ClearState()
+	example := jobs.ExampleJob()
 	taskState = example.TaskState
 	reads := make(chan core.ReadOp)
 	go example.Run(reads)

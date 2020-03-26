@@ -13,7 +13,7 @@ func TestJob(t *testing.T) {
 	add_2_4 := Task("add 2 4", AddOperator(2, 4))
 	add_3_4 := Task("add 3 4", AddOperator(3, 4))
 
-	j := Job("example").
+	j := NewJob("example").
 		AddTask(add_1_1).
 		AddTask(sleep_2).
 		AddTask(add_2_4).
@@ -40,7 +40,7 @@ func TestCyclicJob(t *testing.T) {
 	add_2_2 := Task("add 2 2", AddOperator(2, 2))
 	add_4_4 := Task("add 4 4", AddOperator(4, 4))
 
-	j := Job("cyclic").
+	j := NewJob("cyclic").
 		AddTask(add_2_2).
 		AddTask(add_4_4).
 		SetDownstream(add_2_2, add_4_4).
@@ -52,7 +52,7 @@ func TestCyclicJob(t *testing.T) {
 func TestTaskFailure(t *testing.T) {
 	badTask := Task("add -1 -1", AddOperator(-1, -1))
 
-	j := Job("with bad task").
+	j := NewJob("with bad task").
 		AddTask(badTask)
 
 	err := j.Run(reads)

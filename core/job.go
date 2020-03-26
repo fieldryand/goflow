@@ -6,7 +6,7 @@ import (
 	"os"
 )
 
-type job struct {
+type Job struct {
 	name      string
 	logger    *log.Logger
 	dag       *Dag
@@ -14,8 +14,8 @@ type job struct {
 	TaskState map[string]string
 }
 
-func Job(name string) *job {
-	j := job{
+func NewJob(name string) *Job {
+	j := Job{
 		name:      name,
 		logger:    log.New(os.Stdout, "jobLogger:", log.Lshortfile),
 		dag:       NewDag(),
@@ -42,26 +42,19 @@ func (e *jobError) Error() string {
 	return fmt.Sprintf("Job failed on task %s", e.task)
 }
 
-func (j *job) ClearState() *job {
-	for name, _ := range j.TaskState {
-		j.TaskState[name] = "None"
-	}
-	return j
-}
-
-func (j *job) AddTask(t *task) *job {
+func (j *Job) AddTask(t *task) *Job {
 	j.tasks[t.name] = t
 	j.dag.addNode(t.name)
 	j.TaskState[t.name] = "None"
 	return j
 }
 
-func (j *job) SetDownstream(ind, dep *task) *job {
+func (j *Job) SetDownstream(ind, dep *task) *Job {
 	j.dag.setDownstream(ind.name, dep.name)
 	return j
 }
 
-func (j *job) allDone() bool {
+func (j *Job) allDone() bool {
 	done := true
 	for _, v := range j.TaskState {
 		if v == "None" || v == "Running" {
@@ -71,7 +64,7 @@ func (j *job) allDone() bool {
 	return done
 }
 
-func (j *job) isDownstream(taskName string) bool {
+func (j *Job) isDownstream(taskName string) bool {
 	ind := j.dag.independentNodes()
 
 	for _, name := range ind {
@@ -83,7 +76,7 @@ func (j *job) isDownstream(taskName string) bool {
 	return true
 }
 
-func (j *job) Run(reads chan ReadOp) error {
+func (j *Job) Run(reads chan ReadOp) error {
 	if !j.dag.validate() {
 		return &InvalidDagError{}
 	}
