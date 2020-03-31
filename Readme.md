@@ -9,9 +9,9 @@ For personal projects, I want the cheapest architecture possible. I want to run 
 ## Usage
 
 1. Clone the repo.
-2. Create a Job in the `jobs` directory. See `example_job.go` for an example.
-3. Add the job to `goflow.go`.
-4. `go run goflow.go`
+2. To create a job: create a file in the `jobs` directory that matches the pattern `*_job.go`. In this file, declare a function that returns a `*core.Job`, and in the line above, write a comment that matches the pattern `// goflow: {{ function }} {{ job name }}`. See `example_job.go` for an example.
+3. Run `go generate` to generate the `flow` function in `flow.go`. This function exposes the jobs.
+4. Run the webserver with `go run .`.
 
 Run the demo with `./demo.sh`.
 
@@ -30,6 +30,11 @@ taskLogger:job.go:161: Task add 1 1 succeeded with result 2
 taskLogger:job.go:161: Task add 3 4 succeeded with result 7
 taskLogger:job.go:161: Task sleep 2 succeeded with result true
 taskLogger:job.go:161: Task add 2 4 succeeded with result 6
+```
+
+`go generate` output:
+```
+2020/03/30 21:41:35 Found job example (ExampleJob) in ./jobs/example_job.go
 ```
 
 ## TODO

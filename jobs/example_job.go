@@ -2,6 +2,8 @@ package jobs
 
 import "github.com/fieldryand/goflow/core"
 
+// ExampleJob returns an example job.
+// goflow: ExampleJob example
 func ExampleJob() *core.Job {
 	sleep_1 := core.Task("sleep 1", core.SleepOperator(1))
 	add_1_1 := core.Task("add 1 1", core.AddOperator(1, 1))

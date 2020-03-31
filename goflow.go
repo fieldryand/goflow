@@ -4,14 +4,15 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/fieldryand/goflow/core"
-	"github.com/fieldryand/goflow/jobs"
 	"net/http"
 )
+
+//go:generate go run jobs/gen.go
 
 var taskState map[string]string
 
 func submit(w http.ResponseWriter, req *http.Request) {
-	example := jobs.ExampleJob()
+	example := flow("example")()
 	taskState = example.TaskState
 	reads := make(chan core.ReadOp)
 	go example.Run(reads)
