@@ -23,15 +23,6 @@ job submitted
 {"add 1 1":"Success","add 2 4":"Success","add 3 4":"Success","sleep 1":"Success","sleep 2":"Success"}
 ```
 
-Demo server output:
-```
-taskLogger:job.go:161: Task sleep 1 succeeded with result true
-taskLogger:job.go:161: Task add 1 1 succeeded with result 2
-taskLogger:job.go:161: Task add 3 4 succeeded with result 7
-taskLogger:job.go:161: Task sleep 2 succeeded with result true
-taskLogger:job.go:161: Task add 2 4 succeeded with result 6
-```
-
 `go generate` output:
 ```
 2020/03/30 21:41:35 Found job example (ExampleJob) in ./jobs/example_job.go

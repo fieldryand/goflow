@@ -2,8 +2,8 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/fieldryand/goflow/core"
+	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
@@ -11,27 +11,27 @@ import (
 
 var taskState map[string]string
 
-func submit(w http.ResponseWriter, req *http.Request) {
-	example := flow("example")()
-	taskState = example.TaskState
-	reads := make(chan core.ReadOp)
-	go example.Run(reads)
-	go func() {
-		read := core.ReadOp{Resp: make(chan map[string]string)}
-		reads <- read
-		taskState = <-read.Resp
-	}()
-	fmt.Fprintf(w, "job submitted\n")
-}
-
-func status(w http.ResponseWriter, req *http.Request) {
-	encoded, _ := json.Marshal(taskState)
-	fmt.Fprintf(w, string(encoded)+"\n")
-}
-
 func main() {
-	http.HandleFunc("/submit", submit)
-	http.HandleFunc("/status", status)
+	router := gin.Default()
 
-	http.ListenAndServe(":8090", nil)
+	router.GET("/job/:name/submit", func(c *gin.Context) {
+		name := c.Param("name")
+		job := flow(name)()
+		taskState = job.TaskState
+		reads := make(chan core.ReadOp)
+		go job.Run(reads)
+		go func() {
+			read := core.ReadOp{Resp: make(chan map[string]string)}
+			reads <- read
+			taskState = <-read.Resp
+		}()
+		c.String(http.StatusOK, "job submitted\n")
+	})
+
+	router.GET("status", func(c *gin.Context) {
+		encoded, _ := json.Marshal(taskState)
+		c.String(http.StatusOK, string(encoded)+"\n")
+	})
+
+	router.Run(":8090")
 }
