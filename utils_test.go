@@ -1,12 +1,12 @@
-package core
+package goflow
 
 import (
 	"testing"
 )
 
 type test struct {
-	a []string
-	b []string
+	a   []string
+	b   []string
 	out bool
 }
 
@@ -18,7 +18,7 @@ var tests = []test{
 
 func TestEqual(t *testing.T) {
 	for _, v := range tests {
-		got := Equal(v.a, v.b)
+		got := equal(v.a, v.b)
 		if got != v.out {
 			t.Errorf("Test failed: got %t, expected %t", got, v.out)
 		}

@@ -1,4 +1,4 @@
-package core
+package goflow
 
 import (
 	"github.com/ef-ds/deque"

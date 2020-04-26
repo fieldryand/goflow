@@ -1,27 +1,25 @@
-package main
+//Package goflow implements a minimal workflow scheduler.
+package goflow
 
 import (
 	"encoding/json"
-	"github.com/fieldryand/goflow/core"
 	"github.com/gin-gonic/gin"
 	"net/http"
 )
 
-//go:generate go run jobs/gen.go
+func Start(jobs map[string]*Job) {
+	taskState := make(map[string]string)
 
-var taskState map[string]string
-
-func main() {
 	router := gin.Default()
 
 	router.GET("/job/:name/submit", func(c *gin.Context) {
 		name := c.Param("name")
-		job := flow(name)()
+		job := jobs[name]
 		taskState = job.TaskState
-		reads := make(chan core.ReadOp)
+		reads := make(chan ReadOp)
 		go job.Run(reads)
 		go func() {
-			read := core.ReadOp{Resp: make(chan map[string]string)}
+			read := ReadOp{Resp: make(chan map[string]string)}
 			reads <- read
 			taskState = <-read.Resp
 		}()

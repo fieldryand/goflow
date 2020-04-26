@@ -1,6 +1,6 @@
-package core
+package goflow
 
-func Equal(a, b []string) bool {
+func equal(a, b []string) bool {
 	if len(a) != len(b) {
 		return false
 	}

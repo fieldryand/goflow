@@ -1,7 +1,8 @@
-package core
+package goflow
 
 import (
 	"fmt"
+	"github.com/fieldryand/goflow/operators"
 	"log"
 	"os"
 )
@@ -132,17 +133,17 @@ func (j *Job) Run(reads chan ReadOp) error {
 type task struct {
 	name     string
 	logger   *log.Logger
-	operator operator
+	operator operators.Operator
 }
 
-func Task(name string, op operator) *task {
+func Task(name string, op operators.Operator) *task {
 	l := log.New(os.Stdout, "taskLogger:", log.Lshortfile)
 	t := task{name, l, op}
 	return &t
 }
 
 func (t *task) run(writes chan writeOp) error {
-	res, err := t.operator.run()
+	res, err := t.operator.Run()
 
 	if err != nil {
 		t.logger.Println("Task", t.name, "failed:", err)

@@ -1,11 +1,12 @@
-package core
+// Package operators defines goflow operators.
+package operators
 
 import (
 	"time"
 )
 
-type operator interface {
-	run() (interface{}, error)
+type Operator interface {
+	Run() (interface{}, error)
 }
 
 type operatorError struct {
@@ -23,7 +24,7 @@ func AddOperator(a, b int) *addOperator {
 	return &o
 }
 
-func (addop addOperator) run() (interface{}, error) {
+func (addop addOperator) Run() (interface{}, error) {
 
 	if addop.a < 0 || addop.b < 0 {
 		return 0, &operatorError{"Can't add negative numbers"}
@@ -40,7 +41,7 @@ func SleepOperator(s int) *sleepOperator {
 	return &o
 }
 
-func (slpop sleepOperator) run() (interface{}, error) {
+func (slpop sleepOperator) Run() (interface{}, error) {
 	time.Sleep(time.Duration(slpop.s) * time.Second)
 	return true, nil
 }

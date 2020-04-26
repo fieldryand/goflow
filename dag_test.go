@@ -1,4 +1,4 @@
-package core
+package goflow
 
 import (
 	"testing"
@@ -20,13 +20,13 @@ func TestDag(t *testing.T) {
 		t.Errorf("Valid dag failed validation check")
 	}
 
-	if !Equal(d.dependencies("b"), []string{"a"}) {
+	if !equal(d.dependencies("b"), []string{"a"}) {
 		t.Errorf("d.dependencies() returned %s, expected %s",
 			d.dependencies("b"),
 			[]string{"a"})
 	}
 
-	if !Equal(d.independentNodes(), []string{"a"}) {
+	if !equal(d.independentNodes(), []string{"a"}) {
 		t.Errorf("d.independentNodes() returned %s, expected %s",
 			d.dependencies("b"),
 			[]string{"a"})
