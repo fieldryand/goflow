@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-var reads = make(chan ReadOp)
+var reads = make(chan readOp)
 
 func TestJob(t *testing.T) {
 	add_1_1 := Task("add 1 1", operators.AddOperator(1, 1))
@@ -23,7 +23,7 @@ func TestJob(t *testing.T) {
 		SetDownstream(sleep_2, add_2_4).
 		SetDownstream(add_1_1, add_3_4)
 
-	j.Run(reads)
+	j.run(reads)
 
 	expectedState := map[string]string{
 		"add 1 1": "Success",
@@ -47,7 +47,7 @@ func TestCyclicJob(t *testing.T) {
 		SetDownstream(add_2_2, add_4_4).
 		SetDownstream(add_4_4, add_2_2)
 
-	j.Run(reads)
+	j.run(reads)
 }
 
 func TestTaskFailure(t *testing.T) {
@@ -56,7 +56,7 @@ func TestTaskFailure(t *testing.T) {
 	j := NewJob("with bad task").
 		AddTask(badTask)
 
-	err := j.Run(reads)
+	err := j.run(reads)
 
 	if err == nil {
 		t.Errorf("Job returned nil, expected a jobError")

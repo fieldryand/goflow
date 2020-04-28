@@ -7,6 +7,7 @@ import (
 	"net/http"
 )
 
+// Starts the application webserver.
 func Start(jobs map[string]*Job) {
 	taskState := make(map[string]string)
 
@@ -16,10 +17,10 @@ func Start(jobs map[string]*Job) {
 		name := c.Param("name")
 		job := jobs[name]
 		taskState = job.TaskState
-		reads := make(chan ReadOp)
-		go job.Run(reads)
+		reads := make(chan readOp)
+		go job.run(reads)
 		go func() {
-			read := ReadOp{Resp: make(chan map[string]string)}
+			read := readOp{Resp: make(chan map[string]string)}
 			reads <- read
 			taskState = <-read.Resp
 		}()

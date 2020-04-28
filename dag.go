@@ -4,35 +4,35 @@ import (
 	"github.com/ef-ds/deque"
 )
 
-type Dag struct {
+type dag struct {
 	graph map[string][]string
 }
 
-func NewDag() *Dag {
-	d := Dag{make(map[string][]string)}
+func newDag() *dag {
+	d := dag{make(map[string][]string)}
 	return &d
 }
 
 // A node has a name and 0 or more dependent nodes
-func (d *Dag) addNode(name string) {
+func (d *dag) addNode(name string) {
 	deps := make([]string, 0)
 	d.graph[name] = deps
 }
 
 // Create an edge between an independent and dependent node
-func (d *Dag) setDownstream(ind, dep string) {
+func (d *dag) setDownstream(ind, dep string) {
 	d.graph[ind] = append(d.graph[ind], dep)
 }
 
-type InvalidDagError struct {
+type invalidDagError struct {
 }
 
-func (e *InvalidDagError) Error() string {
+func (e *invalidDagError) Error() string {
 	return "Invalid DAG"
 }
 
 // Ensure the DAG is acyclic
-func (d *Dag) validate() bool {
+func (d *dag) validate() bool {
 	degree := make(map[string]int)
 
 	for node, _ := range d.graph {
@@ -80,7 +80,7 @@ func (d *Dag) validate() bool {
 }
 
 // Return the immediately upstream nodes for a given node
-func (d *Dag) dependencies(node string) []string {
+func (d *dag) dependencies(node string) []string {
 
 	dependencies := make([]string, 0)
 
@@ -96,7 +96,7 @@ func (d *Dag) dependencies(node string) []string {
 }
 
 // Return all the independent nodes in the graph
-func (d *Dag) independentNodes() []string {
+func (d *dag) independentNodes() []string {
 
 	downstream := make([]string, 0)
 

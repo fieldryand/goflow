@@ -1,3 +1,4 @@
+// An example program demonstrating the usage of goflow.
 package main
 
 import (

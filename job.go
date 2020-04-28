@@ -10,7 +10,7 @@ import (
 type Job struct {
 	name      string
 	logger    *log.Logger
-	dag       *Dag
+	dag       *dag
 	tasks     map[string]*task
 	TaskState map[string]string
 }
@@ -19,7 +19,7 @@ func NewJob(name string) *Job {
 	j := Job{
 		name:      name,
 		logger:    log.New(os.Stdout, "jobLogger:", log.Lshortfile),
-		dag:       NewDag(),
+		dag:       newDag(),
 		tasks:     make(map[string]*task),
 		TaskState: make(map[string]string)}
 	return &j
@@ -35,7 +35,7 @@ type writeOp struct {
 	resp chan bool
 }
 
-type ReadOp struct {
+type readOp struct {
 	Resp chan map[string]string
 }
 
@@ -43,6 +43,7 @@ func (e *jobError) Error() string {
 	return fmt.Sprintf("Job failed on task %s", e.task)
 }
 
+// Adds a task to a job.
 func (j *Job) AddTask(t *task) *Job {
 	j.tasks[t.name] = t
 	j.dag.addNode(t.name)
@@ -50,6 +51,10 @@ func (j *Job) AddTask(t *task) *Job {
 	return j
 }
 
+// Sets a dependency relationship between two tasks in the job.
+// The dependent task is downstream of the independent task and
+// waits for the independent task to finish before starting
+// execution.
 func (j *Job) SetDownstream(ind, dep *task) *Job {
 	j.dag.setDownstream(ind.name, dep.name)
 	return j
@@ -77,9 +82,9 @@ func (j *Job) isDownstream(taskName string) bool {
 	return true
 }
 
-func (j *Job) Run(reads chan ReadOp) error {
+func (j *Job) run(reads chan readOp) error {
 	if !j.dag.validate() {
-		return &InvalidDagError{}
+		return &invalidDagError{}
 	}
 
 	ind := j.dag.independentNodes()
@@ -136,6 +141,7 @@ type task struct {
 	operator operators.Operator
 }
 
+// Returns a Task.
 func Task(name string, op operators.Operator) *task {
 	l := log.New(os.Stdout, "taskLogger:", log.Lshortfile)
 	t := task{name, l, op}

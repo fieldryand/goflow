@@ -5,7 +5,7 @@ import (
 )
 
 func TestDag(t *testing.T) {
-	d := NewDag()
+	d := newDag()
 
 	d.addNode("a")
 	d.addNode("b")
@@ -32,7 +32,7 @@ func TestDag(t *testing.T) {
 			[]string{"a"})
 	}
 
-	e := NewDag()
+	e := newDag()
 
 	e.addNode("a")
 	e.addNode("b")
@@ -43,9 +43,9 @@ func TestDag(t *testing.T) {
 		t.Errorf("Invalid dag passed validation check")
 	}
 
-	invalidErr := InvalidDagError{}
+	invalidErr := invalidDagError{}
 
 	if invalidErr.Error() != "Invalid DAG" {
-		t.Errorf("InvalidDagError returned unexpected message")
+		t.Errorf("invalidDagError returned unexpected message")
 	}
 }
