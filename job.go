@@ -2,25 +2,29 @@ package goflow
 
 import (
 	"fmt"
-	"github.com/fieldryand/goflow/operators"
 	"log"
 	"os"
+
+	"github.com/fieldryand/goflow/operator"
 )
 
+// A job is a workflow consisting of independent and dependent tasks
+// organized into a graph.
 type Job struct {
-	name      string
+	Name      string
+	Tasks     map[string]*Task
 	logger    *log.Logger
 	dag       *dag
-	tasks     map[string]*task
 	TaskState map[string]string
 }
 
+// Returns a new job.
 func NewJob(name string) *Job {
 	j := Job{
-		name:      name,
+		Name:      name,
 		logger:    log.New(os.Stdout, "jobLogger:", log.Lshortfile),
 		dag:       newDag(),
-		tasks:     make(map[string]*task),
+		Tasks:     make(map[string]*Task),
 		TaskState: make(map[string]string)}
 	return &j
 }
@@ -44,8 +48,8 @@ func (e *jobError) Error() string {
 }
 
 // Adds a task to a job.
-func (j *Job) AddTask(t *task) *Job {
-	j.tasks[t.name] = t
+func (j *Job) AddTask(t *Task) *Job {
+	j.Tasks[t.name] = t
 	j.dag.addNode(t.name)
 	j.TaskState[t.name] = "None"
 	return j
@@ -55,7 +59,7 @@ func (j *Job) AddTask(t *task) *Job {
 // The dependent task is downstream of the independent task and
 // waits for the independent task to finish before starting
 // execution.
-func (j *Job) SetDownstream(ind, dep *task) *Job {
+func (j *Job) SetDownstream(ind, dep *Task) *Job {
 	j.dag.setDownstream(ind.name, dep.name)
 	return j
 }
@@ -93,7 +97,7 @@ func (j *Job) run(reads chan readOp) error {
 
 	// Start the independent tasks
 	for _, name := range ind {
-		go j.tasks[name].run(writes)
+		go j.Tasks[name].run(writes)
 	}
 
 	// Run downstream tasks
@@ -112,7 +116,7 @@ func (j *Job) run(reads chan readOp) error {
 			break
 		} else {
 			// for each task
-			for _, t := range j.tasks {
+			for _, t := range j.Tasks {
 				if j.TaskState[t.name] == "None" && j.isDownstream(t.name) {
 					upstream_done := true
 					// iterate over the dependencies
@@ -135,20 +139,22 @@ func (j *Job) run(reads chan readOp) error {
 	return nil
 }
 
-type task struct {
+// Tasks are the units of work that make up a job. Whenever a task is executed, it
+// calls its associated operator.
+type Task struct {
 	name     string
 	logger   *log.Logger
-	operator operators.Operator
+	operator operator.Operator
 }
 
 // Returns a Task.
-func Task(name string, op operators.Operator) *task {
+func NewTask(name string, op operator.Operator) *Task {
 	l := log.New(os.Stdout, "taskLogger:", log.Lshortfile)
-	t := task{name, l, op}
+	t := Task{name, l, op}
 	return &t
 }
 
-func (t *task) run(writes chan writeOp) error {
+func (t *Task) run(writes chan writeOp) error {
 	res, err := t.operator.Run()
 
 	if err != nil {

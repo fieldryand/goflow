@@ -1,18 +1,20 @@
 package goflow
 
 import (
-	"github.com/fieldryand/goflow/operators"
+	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/fieldryand/goflow/operator"
 )
 
 var reads = make(chan readOp)
 
 func TestJob(t *testing.T) {
-	add_1_1 := Task("add 1 1", operators.AddOperator(1, 1))
-	sleep_2 := Task("sleep 2", operators.SleepOperator(2))
-	add_2_4 := Task("add 2 4", operators.AddOperator(2, 4))
-	add_3_4 := Task("add 3 4", operators.AddOperator(3, 4))
+	add_1_1 := NewTask("add 1 1", NewAddition(1, 1))
+	sleep_2 := NewTask("sleep 2", operator.NewSleep(2))
+	add_2_4 := NewTask("add 2 4", NewAddition(2, 4))
+	add_3_4 := NewTask("add 3 4", NewAddition(3, 4))
 
 	j := NewJob("example").
 		AddTask(add_1_1).
@@ -38,8 +40,8 @@ func TestJob(t *testing.T) {
 }
 
 func TestCyclicJob(t *testing.T) {
-	add_2_2 := Task("add 2 2", operators.AddOperator(2, 2))
-	add_4_4 := Task("add 4 4", operators.AddOperator(4, 4))
+	add_2_2 := NewTask("add 2 2", NewAddition(2, 2))
+	add_4_4 := NewTask("add 4 4", NewAddition(4, 4))
 
 	j := NewJob("cyclic").
 		AddTask(add_2_2).
@@ -51,7 +53,7 @@ func TestCyclicJob(t *testing.T) {
 }
 
 func TestTaskFailure(t *testing.T) {
-	badTask := Task("add -1 -1", operators.AddOperator(-1, -1))
+	badTask := NewTask("add -1 -1", NewAddition(-1, -1))
 
 	j := NewJob("with bad task").
 		AddTask(badTask)
@@ -62,4 +64,22 @@ func TestTaskFailure(t *testing.T) {
 		t.Errorf("Job returned nil, expected a jobError")
 	}
 
+}
+
+// Adds two nonnegative numbers.
+type Addition struct{ a, b int }
+
+func NewAddition(a, b int) *Addition {
+	o := Addition{a, b}
+	return &o
+}
+
+func (o Addition) Run() (interface{}, error) {
+
+	if o.a < 0 || o.b < 0 {
+		return 0, errors.New("Can't add negative numbers")
+	}
+
+	result := o.a + o.b
+	return result, nil
 }

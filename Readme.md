@@ -8,14 +8,13 @@ For personal projects, I want the cheapest architecture possible. I want to run 
 
 ## Usage
 
-1. Clone the repo.
-2. To create a job: create a file in the `jobs` directory that matches the pattern `*_job.go`. In this file, declare a function that returns a `*core.Job`, and in the line above, write a comment that matches the pattern `// goflow: {{ function }} {{ job name }}`. See `example_job.go` for an example.
-3. Run `go generate` to generate the `flow` function in `flow.go`. This function exposes the jobs.
-4. Run the webserver with `go run .`.
+See `examples/` for examples of using the library. You can run a simple example webserver with
+```
+go install examples/simple/goflow-simple-example.go
+eval "$GOPATH/bin/goflow-simple-example"
+```
 
-Run the demo with `./demo.sh`.
-
-Demo client output:
+Then send some requests with `./demo.sh`. You should see this output:
 ```
 job submitted
 {"add 1 1":"None","add 2 4":"None","add 3 4":"None","sleep 1":"None","sleep 2":"None"}
@@ -23,13 +22,10 @@ job submitted
 {"add 1 1":"Success","add 2 4":"Success","add 3 4":"Success","sleep 1":"Success","sleep 2":"Success"}
 ```
 
-`go generate` output:
-```
-2020/03/30 21:41:35 Found job example (ExampleJob) in ./jobs/example_job.go
-```
-
 ## TODO
 
-- UI
+- http operator
+- multiple jobs
 - scheduling
+- UI
 - ...
