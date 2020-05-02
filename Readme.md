@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/fieldryand/goflow.svg?branch=master)](https://travis-ci.org/fieldryand/goflow)
+
 # Goflow
 
 A minimal workflow scheduler written in Go, inspired by Apache Airflow and github.com/thieman/dagobah.
