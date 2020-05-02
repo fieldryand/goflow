@@ -7,30 +7,53 @@ import (
 	"net/http"
 )
 
-// Starts the application webserver.
-func Start(jobs map[string]*Job) {
-	taskState := make(map[string]string)
+// Returns the application router.
+func Goflow(jobs map[string](func() *Job)) *gin.Engine {
+
+	jobNames := make([]string, 0)
+	for name, _ := range jobs {
+		jobNames = append(jobNames, name)
+	}
+
+	js := make(map[string]*jobState)
+
+	for j, _ := range jobs {
+		js[j] = newJobState()
+	}
 
 	router := gin.Default()
+	router.LoadHTMLGlob("templates/*")
 
-	router.GET("/job/:name/submit", func(c *gin.Context) {
+	router.GET("/", func(c *gin.Context) {
+		c.HTML(http.StatusOK, "index.tmpl", gin.H{
+			"js": js,
+		})
+	})
+
+	router.GET("/jobs", func(c *gin.Context) {
+		encoded, _ := json.Marshal(jobNames)
+		c.String(http.StatusOK, string(encoded))
+	})
+
+	router.GET("/jobs/:name/submit", func(c *gin.Context) {
 		name := c.Param("name")
-		job := jobs[name]
-		taskState = job.TaskState
+		job := jobs[name]()
+		js[name] = job.jobState
 		reads := make(chan readOp)
 		go job.run(reads)
 		go func() {
-			read := readOp{Resp: make(chan map[string]string)}
+			read := readOp{resp: make(chan *jobState)}
 			reads <- read
-			taskState = <-read.Resp
+			js[name] = <-read.resp
 		}()
-		c.String(http.StatusOK, "job submitted\n")
+		c.String(http.StatusOK, "job submitted")
 	})
 
-	router.GET("status", func(c *gin.Context) {
-		encoded, _ := json.Marshal(taskState)
-		c.String(http.StatusOK, string(encoded)+"\n")
+	router.GET("/jobs/:name", func(c *gin.Context) {
+		name := c.Param("name")
+		encoded, _ := json.Marshal(js[name])
+		c.String(http.StatusOK, string(encoded))
 	})
 
-	router.Run(":8090")
+	return router
 }

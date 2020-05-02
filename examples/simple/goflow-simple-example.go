@@ -9,8 +9,9 @@ import (
 )
 
 func main() {
-	jobs := map[string]*goflow.Job{"example": ExampleJob()}
-	goflow.Start(jobs)
+	jobs := map[string](func() *goflow.Job){"example": ExampleJob}
+	goflow := goflow.Goflow(jobs)
+	goflow.Run(":8090")
 }
 
 func ExampleJob() *goflow.Job {

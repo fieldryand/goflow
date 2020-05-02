@@ -1,0 +1,22 @@
+<html>
+	<head>
+		<title>Goflow</title>
+	</head>
+	<script>
+		function submit(jobName) {
+		  var xhttp = new XMLHttpRequest();
+		  xhttp.open("GET", `/jobs/${jobName}/submit`, true);
+		  xhttp.send();
+		}
+	</script>
+	<body>
+		<h1>
+			Jobs
+		</h1>
+		<div>
+			{{ range $key, $value := .js }}
+				{{ $key }} {{ $value.State }} <button onclick="submit({{ $key }})">Submit</button>
+			{{ end }}
+		</div>
+	</body>
+</html>

@@ -27,15 +27,15 @@ func TestJob(t *testing.T) {
 
 	j.run(reads)
 
-	expectedState := map[string]string{
-		"add 1 1": "Success",
-		"sleep 2": "Success",
-		"add 2 4": "Success",
-		"add 3 4": "Success",
+	expectedState := map[string]state{
+		"add 1 1": Successful,
+		"sleep 2": Successful,
+		"add 2 4": Successful,
+		"add 3 4": Successful,
 	}
 
-	if !reflect.DeepEqual(j.TaskState, expectedState) {
-		t.Errorf("Got status %v, expected %v", j.TaskState, expectedState)
+	if !reflect.DeepEqual(j.jobState.TaskState, expectedState) {
+		t.Errorf("Got status %v, expected %v", j.jobState.TaskState, expectedState)
 	}
 }
 
