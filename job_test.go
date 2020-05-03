@@ -28,10 +28,10 @@ func TestJob(t *testing.T) {
 	j.run(reads)
 
 	expectedState := map[string]state{
-		"add 1 1": Successful,
-		"sleep 2": Successful,
-		"add 2 4": Successful,
-		"add 3 4": Successful,
+		"add 1 1": successful,
+		"sleep 2": successful,
+		"add 2 4": successful,
+		"add 3 4": successful,
 	}
 
 	if !reflect.DeepEqual(j.jobState.TaskState, expectedState) {
@@ -50,6 +50,17 @@ func TestCyclicJob(t *testing.T) {
 		SetDownstream(add_4_4, add_2_2)
 
 	j.run(reads)
+}
+
+func TestJobWithSingleTask(t *testing.T) {
+	add_2_2 := NewTask("add 2 2", NewAddition(2, 2))
+	j := NewJob("cyclic").AddTask(add_2_2)
+	res := j.isDownstream("add 2 2")
+
+	if res {
+		t.Errorf("isDownstream() returned true for an independent task")
+	}
+
 }
 
 func TestTaskFailure(t *testing.T) {

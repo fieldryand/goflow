@@ -5,7 +5,7 @@ import (
 )
 
 type dag struct {
-	graph map[string][]string
+	Graph map[string][]string
 }
 
 func newDag() *dag {
@@ -16,12 +16,12 @@ func newDag() *dag {
 // A node has a name and 0 or more dependent nodes
 func (d *dag) addNode(name string) {
 	deps := make([]string, 0)
-	d.graph[name] = deps
+	d.Graph[name] = deps
 }
 
 // Create an edge between an independent and dependent node
 func (d *dag) setDownstream(ind, dep string) {
-	d.graph[ind] = append(d.graph[ind], dep)
+	d.Graph[ind] = append(d.Graph[ind], dep)
 }
 
 type invalidDagError struct {
@@ -35,11 +35,11 @@ func (e *invalidDagError) Error() string {
 func (d *dag) validate() bool {
 	degree := make(map[string]int)
 
-	for node, _ := range d.graph {
+	for node := range d.Graph {
 		degree[node] = 0
 	}
 
-	for _, ds := range d.graph {
+	for _, ds := range d.Graph {
 		for _, i := range ds {
 			degree[i] += 1
 		}
@@ -63,7 +63,7 @@ func (d *dag) validate() bool {
 		} else {
 			node := popped.(string)
 			l = append(l, node)
-			for _, ds := range d.graph[node] {
+			for _, ds := range d.Graph[node] {
 				degree[ds] -= 1
 				if degree[ds] == 0 {
 					deq.PushFront(ds)
@@ -72,7 +72,7 @@ func (d *dag) validate() bool {
 		}
 	}
 
-	if len(l) == len(d.graph) {
+	if len(l) == len(d.Graph) {
 		return true
 	} else {
 		return false
@@ -84,7 +84,7 @@ func (d *dag) dependencies(node string) []string {
 
 	dependencies := make([]string, 0)
 
-	for dep, ds := range d.graph {
+	for dep, ds := range d.Graph {
 		for _, i := range ds {
 			if node == i {
 				dependencies = append(dependencies, dep)
@@ -100,7 +100,7 @@ func (d *dag) independentNodes() []string {
 
 	downstream := make([]string, 0)
 
-	for _, ds := range d.graph {
+	for _, ds := range d.Graph {
 		for _, i := range ds {
 			downstream = append(downstream, i)
 		}
@@ -108,7 +108,7 @@ func (d *dag) independentNodes() []string {
 
 	ind := make([]string, 0)
 
-	for node, _ := range d.graph {
+	for node := range d.Graph {
 		ctr := 0
 		for _, i := range downstream {
 			if node == i {

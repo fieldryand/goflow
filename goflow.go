@@ -11,13 +11,13 @@ import (
 func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 
 	jobNames := make([]string, 0)
-	for name, _ := range jobs {
+	for name := range jobs {
 		jobNames = append(jobNames, name)
 	}
 
 	js := make(map[string]*jobState)
 
-	for j, _ := range jobs {
+	for j := range jobs {
 		js[j] = newJobState()
 	}
 
@@ -49,9 +49,15 @@ func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 		c.String(http.StatusOK, "job submitted")
 	})
 
-	router.GET("/jobs/:name", func(c *gin.Context) {
+	router.GET("/jobs/:name/state", func(c *gin.Context) {
 		name := c.Param("name")
 		encoded, _ := json.Marshal(js[name])
+		c.String(http.StatusOK, string(encoded))
+	})
+
+	router.GET("/jobs/:name/dag", func(c *gin.Context) {
+		name := c.Param("name")
+		encoded, _ := json.Marshal(jobs[name]().Dag.Graph)
 		c.String(http.StatusOK, string(encoded))
 	})
 

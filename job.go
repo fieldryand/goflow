@@ -13,14 +13,14 @@ type Job struct {
 	Name     string
 	Tasks    map[string]*Task
 	jobState *jobState
-	dag      *dag
+	Dag      *dag
 }
 
 // Returns a new job.
 func NewJob(name string) *Job {
 	j := Job{
 		Name:     name,
-		dag:      newDag(),
+		Dag:      newDag(),
 		Tasks:    make(map[string]*Task),
 		jobState: newJobState()}
 	return &j
@@ -30,11 +30,11 @@ func NewJob(name string) *Job {
 type state string
 
 const (
-	None       state = "None"
-	Running          = "Running"
-	UpForRetry       = "UpForRetry"
-	Failed           = "Failed"
-	Successful       = "Successful"
+	none       state = "None"
+	running          = "Running"
+	upForRetry       = "UpForRetry"
+	failed           = "Failed"
+	successful       = "Successful"
 )
 
 type jobState struct {
@@ -43,7 +43,7 @@ type jobState struct {
 }
 
 func newJobState() *jobState {
-	js := jobState{None, make(map[string]state)}
+	js := jobState{none, make(map[string]state)}
 	return &js
 }
 
@@ -60,8 +60,8 @@ type readOp struct {
 // Adds a task to a job.
 func (j *Job) AddTask(t *Task) *Job {
 	j.Tasks[t.Name] = t
-	j.dag.addNode(t.Name)
-	j.jobState.TaskState[t.Name] = None
+	j.Dag.addNode(t.Name)
+	j.jobState.TaskState[t.Name] = none
 	return j
 }
 
@@ -70,14 +70,14 @@ func (j *Job) AddTask(t *Task) *Job {
 // waits for the independent task to finish before starting
 // execution.
 func (j *Job) SetDownstream(ind, dep *Task) *Job {
-	j.dag.setDownstream(ind.Name, dep.Name)
+	j.Dag.setDownstream(ind.Name, dep.Name)
 	return j
 }
 
 func (j *Job) allDone() bool {
 	done := true
 	for _, v := range j.jobState.TaskState {
-		if v == None || v == Running {
+		if v == none || v == running {
 			done = false
 		}
 	}
@@ -86,7 +86,7 @@ func (j *Job) allDone() bool {
 
 func (j *Job) allSuccessful() bool {
 	for _, v := range j.jobState.TaskState {
-		if v != Successful {
+		if v != successful {
 			return false
 		}
 	}
@@ -95,7 +95,7 @@ func (j *Job) allSuccessful() bool {
 
 func (j *Job) isRunning() bool {
 	for _, v := range j.jobState.TaskState {
-		if v == Running || v == UpForRetry {
+		if v == running || v == upForRetry {
 			return true
 		}
 	}
@@ -103,7 +103,7 @@ func (j *Job) isRunning() bool {
 }
 
 func (j *Job) isDownstream(taskName string) bool {
-	ind := j.dag.independentNodes()
+	ind := j.Dag.independentNodes()
 
 	for _, name := range ind {
 		if taskName == name {
@@ -115,11 +115,11 @@ func (j *Job) isDownstream(taskName string) bool {
 }
 
 func (j *Job) run(reads chan readOp) error {
-	if !j.dag.validate() {
+	if !j.Dag.validate() {
 		return &invalidDagError{}
 	}
 
-	ind := j.dag.independentNodes()
+	ind := j.Dag.independentNodes()
 
 	writes := make(chan writeOp)
 
@@ -136,12 +136,12 @@ func (j *Job) run(reads chan readOp) error {
 		case write := <-writes:
 			j.jobState.TaskState[write.key] = write.val
 			if j.isRunning() {
-				j.jobState.State = Running
+				j.jobState.State = running
 			}
 			if j.allSuccessful() {
-				j.jobState.State = Successful
+				j.jobState.State = successful
 			}
-			if write.val == Failed {
+			if write.val == failed {
 				return fmt.Errorf("Job failed on task %s", write.key)
 			}
 			write.resp <- true
@@ -151,18 +151,18 @@ func (j *Job) run(reads chan readOp) error {
 		} else {
 			// for each task
 			for _, t := range j.Tasks {
-				if j.jobState.TaskState[t.Name] == None && j.isDownstream(t.Name) {
+				if j.jobState.TaskState[t.Name] == none && j.isDownstream(t.Name) {
 					upstream_done := true
 					// iterate over the dependencies
-					for _, us := range j.dag.dependencies(t.Name) {
+					for _, us := range j.Dag.dependencies(t.Name) {
 						// if any upstream task is not done, set the flag to false
-						if j.jobState.TaskState[us] == None || j.jobState.TaskState[us] == Running {
+						if j.jobState.TaskState[us] == none || j.jobState.TaskState[us] == running {
 							upstream_done = false
 						}
 					}
 
 					if upstream_done {
-						j.jobState.TaskState[t.Name] = Running
+						j.jobState.TaskState[t.Name] = running
 						go t.run(writes)
 					}
 				}
@@ -191,13 +191,13 @@ func (t *Task) run(writes chan writeOp) error {
 
 	if err != nil {
 		log.Printf("| Task %-16v | failed | %9v", t.Name, err)
-		write := writeOp{t.Name, Failed, make(chan bool)}
+		write := writeOp{t.Name, failed, make(chan bool)}
 		writes <- write
 		<-write.resp
 		return err
 	} else {
 		log.Printf("| Task %-16v | success | %9v", t.Name, res)
-		write := writeOp{t.Name, Successful, make(chan bool)}
+		write := writeOp{t.Name, successful, make(chan bool)}
 		writes <- write
 		<-write.resp
 		return nil
