@@ -7,7 +7,7 @@ import (
 	"net/http"
 )
 
-// Returns the application router.
+// Goflow returns the application router.
 func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 
 	jobNames := make([]string, 0)

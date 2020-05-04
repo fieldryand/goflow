@@ -14,30 +14,31 @@ func main() {
 	goflow.Run(":8090")
 }
 
+// Returns a simple job consisting of Addition and Sleep operators.
 func ExampleJob() *goflow.Job {
-	sleep_1 := goflow.NewTask("sleep 1", operator.NewSleep(1))
-	add_1_1 := goflow.NewTask("add 1 1", NewAddition(1, 1))
-	sleep_2 := goflow.NewTask("sleep 2", operator.NewSleep(2))
-	add_2_4 := goflow.NewTask("add 2 4", NewAddition(2, 4))
-	add_3_4 := goflow.NewTask("add 3 4", NewAddition(3, 4))
+	sleepOne := goflow.NewTask("sleepOne", operator.NewSleep(1))
+	addOneOne := goflow.NewTask("addOneOne", NewAddition(1, 1))
+	sleepTwo := goflow.NewTask("sleepTwo", operator.NewSleep(2))
+	addTwoFour := goflow.NewTask("addTwoFour", NewAddition(2, 4))
+	addThreeFour := goflow.NewTask("addThreeFour", NewAddition(3, 4))
 
 	j := goflow.NewJob("example").
-		AddTask(sleep_1).
-		AddTask(add_1_1).
-		AddTask(sleep_2).
-		AddTask(add_2_4).
-		AddTask(add_3_4).
-		SetDownstream(sleep_1, add_1_1).
-		SetDownstream(add_1_1, sleep_2).
-		SetDownstream(sleep_2, add_2_4).
-		SetDownstream(add_1_1, add_3_4)
+		AddTask(sleepOne).
+		AddTask(addOneOne).
+		AddTask(sleepTwo).
+		AddTask(addTwoFour).
+		AddTask(addThreeFour).
+		SetDownstream(sleepOne, addOneOne).
+		SetDownstream(addOneOne, sleepTwo).
+		SetDownstream(sleepTwo, addTwoFour).
+		SetDownstream(addOneOne, addThreeFour)
 
 	return j
 }
 
 // We can create custom operators by implementing the Run() method.
 
-// Adds two nonnegative numbers.
+// Addition is an operation that adds two nonnegative numbers.
 type Addition struct{ a, b int }
 
 func NewAddition(a, b int) *Addition {

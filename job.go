@@ -7,7 +7,7 @@ import (
 	"github.com/fieldryand/goflow/operator"
 )
 
-// A job is a workflow consisting of independent and dependent tasks
+// A Job is a workflow consisting of independent and dependent tasks
 // organized into a graph.
 type Job struct {
 	Name     string
@@ -16,7 +16,7 @@ type Job struct {
 	Dag      *dag
 }
 
-// Returns a new job.
+// NewJob returns a new job.
 func NewJob(name string) *Job {
 	j := Job{
 		Name:     name,
@@ -57,7 +57,7 @@ type readOp struct {
 	resp chan *jobState
 }
 
-// Adds a task to a job.
+// AddTask adds a task to a job.
 func (j *Job) AddTask(t *Task) *Job {
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
@@ -65,7 +65,7 @@ func (j *Job) AddTask(t *Task) *Job {
 	return j
 }
 
-// Sets a dependency relationship between two tasks in the job.
+// SetDownstream sets a dependency relationship between two tasks in the job.
 // The dependent task is downstream of the independent task and
 // waits for the independent task to finish before starting
 // execution.
@@ -152,16 +152,16 @@ func (j *Job) run(reads chan readOp) error {
 			// for each task
 			for _, t := range j.Tasks {
 				if j.jobState.TaskState[t.Name] == none && j.isDownstream(t.Name) {
-					upstream_done := true
+					upstreamDone := true
 					// iterate over the dependencies
 					for _, us := range j.Dag.dependencies(t.Name) {
 						// if any upstream task is not done, set the flag to false
 						if j.jobState.TaskState[us] == none || j.jobState.TaskState[us] == running {
-							upstream_done = false
+							upstreamDone = false
 						}
 					}
 
-					if upstream_done {
+					if upstreamDone {
 						j.jobState.TaskState[t.Name] = running
 						go t.run(writes)
 					}
@@ -173,14 +173,14 @@ func (j *Job) run(reads chan readOp) error {
 	return nil
 }
 
-// Tasks are the units of work that make up a job. Whenever a task is executed, it
+// A Task is the unit of work that makes up a job. Whenever a task is executed, it
 // calls its associated operator.
 type Task struct {
 	Name     string
 	operator operator.Operator
 }
 
-// Returns a Task.
+// NewTask returns a Task.
 func NewTask(name string, op operator.Operator) *Task {
 	t := Task{name, op}
 	return &t
@@ -195,11 +195,11 @@ func (t *Task) run(writes chan writeOp) error {
 		writes <- write
 		<-write.resp
 		return err
-	} else {
-		log.Printf("| Task %-16v | success | %9v", t.Name, res)
-		write := writeOp{t.Name, successful, make(chan bool)}
-		writes <- write
-		<-write.resp
-		return nil
 	}
+
+	log.Printf("| Task %-16v | success | %9v", t.Name, res)
+	write := writeOp{t.Name, successful, make(chan bool)}
+	writes <- write
+	<-write.resp
+	return nil
 }

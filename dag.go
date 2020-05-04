@@ -41,7 +41,7 @@ func (d *dag) validate() bool {
 
 	for _, ds := range d.Graph {
 		for _, i := range ds {
-			degree[i] += 1
+			degree[i]++
 		}
 	}
 
@@ -64,7 +64,7 @@ func (d *dag) validate() bool {
 			node := popped.(string)
 			l = append(l, node)
 			for _, ds := range d.Graph[node] {
-				degree[ds] -= 1
+				degree[ds]--
 				if degree[ds] == 0 {
 					deq.PushFront(ds)
 				}
@@ -74,9 +74,9 @@ func (d *dag) validate() bool {
 
 	if len(l) == len(d.Graph) {
 		return true
-	} else {
-		return false
 	}
+
+	return false
 }
 
 // Return the immediately upstream nodes for a given node
@@ -112,7 +112,7 @@ func (d *dag) independentNodes() []string {
 		ctr := 0
 		for _, i := range downstream {
 			if node == i {
-				ctr += 1
+				ctr++
 			}
 		}
 		if ctr == 0 {

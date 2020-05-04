@@ -22,7 +22,7 @@ func TestJobsRoute(t *testing.T) {
 }
 
 func ExampleJob() *Job {
-	sleep_1 := NewTask("sleep 1", operator.NewSleep(1))
-	j := NewJob("example").AddTask(sleep_1)
+	sleepOne := NewTask("sleepOne", operator.NewSleep(1))
+	j := NewJob("example").AddTask(sleepOne)
 	return j
 }

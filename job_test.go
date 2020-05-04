@@ -11,27 +11,27 @@ import (
 var reads = make(chan readOp)
 
 func TestJob(t *testing.T) {
-	add_1_1 := NewTask("add 1 1", NewAddition(1, 1))
-	sleep_2 := NewTask("sleep 2", operator.NewSleep(2))
-	add_2_4 := NewTask("add 2 4", NewAddition(2, 4))
-	add_3_4 := NewTask("add 3 4", NewAddition(3, 4))
+	addOneOne := NewTask("addOneOne", NewAddition(1, 1))
+	sleepTwo := NewTask("sleepTwo", operator.NewSleep(2))
+	addTwoFour := NewTask("addTwoFour", NewAddition(2, 4))
+	addThreeFour := NewTask("addThreeFour", NewAddition(3, 4))
 
 	j := NewJob("example").
-		AddTask(add_1_1).
-		AddTask(sleep_2).
-		AddTask(add_2_4).
-		AddTask(add_3_4).
-		SetDownstream(add_1_1, sleep_2).
-		SetDownstream(sleep_2, add_2_4).
-		SetDownstream(add_1_1, add_3_4)
+		AddTask(addOneOne).
+		AddTask(sleepTwo).
+		AddTask(addTwoFour).
+		AddTask(addThreeFour).
+		SetDownstream(addOneOne, sleepTwo).
+		SetDownstream(sleepTwo, addTwoFour).
+		SetDownstream(addOneOne, addThreeFour)
 
 	j.run(reads)
 
 	expectedState := map[string]state{
-		"add 1 1": successful,
-		"sleep 2": successful,
-		"add 2 4": successful,
-		"add 3 4": successful,
+		"addOneOne":    successful,
+		"sleepTwo":     successful,
+		"addTwoFour":   successful,
+		"addThreeFour": successful,
 	}
 
 	if !reflect.DeepEqual(j.jobState.TaskState, expectedState) {
@@ -40,21 +40,21 @@ func TestJob(t *testing.T) {
 }
 
 func TestCyclicJob(t *testing.T) {
-	add_2_2 := NewTask("add 2 2", NewAddition(2, 2))
-	add_4_4 := NewTask("add 4 4", NewAddition(4, 4))
+	addTwoTwo := NewTask("addTwoTwo", NewAddition(2, 2))
+	addFourFour := NewTask("addFourFour", NewAddition(4, 4))
 
 	j := NewJob("cyclic").
-		AddTask(add_2_2).
-		AddTask(add_4_4).
-		SetDownstream(add_2_2, add_4_4).
-		SetDownstream(add_4_4, add_2_2)
+		AddTask(addTwoTwo).
+		AddTask(addFourFour).
+		SetDownstream(addTwoTwo, addFourFour).
+		SetDownstream(addFourFour, addTwoTwo)
 
 	j.run(reads)
 }
 
 func TestJobWithSingleTask(t *testing.T) {
-	add_2_2 := NewTask("add 2 2", NewAddition(2, 2))
-	j := NewJob("cyclic").AddTask(add_2_2)
+	addTwoTwo := NewTask("add 2 2", NewAddition(2, 2))
+	j := NewJob("cyclic").AddTask(addTwoTwo)
 	res := j.isDownstream("add 2 2")
 
 	if res {
@@ -64,7 +64,7 @@ func TestJobWithSingleTask(t *testing.T) {
 }
 
 func TestTaskFailure(t *testing.T) {
-	badTask := NewTask("add -1 -1", NewAddition(-1, -1))
+	badTask := NewTask("badTask", NewAddition(-1, -1))
 
 	j := NewJob("with bad task").
 		AddTask(badTask)
