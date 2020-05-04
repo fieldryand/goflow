@@ -3,8 +3,9 @@ package goflow
 
 import (
 	"encoding/json"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/gin-gonic/gin"
 )
 
 // Goflow returns the application router.

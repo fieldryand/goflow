@@ -6,14 +6,14 @@ import (
 	"testing"
 
 	"github.com/fieldryand/goflow/operator"
+	"github.com/gin-gonic/gin"
 )
 
-func TestJobsRoute(t *testing.T) {
-	jobs := map[string](func() *Job){"example": ExampleJob}
-	router := Goflow(jobs)
+var router = exampleRouter()
+var w = httptest.NewRecorder()
 
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/jobs", nil)
+func TestIndexRoute(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -21,8 +21,50 @@ func TestJobsRoute(t *testing.T) {
 	}
 }
 
-func ExampleJob() *Job {
+func TestJobsRoute(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/jobs", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
+func TestJobSubmitRoute(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/jobs/example/submit", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
+func TestJobStateRoute(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/jobs/example/state", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
+func TestJobDagRoute(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/jobs/example/dag", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
+func exampleJob() *Job {
 	sleepOne := NewTask("sleepOne", operator.NewSleep(1))
 	j := NewJob("example").AddTask(sleepOne)
 	return j
+}
+
+func exampleRouter() *gin.Engine {
+	jobs := map[string](func() *Job){"example": exampleJob}
+	r := Goflow(jobs)
+	return r
 }
