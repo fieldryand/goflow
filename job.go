@@ -13,14 +13,14 @@ type Job struct {
 	Name     string
 	Tasks    map[string]*Task
 	jobState *jobState
-	Dag      *dag
+	Dag      Dag
 }
 
 // NewJob returns a new job.
 func NewJob(name string) *Job {
 	j := Job{
 		Name:     name,
-		Dag:      newDag(),
+		Dag:      make(Dag),
 		Tasks:    make(map[string]*Task),
 		jobState: newJobState()}
 	return &j
@@ -102,21 +102,9 @@ func (j *Job) isRunning() bool {
 	return false
 }
 
-func (j *Job) isDownstream(taskName string) bool {
-	ind := j.Dag.independentNodes()
-
-	for _, name := range ind {
-		if taskName == name {
-			return false
-		}
-	}
-
-	return true
-}
-
 func (j *Job) run(reads chan readOp) error {
 	if !j.Dag.validate() {
-		return &invalidDagError{}
+		return fmt.Errorf("Invalid Dag for job %s", j.Name)
 	}
 
 	ind := j.Dag.independentNodes()
@@ -151,7 +139,7 @@ func (j *Job) run(reads chan readOp) error {
 		} else {
 			// for each task
 			for _, t := range j.Tasks {
-				if j.jobState.TaskState[t.Name] == none && j.isDownstream(t.Name) {
+				if j.jobState.TaskState[t.Name] == none && j.Dag.isDownstream(t.Name) {
 					upstreamDone := true
 					// iterate over the dependencies
 					for _, us := range j.Dag.dependencies(t.Name) {

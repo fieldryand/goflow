@@ -23,10 +23,10 @@ func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 	}
 
 	router := gin.Default()
-	router.LoadHTMLGlob("templates/*")
+	router.LoadHTMLGlob("assets/*.html.tmpl")
 
 	router.GET("/", func(c *gin.Context) {
-		c.HTML(http.StatusOK, "index.tmpl", gin.H{
+		c.HTML(http.StatusOK, "index.html.tmpl", gin.H{
 			"js": js,
 		})
 	})
@@ -34,6 +34,15 @@ func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 	router.GET("/jobs", func(c *gin.Context) {
 		encoded, _ := json.Marshal(jobNames)
 		c.String(http.StatusOK, string(encoded))
+	})
+
+	router.GET("/jobs/:name", func(c *gin.Context) {
+		name := c.Param("name")
+
+		c.HTML(http.StatusOK, "job.html.tmpl", gin.H{
+			"jobName": name,
+			"js":      js[name],
+		})
 	})
 
 	router.GET("/jobs/:name/submit", func(c *gin.Context) {
@@ -58,7 +67,7 @@ func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 
 	router.GET("/jobs/:name/dag", func(c *gin.Context) {
 		name := c.Param("name")
-		encoded, _ := json.Marshal(jobs[name]().Dag.Graph)
+		encoded, _ := json.Marshal(jobs[name]().Dag)
 		c.String(http.StatusOK, string(encoded))
 	})
 

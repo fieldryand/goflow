@@ -18,18 +18,10 @@ go install examples/simple/goflow-simple-example.go
 eval "$GOPATH/bin/goflow-simple-example"
 ```
 
-Then send some requests with `./demo.sh`. You should see this output:
-```
-job submitted
-{"add 1 1":"None","add 2 4":"None","add 3 4":"None","sleep 1":"None","sleep 2":"None"}
-{"add 1 1":"Success","add 2 4":"None","add 3 4":"Success","sleep 1":"Success","sleep 2":"Running"}
-{"add 1 1":"Success","add 2 4":"Success","add 3 4":"Success","sleep 1":"Success","sleep 2":"Success"}
-```
+Then browse to `localhost:8090` to explore the UI, where you can submit jobs and view their current state. 
 
 ## TODO
 
 - http operator
-- multiple jobs
 - scheduling
-- UI
 - ...

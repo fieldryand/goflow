@@ -13,10 +13,10 @@
 		<h1>
 			Jobs
 		</h1>
-		<div>
-			{{ range $key, $value := .js }}
-				{{ $key }} {{ $value.State }} <button onclick="submit({{ $key }})">Submit</button>
-			{{ end }}
-		</div>
+		{{ range $key, $value := .js }}
+			<div>
+				<a href="/jobs/{{ $key }}">{{ $key }}</a> {{ $value.State }} <button onclick="submit({{ $key }})">Submit</button>
+			</div>
+		{{ end }}
 	</body>
 </html>

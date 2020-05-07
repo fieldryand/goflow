@@ -4,42 +4,43 @@ import (
 	"github.com/ef-ds/deque"
 )
 
-type dag struct {
-	Graph map[string][]string
-}
-
-func newDag() *dag {
-	d := dag{make(map[string][]string)}
-	return &d
-}
+// A Dag is a directed acyclic graph.
+type Dag map[string][]string
 
 // A node has a name and 0 or more dependent nodes
-func (d *dag) addNode(name string) {
+func (d Dag) addNode(name string) {
 	deps := make([]string, 0)
-	d.Graph[name] = deps
+	d[name] = deps
 }
 
 // Create an edge between an independent and dependent node
-func (d *dag) setDownstream(ind, dep string) {
-	d.Graph[ind] = append(d.Graph[ind], dep)
+func (d Dag) setDownstream(ind, dep string) {
+	d[ind] = append(d[ind], dep)
 }
 
-type invalidDagError struct {
-}
+// Returns true if a node is a downstream node, false if it
+// is independent.
+func (d Dag) isDownstream(nodeName string) bool {
+	ind := d.independentNodes()
 
-func (e *invalidDagError) Error() string {
-	return "Invalid DAG"
+	for _, name := range ind {
+		if nodeName == name {
+			return false
+		}
+	}
+
+	return true
 }
 
 // Ensure the DAG is acyclic
-func (d *dag) validate() bool {
+func (d Dag) validate() bool {
 	degree := make(map[string]int)
 
-	for node := range d.Graph {
+	for node := range d {
 		degree[node] = 0
 	}
 
-	for _, ds := range d.Graph {
+	for _, ds := range d {
 		for _, i := range ds {
 			degree[i]++
 		}
@@ -63,7 +64,7 @@ func (d *dag) validate() bool {
 		} else {
 			node := popped.(string)
 			l = append(l, node)
-			for _, ds := range d.Graph[node] {
+			for ds := range d {
 				degree[ds]--
 				if degree[ds] == 0 {
 					deq.PushFront(ds)
@@ -72,7 +73,7 @@ func (d *dag) validate() bool {
 		}
 	}
 
-	if len(l) == len(d.Graph) {
+	if len(l) == len(d) {
 		return true
 	}
 
@@ -80,11 +81,11 @@ func (d *dag) validate() bool {
 }
 
 // Return the immediately upstream nodes for a given node
-func (d *dag) dependencies(node string) []string {
+func (d Dag) dependencies(node string) []string {
 
 	dependencies := make([]string, 0)
 
-	for dep, ds := range d.Graph {
+	for dep, ds := range d {
 		for _, i := range ds {
 			if node == i {
 				dependencies = append(dependencies, dep)
@@ -96,11 +97,11 @@ func (d *dag) dependencies(node string) []string {
 }
 
 // Return all the independent nodes in the graph
-func (d *dag) independentNodes() []string {
+func (d Dag) independentNodes() []string {
 
 	downstream := make([]string, 0)
 
-	for _, ds := range d.Graph {
+	for _, ds := range d {
 		for _, i := range ds {
 			downstream = append(downstream, i)
 		}
@@ -108,7 +109,7 @@ func (d *dag) independentNodes() []string {
 
 	ind := make([]string, 0)
 
-	for node := range d.Graph {
+	for node := range d {
 		ctr := 0
 		for _, i := range downstream {
 			if node == i {

@@ -9,13 +9,16 @@ import (
 )
 
 func main() {
-	jobs := map[string](func() *goflow.Job){"example": ExampleJob}
+	jobs := map[string](func() *goflow.Job){
+		"exampleOne": ExampleJobOne,
+		"exampleTwo": ExampleJobTwo,
+	}
 	goflow := goflow.Goflow(jobs)
 	goflow.Run(":8090")
 }
 
 // Returns a simple job consisting of Addition and Sleep operators.
-func ExampleJob() *goflow.Job {
+func ExampleJobOne() *goflow.Job {
 	sleepOne := goflow.NewTask("sleepOne", operator.NewSleep(1))
 	addOneOne := goflow.NewTask("addOneOne", NewAddition(1, 1))
 	sleepTwo := goflow.NewTask("sleepTwo", operator.NewSleep(2))
@@ -33,6 +36,13 @@ func ExampleJob() *goflow.Job {
 		SetDownstream(sleepTwo, addTwoFour).
 		SetDownstream(addOneOne, addThreeFour)
 
+	return j
+}
+
+// Returns an even simpler job consisting of a single Sleep task.
+func ExampleJobTwo() *goflow.Job {
+	sleepTen := goflow.NewTask("sleepTen", operator.NewSleep(10))
+	j := goflow.NewJob("example").AddTask(sleepTen)
 	return j
 }
 
