@@ -43,3 +43,14 @@ func TestDag(t *testing.T) {
 		t.Errorf("Invalid dag passed validation check")
 	}
 }
+
+func TestDagWithSingleNode(t *testing.T) {
+	d := make(Dag)
+	d.addNode("a")
+	res := d.isDownstream("a")
+
+	if res {
+		t.Errorf("isDownstream() returned true for an independent node")
+	}
+
+}

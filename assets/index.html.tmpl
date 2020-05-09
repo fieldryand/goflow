@@ -2,29 +2,9 @@
 	<head>
 		<!-- Compressed CSS -->
 		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css" integrity="sha256-ogmFxjqiTMnZhxCqVmcqTvjfe1Y/ec4WaRj/aQPvn+I=" crossorigin="anonymous">
+		<script src="/static/submit.js"></script>
+		<script src="/static/pollster.js"></script>
 		<script>
-			function submit(jobName) {
-			  var xhttp = new XMLHttpRequest();
-			  xhttp.open("GET", `/jobs/${jobName}/submit`, true);
-			  xhttp.send();
-			}
-		</script>
-		<script>
-			function pollster(jobName) {
-				function pollJobState() {
-				  var xhttp = new XMLHttpRequest();
-				  xhttp.onreadystatechange = function() {
-				    if (this.readyState == 4 && this.status == 200) {
-				      console.log(JSON.parse(this.responseText));
-				      document.getElementById(jobName).innerHTML = JSON.parse(this.responseText).state;
-				    }
-				  };
-				  xhttp.open("GET", `/jobs/${jobName}/state`, true);
-				  xhttp.send();
-				  setTimeout(pollJobState, 2000);
-				}
-				return pollJobState
-			}
 		{{ range $key, $value := .js }}
 			pollster("{{ $key }}")();
 		{{ end }}
@@ -32,7 +12,7 @@
 		<title>Goflow</title>
 	</head>
 	<body>
-		<div style="width:90%">
+		<div style="width:90%; margin: auto">
 			<h1>
 				Jobs
 			</h1>

@@ -9,6 +9,8 @@ import (
 )
 
 // Goflow returns the application router.
+// BUG(rf): no validation on Job or Task names to prevent collision.
+// BUG(rf): no validation on parameters to ensure the job exists.
 func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 
 	jobNames := make([]string, 0)
@@ -23,6 +25,7 @@ func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 	}
 
 	router := gin.Default()
+	router.Static("/static", "assets/static")
 	router.LoadHTMLGlob("assets/*.html.tmpl")
 
 	router.GET("/", func(c *gin.Context) {

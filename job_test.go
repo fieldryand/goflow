@@ -52,17 +52,6 @@ func TestCyclicJob(t *testing.T) {
 	j.run(reads)
 }
 
-func TestJobWithSingleTask(t *testing.T) {
-	addTwoTwo := NewTask("add 2 2", NewAddition(2, 2))
-	j := NewJob("cyclic").AddTask(addTwoTwo)
-	res := j.Dag.isDownstream("add 2 2")
-
-	if res {
-		t.Errorf("isDownstream() returned true for an independent task")
-	}
-
-}
-
 func TestTaskFailure(t *testing.T) {
 	badTask := NewTask("badTask", NewAddition(-1, -1))
 
