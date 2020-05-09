@@ -1,22 +1,59 @@
 <html>
 	<head>
+		<!-- Compressed CSS -->
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css" integrity="sha256-ogmFxjqiTMnZhxCqVmcqTvjfe1Y/ec4WaRj/aQPvn+I=" crossorigin="anonymous">
+		<script>
+			function submit(jobName) {
+			  var xhttp = new XMLHttpRequest();
+			  xhttp.open("GET", `/jobs/${jobName}/submit`, true);
+			  xhttp.send();
+			}
+		</script>
+		<script>
+			function pollster(jobName) {
+				function pollJobState() {
+				  var xhttp = new XMLHttpRequest();
+				  xhttp.onreadystatechange = function() {
+				    if (this.readyState == 4 && this.status == 200) {
+				      console.log(JSON.parse(this.responseText));
+				      document.getElementById(jobName).innerHTML = JSON.parse(this.responseText).state;
+				    }
+				  };
+				  xhttp.open("GET", `/jobs/${jobName}/state`, true);
+				  xhttp.send();
+				  setTimeout(pollJobState, 2000);
+				}
+				return pollJobState
+			}
+		{{ range $key, $value := .js }}
+			pollster("{{ $key }}")();
+		{{ end }}
+		</script>
 		<title>Goflow</title>
 	</head>
-	<script>
-		function submit(jobName) {
-		  var xhttp = new XMLHttpRequest();
-		  xhttp.open("GET", `/jobs/${jobName}/submit`, true);
-		  xhttp.send();
-		}
-	</script>
 	<body>
-		<h1>
-			Jobs
-		</h1>
-		{{ range $key, $value := .js }}
-			<div>
-				<a href="/jobs/{{ $key }}">{{ $key }}</a> {{ $value.State }} <button onclick="submit({{ $key }})">Submit</button>
-			</div>
-		{{ end }}
+		<div style="width:90%">
+			<h1>
+				Jobs
+			</h1>
+			<table class="pure-table">
+				<thead>
+					<tr>
+						<th style="width:50%">Job</th>
+						<th style="width:25%">State</th>
+						<th style="width:25%"></th>
+					</tr>
+				</thead>
+				<tbody>
+				{{ range $key, $value := .js }}
+					<tr>
+						<td><a href="/jobs/{{ $key }}">{{ $key }}</a></td>
+						<td id="{{ $key }}"></td>
+						<td><button class="button primary" onclick="submit({{ $key }})">Submit</button></td>
+					</tr>
+				{{ end }}
+				</tbody>
+			</table>
+		</div>
 	</body>
 </html>

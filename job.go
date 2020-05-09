@@ -113,6 +113,7 @@ func (j *Job) run(reads chan readOp) error {
 
 	// Start the independent tasks
 	for _, name := range ind {
+		j.jobState.TaskState[name] = running
 		go j.Tasks[name].run(writes)
 	}
 
@@ -130,29 +131,31 @@ func (j *Job) run(reads chan readOp) error {
 				j.jobState.State = successful
 			}
 			if write.val == failed {
+				j.jobState.State = failed
 				return fmt.Errorf("Job failed on task %s", write.key)
 			}
 			write.resp <- true
 		}
+
 		if j.allDone() {
 			break
-		} else {
-			// for each task
-			for _, t := range j.Tasks {
-				if j.jobState.TaskState[t.Name] == none && j.Dag.isDownstream(t.Name) {
-					upstreamDone := true
-					// iterate over the dependencies
-					for _, us := range j.Dag.dependencies(t.Name) {
-						// if any upstream task is not done, set the flag to false
-						if j.jobState.TaskState[us] == none || j.jobState.TaskState[us] == running {
-							upstreamDone = false
-						}
-					}
+		}
 
-					if upstreamDone {
-						j.jobState.TaskState[t.Name] = running
-						go t.run(writes)
+		// for each task
+		for _, t := range j.Tasks {
+			if j.jobState.TaskState[t.Name] == none && j.Dag.isDownstream(t.Name) {
+				upstreamDone := true
+				// iterate over the dependencies
+				for _, us := range j.Dag.dependencies(t.Name) {
+					// if any upstream task is not done, set the flag to false
+					if j.jobState.TaskState[us] == none || j.jobState.TaskState[us] == running {
+						upstreamDone = false
 					}
+				}
+
+				if upstreamDone {
+					j.jobState.TaskState[t.Name] = running
+					go t.run(writes)
 				}
 			}
 		}

@@ -10,14 +10,15 @@ import (
 
 func main() {
 	jobs := map[string](func() *goflow.Job){
-		"exampleOne": ExampleJobOne,
-		"exampleTwo": ExampleJobTwo,
+		"exampleOne":   ExampleJobOne,
+		"exampleTwo":   ExampleJobTwo,
+		"exampleThree": ExampleJobThree,
 	}
 	goflow := goflow.Goflow(jobs)
 	goflow.Run(":8090")
 }
 
-// Returns a simple job consisting of Addition and Sleep operators.
+// ExampleJobOne returns a simple job consisting of Addition and Sleep operators.
 func ExampleJobOne() *goflow.Job {
 	sleepOne := goflow.NewTask("sleepOne", operator.NewSleep(1))
 	addOneOne := goflow.NewTask("addOneOne", NewAddition(1, 1))
@@ -25,7 +26,7 @@ func ExampleJobOne() *goflow.Job {
 	addTwoFour := goflow.NewTask("addTwoFour", NewAddition(2, 4))
 	addThreeFour := goflow.NewTask("addThreeFour", NewAddition(3, 4))
 
-	j := goflow.NewJob("example").
+	j := goflow.NewJob("exampleOne").
 		AddTask(sleepOne).
 		AddTask(addOneOne).
 		AddTask(sleepTwo).
@@ -39,10 +40,17 @@ func ExampleJobOne() *goflow.Job {
 	return j
 }
 
-// Returns an even simpler job consisting of a single Sleep task.
+// ExampleJobTwo returns an even simpler job consisting of a single Sleep task.
 func ExampleJobTwo() *goflow.Job {
 	sleepTen := goflow.NewTask("sleepTen", operator.NewSleep(10))
-	j := goflow.NewJob("example").AddTask(sleepTen)
+	j := goflow.NewJob("exampleTwo").AddTask(sleepTen)
+	return j
+}
+
+// ExampleJobThree returns a job with a task that throws an error.
+func ExampleJobThree() *goflow.Job {
+	badTask := goflow.NewTask("badTask", NewAddition(-10, 0))
+	j := goflow.NewJob("exampleThree").AddTask(badTask)
 	return j
 }
 
