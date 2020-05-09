@@ -74,14 +74,77 @@ func (j *Job) SetDownstream(ind, dep *Task) *Job {
 	return j
 }
 
-func (j *Job) allDone() bool {
-	done := true
-	for _, v := range j.jobState.TaskState {
-		if v == none || v == running {
-			done = false
+func (j *Job) run(reads chan readOp) error {
+	if !j.Dag.validate() {
+		return fmt.Errorf("Invalid Dag for job %s", j.Name)
+	}
+
+	writes := make(chan writeOp)
+
+	for {
+		for t, task := range j.Tasks {
+			// Start the independent tasks
+			if j.jobState.TaskState[t] == none && !j.Dag.isDownstream(t) {
+				j.jobState.TaskState[t] = running
+				go task.run(writes)
+			}
+
+			// If dependencies are done, start the dependent tasks
+			if j.jobState.TaskState[t] == none && j.Dag.isDownstream(t) {
+				upstreamDone := true
+				for _, us := range j.Dag.dependencies(t) {
+					if j.jobState.TaskState[us] == none || j.jobState.TaskState[us] == running {
+						upstreamDone = false
+					}
+				}
+
+				if upstreamDone {
+					j.jobState.TaskState[t] = running
+					go task.run(writes)
+				}
+			}
+		}
+
+		select {
+		// Respond to requests for job state
+		case read := <-reads:
+			read.resp <- j.jobState
+		// Receive updates on task state
+		case write := <-writes:
+			j.jobState.TaskState[write.key] = write.val
+			// Acknowledge the update
+			write.resp <- true
+		}
+
+		j.updateJobState()
+
+		if j.allDone() {
+			break
 		}
 	}
-	return done
+
+	return nil
+}
+
+func (j *Job) updateJobState() {
+	if j.isRunning() {
+		j.jobState.State = running
+	}
+	if j.allSuccessful() {
+		j.jobState.State = successful
+	}
+	if j.anyFailed() {
+		j.jobState.State = failed
+	}
+}
+
+func (j *Job) allDone() bool {
+	for _, v := range j.jobState.TaskState {
+		if v == none || v == running {
+			return false
+		}
+	}
+	return true
 }
 
 func (j *Job) allSuccessful() bool {
@@ -102,66 +165,13 @@ func (j *Job) isRunning() bool {
 	return false
 }
 
-func (j *Job) run(reads chan readOp) error {
-	if !j.Dag.validate() {
-		return fmt.Errorf("Invalid Dag for job %s", j.Name)
-	}
-
-	ind := j.Dag.independentNodes()
-
-	writes := make(chan writeOp)
-
-	// Start the independent tasks
-	for _, name := range ind {
-		j.jobState.TaskState[name] = running
-		go j.Tasks[name].run(writes)
-	}
-
-	// Run downstream tasks
-	for {
-		select {
-		case read := <-reads:
-			read.resp <- j.jobState
-		case write := <-writes:
-			j.jobState.TaskState[write.key] = write.val
-			if j.isRunning() {
-				j.jobState.State = running
-			}
-			if j.allSuccessful() {
-				j.jobState.State = successful
-			}
-			if write.val == failed {
-				j.jobState.State = failed
-				return fmt.Errorf("Job failed on task %s", write.key)
-			}
-			write.resp <- true
-		}
-
-		if j.allDone() {
-			break
-		}
-
-		// for each task
-		for _, t := range j.Tasks {
-			if j.jobState.TaskState[t.Name] == none && j.Dag.isDownstream(t.Name) {
-				upstreamDone := true
-				// iterate over the dependencies
-				for _, us := range j.Dag.dependencies(t.Name) {
-					// if any upstream task is not done, set the flag to false
-					if j.jobState.TaskState[us] == none || j.jobState.TaskState[us] == running {
-						upstreamDone = false
-					}
-				}
-
-				if upstreamDone {
-					j.jobState.TaskState[t.Name] = running
-					go t.run(writes)
-				}
-			}
+func (j *Job) anyFailed() bool {
+	for _, v := range j.jobState.TaskState {
+		if v == failed {
+			return true
 		}
 	}
-
-	return nil
+	return false
 }
 
 // A Task is the unit of work that makes up a job. Whenever a task is executed, it

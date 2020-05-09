@@ -69,10 +69,10 @@ func TestTaskFailure(t *testing.T) {
 	j := NewJob("with bad task").
 		AddTask(badTask)
 
-	err := j.run(reads)
+	j.run(reads)
 
-	if err == nil {
-		t.Errorf("Job returned nil, expected a jobError")
+	if j.jobState.State != failed {
+		t.Errorf("Got status %v, expected %v", j.jobState.State, failed)
 	}
 
 }
