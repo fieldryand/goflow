@@ -4,6 +4,7 @@ package goflow
 import (
 	"encoding/json"
 	"net/http"
+	"os"
 
 	"github.com/gin-gonic/gin"
 )
@@ -26,7 +27,10 @@ func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 
 	router := gin.Default()
 	router.Static("/static", "assets/static")
-	router.LoadHTMLGlob("assets/*.html.tmpl")
+
+	goPath := os.Getenv("GOPATH")
+	assetPath := "/src/github.com/fieldryand/goflow/assets/*.html.tmpl"
+	router.LoadHTMLGlob(goPath + assetPath)
 
 	router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html.tmpl", gin.H{
