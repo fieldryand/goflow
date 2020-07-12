@@ -21,6 +21,15 @@ func TestIndexRoute(t *testing.T) {
 	}
 }
 
+func TestHealthRoute(t *testing.T) {
+	req, _ := http.NewRequest("GET", "/health", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
 func TestJobsRoute(t *testing.T) {
 	req, _ := http.NewRequest("GET", "/jobs", nil)
 	router.ServeHTTP(w, req)

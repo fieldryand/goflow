@@ -44,6 +44,10 @@ func Goflow(jobs map[string](func() *Job), middleware [](func() gin.HandlerFunc)
 		})
 	})
 
+	router.GET("/health", func(c *gin.Context) {
+		c.String(http.StatusOK, "OK")
+	})
+
 	router.GET("/jobs", func(c *gin.Context) {
 		encoded, _ := json.Marshal(jobNames)
 		c.String(http.StatusOK, string(encoded))

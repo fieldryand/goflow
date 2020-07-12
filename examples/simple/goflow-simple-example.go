@@ -4,6 +4,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"net/http"
 	"time"
 
 	"github.com/fieldryand/goflow"
@@ -21,7 +22,10 @@ func main() {
 
 	middleware := [](func() gin.HandlerFunc){structuredLogger}
 
+	go heartbeat()
+
 	goflow := goflow.Goflow(jobs, middleware)
+
 	goflow.Run(":8090")
 }
 
@@ -111,4 +115,11 @@ type structuredLogEntry struct {
 	Latency      time.Duration `json:"latency"`
 	UserAgent    string        `json:"userAgent"`
 	ErrorMessage string        `json:"errorMessage"`
+}
+
+func heartbeat() {
+	for {
+		time.Sleep(5 * time.Second)
+		http.Get("http://localhost:8090/health")
+	}
 }
