@@ -65,6 +65,7 @@ func exampleJob() *Job {
 
 func exampleRouter() *gin.Engine {
 	jobs := map[string](func() *Job){"example": exampleJob}
-	r := Goflow(jobs)
+	middleware := [](func() gin.HandlerFunc){gin.Logger}
+	r := Goflow(jobs, middleware)
 	return r
 }
