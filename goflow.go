@@ -12,7 +12,7 @@ import (
 // Goflow returns the application router.
 // BUG(rf): no validation on Job or Task names to prevent collision.
 // BUG(rf): no validation on parameters to ensure the job exists.
-func Goflow(jobs map[string](func() *Job)) *gin.Engine {
+func Goflow(jobs map[string](func() *Job), middleware [](func() gin.HandlerFunc)) *gin.Engine {
 
 	jobNames := make([]string, 0)
 	for name := range jobs {
@@ -25,7 +25,13 @@ func Goflow(jobs map[string](func() *Job)) *gin.Engine {
 		js[j] = newJobState()
 	}
 
-	router := gin.Default()
+	router := gin.New()
+	router.Use(gin.Recovery())
+
+	for _, m := range middleware {
+		router.Use(m())
+	}
+
 	router.Static("/static", "assets/static")
 
 	goPath := os.Getenv("GOPATH")

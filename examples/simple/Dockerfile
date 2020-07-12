@@ -1,5 +1,7 @@
 FROM golang:1.14
 
+ENV GIN_MODE=release
+
 WORKDIR /go/src/app
 COPY . .
 
