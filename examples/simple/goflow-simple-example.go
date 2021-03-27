@@ -2,31 +2,15 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
-	"net/http"
-	"time"
 
 	"github.com/fieldryand/goflow"
 	"github.com/fieldryand/goflow/operator"
-
-	"github.com/gin-gonic/gin"
 )
 
 func main() {
-	jobs := map[string](func() *goflow.Job){
-		"exampleOne":   ExampleJobOne,
-		"exampleTwo":   ExampleJobTwo,
-		"exampleThree": ExampleJobThree,
-	}
-
-	middleware := [](func() gin.HandlerFunc){structuredLogger}
-
-	go heartbeat()
-
-	goflow := goflow.Goflow(jobs, middleware)
-
-	goflow.Run(":8090")
+	goflow := goflow.New(ExampleJobOne, ExampleJobTwo, ExampleJobThree)
+	goflow.Run(":8100")
 }
 
 // ExampleJobOne returns a simple job consisting of Addition and Sleep operators.
@@ -83,43 +67,4 @@ func (o Addition) Run() (interface{}, error) {
 
 	result := o.a + o.b
 	return result, nil
-}
-
-func structuredLogger() gin.HandlerFunc {
-	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-
-		entry := &structuredLogEntry{
-			param.ClientIP,
-			param.TimeStamp.Format(time.RFC1123),
-			param.Method,
-			param.Path,
-			param.Request.Proto,
-			param.StatusCode,
-			param.Latency,
-			param.Request.UserAgent(),
-			param.ErrorMessage,
-		}
-
-		encoded, _ := json.Marshal(entry)
-		return string(encoded) + "\n"
-	})
-}
-
-type structuredLogEntry struct {
-	ClientIp     string        `json:"clientIp"`
-	Timestamp    string        `json:"timestamp"`
-	Method       string        `json:"method"`
-	Path         string        `json:"path"`
-	Proto        string        `json:"protocol"`
-	Status       int           `json:"status"`
-	Latency      time.Duration `json:"latency"`
-	UserAgent    string        `json:"userAgent"`
-	ErrorMessage string        `json:"errorMessage"`
-}
-
-func heartbeat() {
-	for {
-		time.Sleep(5 * time.Second)
-		http.Get("http://localhost:8090/health")
-	}
 }

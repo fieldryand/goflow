@@ -15,4 +15,4 @@ go install examples/simple/goflow-simple-example.go
 eval "$GOPATH/bin/goflow-simple-example"
 ```
 
-Then browse to `localhost:8090` to explore the UI, where you can submit jobs and view their current state. 
+Then browse to `localhost:8100` to explore the UI, where you can submit jobs and view their current state.

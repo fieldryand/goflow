@@ -9,84 +9,103 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Goflow returns the application router.
-// BUG(rf): no validation on Job or Task names to prevent collision.
-// BUG(rf): no validation on parameters to ensure the job exists.
-func Goflow(jobs map[string](func() *Job), middleware [](func() gin.HandlerFunc)) *gin.Engine {
+type Goflow struct {
+	jobNames  []string
+	jobMap    map[string](func() *Job)
+	jobStates map[string]*jobState
+	router    *gin.Engine
+}
 
+// New returns a Goflow engine.
+func New(jobs ...func() *Job) *Goflow {
 	jobNames := make([]string, 0)
-	for name := range jobs {
-		jobNames = append(jobNames, name)
-	}
+	jobMap := make(map[string](func() *Job))
+	jobStates := make(map[string]*jobState)
 
-	js := make(map[string]*jobState)
-
-	for j := range jobs {
-		js[j] = newJobState()
+	for _, job := range jobs {
+		jobNames = append(jobNames, job().Name)
+		jobMap[job().Name] = job
+		jobStates[job().Name] = newJobState()
 	}
 
 	router := gin.New()
-	router.Use(gin.Recovery())
 
-	for _, m := range middleware {
-		router.Use(m())
+	g := Goflow{
+		jobNames:  jobNames,
+		jobMap:    jobMap,
+		jobStates: jobStates,
+		router:    router,
 	}
 
-	router.Static("/static", "assets/static")
+	return &g
+}
 
+func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
+	g.router.Use(middleware)
+	return g
+}
+
+func (g *Goflow) Run(port string) {
+	g.addRoutes()
+	g.router.Run(port)
+}
+
+func (g *Goflow) addRoutes() *Goflow {
 	goPath := os.Getenv("GOPATH")
 	assetPath := "/src/github.com/fieldryand/goflow/assets/*.html.tmpl"
-	router.LoadHTMLGlob(goPath + assetPath)
 
-	router.GET("/", func(c *gin.Context) {
+	g.router.Static("/static", "assets/static")
+	g.router.LoadHTMLGlob(goPath + assetPath)
+
+	g.router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html.tmpl", gin.H{
-			"js": js,
+			"js": g.jobStates,
 		})
 	})
 
-	router.GET("/health", func(c *gin.Context) {
+	g.router.GET("/health", func(c *gin.Context) {
 		c.String(http.StatusOK, "OK")
 	})
 
-	router.GET("/jobs", func(c *gin.Context) {
-		encoded, _ := json.Marshal(jobNames)
+	g.router.GET("/jobs", func(c *gin.Context) {
+		encoded, _ := json.Marshal(g.jobNames)
 		c.String(http.StatusOK, string(encoded))
 	})
 
-	router.GET("/jobs/:name", func(c *gin.Context) {
+	g.router.GET("/jobs/:name", func(c *gin.Context) {
 		name := c.Param("name")
 
 		c.HTML(http.StatusOK, "job.html.tmpl", gin.H{
 			"jobName": name,
-			"js":      js[name],
+			"js":      g.jobStates[name],
 		})
 	})
 
-	router.GET("/jobs/:name/submit", func(c *gin.Context) {
+	g.router.GET("/jobs/:name/submit", func(c *gin.Context) {
 		name := c.Param("name")
-		job := jobs[name]()
-		js[name] = job.jobState
+		job := g.jobMap[name]()
+		g.jobStates[name] = job.jobState
 		reads := make(chan readOp)
 		go job.run(reads)
 		go func() {
 			read := readOp{resp: make(chan *jobState)}
 			reads <- read
-			js[name] = <-read.resp
+			g.jobStates[name] = <-read.resp
 		}()
 		c.String(http.StatusOK, "job submitted")
 	})
 
-	router.GET("/jobs/:name/state", func(c *gin.Context) {
+	g.router.GET("/jobs/:name/state", func(c *gin.Context) {
 		name := c.Param("name")
-		encoded, _ := json.Marshal(js[name])
+		encoded, _ := json.Marshal(g.jobStates[name])
 		c.String(http.StatusOK, string(encoded))
 	})
 
-	router.GET("/jobs/:name/dag", func(c *gin.Context) {
+	g.router.GET("/jobs/:name/dag", func(c *gin.Context) {
 		name := c.Param("name")
-		encoded, _ := json.Marshal(jobs[name]().Dag)
+		encoded, _ := json.Marshal(g.jobMap[name]().Dag)
 		c.String(http.StatusOK, string(encoded))
 	})
 
-	return router
+	return g
 }
