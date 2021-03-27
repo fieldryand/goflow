@@ -1,13 +1,30 @@
 <html>
 	<head>
+		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css" integrity="sha256-ogmFxjqiTMnZhxCqVmcqTvjfe1Y/ec4WaRj/aQPvn+I=" crossorigin="anonymous">
+		<link rel="stylesheet" href="/static/css/styles.css">
+		<script src="/static/viz.js"></script>
+		<script src="/static/full.render.js"></script>
 		<title>Goflow</title>
 	</head>
 	<body>
-		<h1>
-			{{ .jobName }}
-		</h1>
-		<div>
-			{{ .js }}
+		<div class="job-info">
+			<h1>
+				{{ .jobName }}
+			</h1>
+			<div id="graph"></div>
+			<div>
+				<script>
+				/*
+				    const viz = new Viz();
+				    const graph = document.getElementById('graph');
+
+				    viz.renderSVGElement('digraph { a -> b; a -> c; }')
+				    .then(function(element) {
+				      graph.appendChild(element);
+				    });
+				*/
+				</script>
+			</div>
 		</div>
 	</body>
 </html>
