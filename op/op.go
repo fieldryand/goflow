@@ -17,7 +17,7 @@ type BashOperator struct {
 	args []string
 }
 
-// NewBashOperator returns a bash operator.
+// Bash returns a bash operator.
 func Bash(cmd string, args ...string) *BashOperator {
 	o := BashOperator{cmd, args}
 	return &o
