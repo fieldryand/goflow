@@ -9,8 +9,9 @@ import (
 )
 
 func main() {
-	goflow := goflow.New(ExampleJobOne, ExampleJobTwo, ExampleJobThree)
-	goflow.Run(":8100")
+	gf := goflow.New(ExampleJobOne, ExampleJobTwo, ExampleJobThree)
+	gf.Use(goflow.DefaultLogger())
+	gf.Run(":8100")
 }
 
 // ExampleJobOne returns a simple job consisting of calls to "sleep" and a
