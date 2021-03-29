@@ -67,9 +67,7 @@ func TestJobDagRoute(t *testing.T) {
 }
 
 func exampleJob() *Job {
-	sleepOne := NewTask("sleepOne", op.Bash("sleep", "1"))
-	j := NewJob("example").AddTask(sleepOne)
-	return j
+	return NewJob("example").Task("sleepOne", op.Bash("sleep", "1"))
 }
 
 func exampleRouter() *gin.Engine {

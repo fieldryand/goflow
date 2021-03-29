@@ -11,19 +11,14 @@ import (
 var reads = make(chan readOp)
 
 func TestJob(t *testing.T) {
-	addOneOne := NewTask("addOneOne", NewAddition(1, 1))
-	sleepTwo := NewTask("sleepTwo", op.Bash("sleep", "2"))
-	addTwoFour := NewTask("addTwoFour", NewAddition(2, 4))
-	addThreeFour := NewTask("addThreeFour", NewAddition(3, 4))
-
 	j := NewJob("example").
-		AddTask(addOneOne).
-		AddTask(sleepTwo).
-		AddTask(addTwoFour).
-		AddTask(addThreeFour).
-		SetDownstream(addOneOne, sleepTwo).
-		SetDownstream(sleepTwo, addTwoFour).
-		SetDownstream(addOneOne, addThreeFour)
+		Task("addOneOne", NewAddition(1, 1)).
+		Task("sleepTwo", op.Bash("sleep", "2")).
+		Task("addTwoFour", NewAddition(2, 4)).
+		Task("addThreeFour", NewAddition(3, 4)).
+		SetDownstream("addOneOne", "sleepTwo").
+		SetDownstream("sleepTwo", "addTwoFour").
+		SetDownstream("addOneOne", "addThreeFour")
 
 	j.run(reads)
 
@@ -40,30 +35,22 @@ func TestJob(t *testing.T) {
 }
 
 func TestCyclicJob(t *testing.T) {
-	addTwoTwo := NewTask("addTwoTwo", NewAddition(2, 2))
-	addFourFour := NewTask("addFourFour", NewAddition(4, 4))
-
 	j := NewJob("cyclic").
-		AddTask(addTwoTwo).
-		AddTask(addFourFour).
-		SetDownstream(addTwoTwo, addFourFour).
-		SetDownstream(addFourFour, addTwoTwo)
+		Task("addTwoTwo", NewAddition(2, 2)).
+		Task("addFourFour", NewAddition(4, 4)).
+		SetDownstream("addTwoTwo", "addFourFour").
+		SetDownstream("addFourFour", "addTwoTwo")
 
 	j.run(reads)
 }
 
 func TestTaskFailure(t *testing.T) {
-	badTask := NewTask("badTask", NewAddition(-1, -1))
-
-	j := NewJob("with bad task").
-		AddTask(badTask)
-
+	j := NewJob("with bad task").Task("badTask", NewAddition(-1, -1))
 	j.run(reads)
 
 	if j.jobState.State != failed {
 		t.Errorf("Got status %v, expected %v", j.jobState.State, failed)
 	}
-
 }
 
 // Adds two nonnegative numbers.
