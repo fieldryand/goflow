@@ -5,14 +5,14 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/fieldryand/goflow/operator"
+	"github.com/fieldryand/goflow/op"
 )
 
 var reads = make(chan readOp)
 
 func TestJob(t *testing.T) {
 	addOneOne := NewTask("addOneOne", NewAddition(1, 1))
-	sleepTwo := NewTask("sleepTwo", operator.NewSleep(2))
+	sleepTwo := NewTask("sleepTwo", op.Bash("sleep", "2"))
 	addTwoFour := NewTask("addTwoFour", NewAddition(2, 4))
 	addThreeFour := NewTask("addThreeFour", NewAddition(3, 4))
 

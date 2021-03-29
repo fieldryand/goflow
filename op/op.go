@@ -1,5 +1,5 @@
-// Package operator defines an interface for goflow operators.
-package operator
+// Package op defines an interface for goflow operators.
+package op
 
 import (
 	"os/exec"
@@ -12,20 +12,20 @@ type Operator interface {
 }
 
 // A bash operator executes a shell command.
-type Bash struct {
+type BashOperator struct {
 	cmd  string
 	args []string
 }
 
 // NewBashOperator returns a bash operator.
-func NewBash(cmd string, args ...string) *Bash {
-	o := Bash{cmd, args}
+func Bash(cmd string, args ...string) *BashOperator {
+	o := BashOperator{cmd, args}
 	return &o
 }
 
 // Run passes the command and arguments to exec.Command and captures the
 // output.
-func (o Bash) Run() (interface{}, error) {
+func (o BashOperator) Run() (interface{}, error) {
 	out, err := exec.Command(o.cmd, o.args...).Output()
 	return string(out), err
 }

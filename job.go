@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/fieldryand/goflow/operator"
+	"github.com/fieldryand/goflow/op"
 )
 
 // A Job is a workflow consisting of independent and dependent tasks
@@ -179,11 +179,11 @@ func (j *Job) anyFailed() bool {
 // calls its associated operator.
 type Task struct {
 	Name     string
-	operator operator.Operator
+	operator op.Operator
 }
 
 // NewTask returns a Task.
-func NewTask(name string, op operator.Operator) *Task {
+func NewTask(name string, op op.Operator) *Task {
 	t := Task{name, op}
 	return &t
 }

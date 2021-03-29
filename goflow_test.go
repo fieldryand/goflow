@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/fieldryand/goflow/operator"
+	"github.com/fieldryand/goflow/op"
 	"github.com/gin-gonic/gin"
 )
 
@@ -67,7 +67,7 @@ func TestJobDagRoute(t *testing.T) {
 }
 
 func exampleJob() *Job {
-	sleepOne := NewTask("sleepOne", operator.NewSleep(1))
+	sleepOne := NewTask("sleepOne", op.Bash("sleep", "1"))
 	j := NewJob("example").AddTask(sleepOne)
 	return j
 }
