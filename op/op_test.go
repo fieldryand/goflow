@@ -1,14 +1,16 @@
 package op
 
 import (
+	"fmt"
 	"testing"
 )
 
 func TestBash(t *testing.T) {
-	o := Bash("sh", "-c", "echo $((2 + 4))")
-	result, _ := o.Run()
+	result, _ := Bash("sh", "-c", "echo $((2 + 4))").Run()
+	result_str := fmt.Sprintf("%v", result)
+	expected := "6\n"
 
-	if result != 6 {
-		t.Errorf("Expected %t, got %d", true, result)
+	if result_str != expected {
+		t.Errorf("Expected %s, got %s", expected, result_str)
 	}
 }

@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// DefaultLogger returns the default logging middleware.
 func DefaultLogger() gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
 		return fmt.Sprintf("%s [GOFLOW] - \"%s %s %s %d %s \"%s\" %s\"\n",

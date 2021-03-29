@@ -9,6 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// The Goflow engine contains job data and a router.
 type Goflow struct {
 	jobNames  []string
 	jobMap    map[string](func() *Job)
@@ -40,11 +41,13 @@ func New(jobs ...func() *Job) *Goflow {
 	return &g
 }
 
+// Use passes middleware to the Gin router.
 func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
 	g.router.Use(middleware)
 	return g
 }
 
+// Run runs the webserver.
 func (g *Goflow) Run(port string) {
 	g.addRoutes()
 	g.router.Run(port)
