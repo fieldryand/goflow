@@ -6,7 +6,7 @@
 		<script src="/static/submit.js"></script>
 		<script src="/static/pollster.js"></script>
 		<script>
-		{{ range $key, $value := .js }}
+		{{ range $key, $value := .jobStates }}
 			pollster("{{ $key }}")();
 		{{ end }}
 		</script>
@@ -26,7 +26,7 @@
 					</tr>
 				</thead>
 				<tbody>
-				{{ range $key, $value := .js }}
+				{{ range $key, $value := .jobStates }}
 					<tr>
 						<td><a href="/jobs/{{ $key }}">{{ $key }}</a></td>
 						<td id="{{ $key }}"></td>

@@ -59,7 +59,7 @@ func (g *Goflow) addRoutes() *Goflow {
 
 	g.router.GET("/", func(c *gin.Context) {
 		c.HTML(http.StatusOK, "index.html.tmpl", gin.H{
-			"js": g.jobStates,
+			"jobStates": g.jobStates,
 		})
 	})
 
@@ -76,8 +76,8 @@ func (g *Goflow) addRoutes() *Goflow {
 		name := c.Param("name")
 
 		c.HTML(http.StatusOK, "job.html.tmpl", gin.H{
-			"jobName": name,
-			"js":      g.jobStates[name],
+			"jobName":   name,
+			"jobStates": g.jobStates[name],
 		})
 	})
 

@@ -13,12 +13,13 @@ func main() {
 	goflow.Run(":8100")
 }
 
-// ExampleJobOne returns a simple job consisting of Addition and Sleep operators.
+// ExampleJobOne returns a simple job consisting of calls to "sleep" and a
+// custom Addition operator.
 func ExampleJobOne() *goflow.Job {
-	sleepOne := goflow.NewTask("sleepOne", operator.NewSleep(1))
+	sleepOne := goflow.NewTask("sleepOne", operator.NewBash("sleep", "1"))
 	addOneOne := goflow.NewTask("addOneOne", NewAddition(1, 1))
-	sleepTwo := goflow.NewTask("sleepTwo", operator.NewSleep(2))
-	addTwoFour := goflow.NewTask("addTwoFour", NewAddition(2, 4))
+	sleepTwo := goflow.NewTask("sleepTwo", operator.NewBash("sleep", "2"))
+	addTwoFour := goflow.NewTask("addTwoFour", operator.NewBash("sh", "-c", "echo $((2 + 4))"))
 	addThreeFour := goflow.NewTask("addThreeFour", NewAddition(3, 4))
 
 	j := goflow.NewJob("exampleOne").
@@ -35,9 +36,9 @@ func ExampleJobOne() *goflow.Job {
 	return j
 }
 
-// ExampleJobTwo returns an even simpler job consisting of a single Sleep task.
+// ExampleJobTwo returns an even simpler job consisting of a single "sleep" task.
 func ExampleJobTwo() *goflow.Job {
-	sleepTen := goflow.NewTask("sleepTen", operator.NewSleep(10))
+	sleepTen := goflow.NewTask("sleepTen", operator.NewBash("sleep", "10"))
 	j := goflow.NewJob("exampleTwo").AddTask(sleepTen)
 	return j
 }

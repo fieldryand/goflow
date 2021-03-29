@@ -2,7 +2,7 @@
 package operator
 
 import (
-	"time"
+	"os/exec"
 )
 
 // An Operator implements a Run() method. When a job executes a task that
@@ -11,17 +11,21 @@ type Operator interface {
 	Run() (interface{}, error)
 }
 
-// A Sleep operator sleeps for s seconds.
-type Sleep struct{ s int }
+// A bash operator executes a shell command.
+type Bash struct {
+	cmd  string
+	args []string
+}
 
-// NewSleep returns a sleep operator.
-func NewSleep(s int) *Sleep {
-	o := Sleep{s}
+// NewBashOperator returns a bash operator.
+func NewBash(cmd string, args ...string) *Bash {
+	o := Bash{cmd, args}
 	return &o
 }
 
-// Run implements the sleep interface.
-func (o Sleep) Run() (interface{}, error) {
-	time.Sleep(time.Duration(o.s) * time.Second)
-	return true, nil
+// Run passes the command and arguments to exec.Command and captures the
+// output.
+func (o Bash) Run() (interface{}, error) {
+	out, err := exec.Command(o.cmd, o.args...).Output()
+	return string(out), err
 }

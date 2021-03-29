@@ -3,6 +3,7 @@ package goflow
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/fieldryand/goflow/operator"
 )
@@ -189,18 +190,28 @@ func NewTask(name string, op operator.Operator) *Task {
 
 func (t *Task) run(writes chan writeOp) error {
 	res, err := t.operator.Run()
+	log.SetFlags(0)
+	log.SetOutput(new(logWriter))
+	logMsg := "task %v reached state %v with result %v"
 
 	if err != nil {
-		log.Printf("| Task %-16v | failed | %9v", t.Name, err)
+		log.Printf(logMsg, t.Name, "failure", err)
 		write := writeOp{t.Name, failed, make(chan bool)}
 		writes <- write
 		<-write.resp
 		return err
 	}
 
-	log.Printf("| Task %-16v | success | %9v", t.Name, res)
+	log.Printf(logMsg, t.Name, "success", res)
 	write := writeOp{t.Name, successful, make(chan bool)}
 	writes <- write
 	<-write.resp
 	return nil
+}
+
+type logWriter struct {
+}
+
+func (writer logWriter) Write(bytes []byte) (int, error) {
+	return fmt.Print(time.Now().Format(time.RFC3339) + " [GOFLOW] - " + string(bytes))
 }

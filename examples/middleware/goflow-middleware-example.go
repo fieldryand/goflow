@@ -17,22 +17,21 @@ func main() {
 
 	goflow := goflow.New(ExampleJobTwo)
 	goflow.Use(gin.Recovery())
-	goflow.Use(Logger())
+	goflow.Use(logger())
 	goflow.Run(":8100")
 }
 
-// ExampleJobTwo returns an even simpler job consisting of a single Sleep task.
+// ExampleJobTwo returns a job consisting of a single "sleep" task.
 func ExampleJobTwo() *goflow.Job {
-	sleepTen := goflow.NewTask("sleepTen", operator.NewSleep(10))
+	sleepTen := goflow.NewTask("sleepTen", operator.NewBash("sleep", "10"))
 	j := goflow.NewJob("exampleTwo").AddTask(sleepTen)
 	return j
 }
 
-func Logger() gin.HandlerFunc {
+func logger() gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		return fmt.Sprintf("[GOFLOW] [%s] %s - \"%s %s %s %d %s \"%s\" %s\"\n",
-			param.TimeStamp.Format(time.RFC1123),
-			param.ClientIP,
+		return fmt.Sprintf("%s [GOFLOW] - \"%s %s %s %d %s \"%s\" %s\"\n",
+			param.TimeStamp.Format(time.RFC3339),
 			param.Method,
 			param.Path,
 			param.Request.Proto,
