@@ -58,8 +58,8 @@ type readOp struct {
 	resp chan *jobState
 }
 
-// Task adds a task to a job.
-func (j *Job) Task(name string, op op.Operator) *Job {
+// AddTask adds a task to a job.
+func (j *Job) AddTask(name string, op op.Operator) *Job {
 	t := newTask(name, op)
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
@@ -67,12 +67,17 @@ func (j *Job) Task(name string, op op.Operator) *Job {
 	return j
 }
 
+// Task getter
+func (j *Job) Task(name string) *Task {
+	return j.Tasks[name]
+}
+
 // SetDownstream sets a dependency relationship between two tasks in the job.
 // The dependent task is downstream of the independent task and
 // waits for the independent task to finish before starting
 // execution.
-func (j *Job) SetDownstream(ind, dep string) *Job {
-	j.Dag.setDownstream(ind, dep)
+func (j *Job) SetDownstream(ind, dep *Task) *Job {
+	j.Dag.setDownstream(ind.Name, dep.Name)
 	return j
 }
 

@@ -17,26 +17,30 @@ func main() {
 // ExampleJobOne returns a simple job consisting of calls to "sleep" and a
 // custom Addition operator.
 func ExampleJobOne() *goflow.Job {
-	return goflow.NewJob("exampleOne").
-		Task("sleepOne", op.Bash("sleep", "1")).
-		Task("addOneOne", NewAddition(1, 1)).
-		Task("sleepTwo", op.Bash("sleep", "2")).
-		Task("addTwoFour", op.Bash("sh", "-c", "echo $((2 + 4))")).
-		Task("addThreeFour", NewAddition(3, 4)).
-		SetDownstream("sleepOne", "addOneOne").
-		SetDownstream("addOneOne", "sleepTwo").
-		SetDownstream("sleepTwo", "addTwoFour").
-		SetDownstream("addOneOne", "addThreeFour")
+	j := goflow.NewJob("exampleOne")
+
+	j.AddTask("sleepOne", op.Bash("sleep", "1"))
+	j.AddTask("addOneOne", NewAddition(1, 1))
+	j.AddTask("sleepTwo", op.Bash("sleep", "2"))
+	j.AddTask("addTwoFour", op.Bash("sh", "-c", "echo $((2 + 4))"))
+	j.AddTask("addThreeFour", NewAddition(3, 4))
+
+	j.SetDownstream(j.Task("sleepOne"), j.Task("addOneOne"))
+	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
+	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
+	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
+
+	return j
 }
 
 // ExampleJobTwo returns an even simpler job consisting of a single "sleep" task.
 func ExampleJobTwo() *goflow.Job {
-	return goflow.NewJob("exampleTwo").Task("sleepTen", op.Bash("sleep", "10"))
+	return goflow.NewJob("exampleTwo").AddTask("sleepTen", op.Bash("sleep", "10"))
 }
 
 // ExampleJobThree returns a job with a task that throws an error.
 func ExampleJobThree() *goflow.Job {
-	return goflow.NewJob("exampleThree").Task("whoops", op.Bash("whoops"))
+	return goflow.NewJob("exampleThree").AddTask("whoops", op.Bash("whoops"))
 }
 
 // We can create custom operators by implementing the Run() method.

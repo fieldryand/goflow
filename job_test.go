@@ -11,14 +11,16 @@ import (
 var reads = make(chan readOp)
 
 func TestJob(t *testing.T) {
-	j := NewJob("example").
-		Task("addOneOne", NewAddition(1, 1)).
-		Task("sleepTwo", op.Bash("sleep", "2")).
-		Task("addTwoFour", NewAddition(2, 4)).
-		Task("addThreeFour", NewAddition(3, 4)).
-		SetDownstream("addOneOne", "sleepTwo").
-		SetDownstream("sleepTwo", "addTwoFour").
-		SetDownstream("addOneOne", "addThreeFour")
+	j := NewJob("example")
+
+	j.AddTask("addOneOne", NewAddition(1, 1))
+	j.AddTask("sleepTwo", op.Bash("sleep", "2"))
+	j.AddTask("addTwoFour", op.Bash("sh", "-c", "echo $((2 + 4))"))
+	j.AddTask("addThreeFour", NewAddition(3, 4))
+
+	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
+	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
+	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
 
 	j.run(reads)
 
@@ -35,17 +37,18 @@ func TestJob(t *testing.T) {
 }
 
 func TestCyclicJob(t *testing.T) {
-	j := NewJob("cyclic").
-		Task("addTwoTwo", NewAddition(2, 2)).
-		Task("addFourFour", NewAddition(4, 4)).
-		SetDownstream("addTwoTwo", "addFourFour").
-		SetDownstream("addFourFour", "addTwoTwo")
+	j := NewJob("cyclic")
+
+	j.AddTask("addTwoTwo", NewAddition(2, 2))
+	j.AddTask("addFourFour", NewAddition(4, 4))
+	j.SetDownstream(j.Task("addTwoTwo"), j.Task("addFourFour"))
+	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
 
 	j.run(reads)
 }
 
 func TestTaskFailure(t *testing.T) {
-	j := NewJob("with bad task").Task("badTask", NewAddition(-1, -1))
+	j := NewJob("with bad task").AddTask("badTask", NewAddition(-1, -1))
 	j.run(reads)
 
 	if j.jobState.State != failed {
