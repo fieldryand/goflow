@@ -9,13 +9,13 @@ import (
 )
 
 func main() {
-	gf := goflow.New(ComplexAnalyticsJob, MessedUpJob, CustomOperatorJob)
+	gf := goflow.New(complexAnalyticsJob, messedUpJob, customOperatorJob)
 	gf.Use(goflow.DefaultLogger())
 	gf.Run(":8100")
 }
 
-// ComplexAnalyticsJob crunches some numbers.
-func ComplexAnalyticsJob() *goflow.Job {
+// Crunch some numbers
+func complexAnalyticsJob() *goflow.Job {
 	j := goflow.NewJob("ComplexAnalytics")
 
 	j.AddTask("sleepOne", op.Bash("sleep", "1"))
@@ -32,21 +32,23 @@ func ComplexAnalyticsJob() *goflow.Job {
 	return j
 }
 
-// MessedUpJob returns a job with a task that throws an error.
-func MessedUpJob() *goflow.Job {
+// A task that throws an error
+func messedUpJob() *goflow.Job {
 	return goflow.NewJob("MessedUp").AddTask("whoops", op.Bash("whoops"))
 }
 
 // We can create custom operators by implementing the Run() method.
-// PositiveAddition is an operation that adds two nonnegative numbers.
-type PositiveAdditionOperator struct{ a, b int }
 
-func PositiveAddition(a, b int) *PositiveAdditionOperator {
-	o := PositiveAdditionOperator{a, b}
+// Add two nonnegative numbers
+type positiveAdditionOperator struct{ a, b int }
+
+func positiveAddition(a, b int) *positiveAdditionOperator {
+	o := positiveAdditionOperator{a, b}
 	return &o
 }
 
-func (o PositiveAdditionOperator) Run() (interface{}, error) {
+// Run implements the custom operation
+func (o positiveAdditionOperator) Run() (interface{}, error) {
 	if o.a < 0 || o.b < 0 {
 		return 0, errors.New("Can't add negative numbers")
 	}
@@ -54,9 +56,9 @@ func (o PositiveAdditionOperator) Run() (interface{}, error) {
 	return result, nil
 }
 
-// CustomOperatorJob returns a job with a custom operator.
-func CustomOperatorJob() *goflow.Job {
+// Use our custom operation in a job
+func customOperatorJob() *goflow.Job {
 	j := goflow.NewJob("CustomOperator")
-	j.AddTask("posAdd", PositiveAddition(5, 6))
+	j.AddTask("posAdd", positiveAddition(5, 6))
 	return j
 }

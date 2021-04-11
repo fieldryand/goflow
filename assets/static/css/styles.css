@@ -1,3 +1,32 @@
+body {
+	font-family: sans-serif;
+}
+
+.table {
+	display: grid;
+	grid-template-columns: 1fr 2fr 0.5fr;
+	word-break: break-all;
+}
+
+.table > div {
+	padding: .5em
+}
+
+.table>div:nth-child(-n+3) {
+	background-color: mediumslateblue;
+	color:white;
+}
+
+.table>div:nth-child(6n+4), .table>div:nth-child(6n+5), .table>div:nth-child(6n+6) {
+	background-color: whitesmoke
+}
+
+.button-container {
+	display: flex;
+	justify-content: flex-end;
+	align-items: flex-start
+}
+
 .job-container {
 	padding: 5em
 }
@@ -7,4 +36,17 @@
 	display: grid;
 	grid-template-columns: auto;
 	grid-gap: 3em;
+}
+
+button {
+	background-color: mediumslateblue;
+	border-radius: .2em;
+	color:white;
+	border-color:mediumslateblue;
+	border-style: none;
+	padding:.5em .75em;
+}
+
+a {
+	color: mediumslateblue;
 }

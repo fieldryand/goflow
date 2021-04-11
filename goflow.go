@@ -2,7 +2,7 @@
 package goflow
 
 import (
-	"encoding/json"
+	"fmt"
 	"net/http"
 	"os"
 
@@ -11,31 +11,25 @@ import (
 
 // The Goflow engine contains job data and a router.
 type Goflow struct {
-	jobNames  []string
-	jobMap    map[string](func() *Job)
-	jobStates map[string]*jobState
-	router    *gin.Engine
+	jobMap  map[string](func() *Job)
+	jobRuns []*jobRun
+	router  *gin.Engine
 }
 
 // New returns a Goflow engine.
 func New(jobs ...func() *Job) *Goflow {
-	jobNames := make([]string, 0)
 	jobMap := make(map[string](func() *Job))
-	jobStates := make(map[string]*jobState)
 
 	for _, job := range jobs {
-		jobNames = append(jobNames, job().Name)
 		jobMap[job().Name] = job
-		jobStates[job().Name] = newJobState()
 	}
 
 	router := gin.New()
 
 	g := Goflow{
-		jobNames:  jobNames,
-		jobMap:    jobMap,
-		jobStates: jobStates,
-		router:    router,
+		jobMap:  jobMap,
+		jobRuns: make([]*jobRun, 0),
+		router:  router,
 	}
 
 	return &g
@@ -61,8 +55,13 @@ func (g *Goflow) addRoutes() *Goflow {
 	g.router.LoadHTMLGlob(goPath + assetPath)
 
 	g.router.GET("/", func(c *gin.Context) {
+		jobNames := make([]string, 0)
+		for _, job := range g.jobMap {
+			jobNames = append(jobNames, job().Name)
+		}
+
 		c.HTML(http.StatusOK, "index.html.tmpl", gin.H{
-			"jobStates": g.jobStates,
+			"jobNames": jobNames,
 		})
 	})
 
@@ -71,43 +70,59 @@ func (g *Goflow) addRoutes() *Goflow {
 	})
 
 	g.router.GET("/jobs", func(c *gin.Context) {
-		encoded, _ := json.Marshal(g.jobNames)
-		c.String(http.StatusOK, string(encoded))
+		jobNames := make([]string, 0)
+		for _, job := range g.jobMap {
+			jobNames = append(jobNames, job().Name)
+		}
+		c.JSON(http.StatusOK, jobNames)
 	})
 
 	g.router.GET("/jobs/:name", func(c *gin.Context) {
 		name := c.Param("name")
 
+		jobRuns := make([]*jobRun, 0)
+		for _, jr := range g.jobRuns {
+			if jr.JobName == name {
+				jobRuns = append(jobRuns, jr)
+			}
+		}
+
 		c.HTML(http.StatusOK, "job.html.tmpl", gin.H{
-			"jobName":   name,
-			"jobStates": g.jobStates[name],
+			"jobName": name,
+			"jobRuns": jobRuns,
 		})
 	})
 
 	g.router.GET("/jobs/:name/submit", func(c *gin.Context) {
 		name := c.Param("name")
 		job := g.jobMap[name]()
-		g.jobStates[name] = job.jobState
+		jobRun := newJobRun(name)
+
+		g.jobRuns = append(g.jobRuns, jobRun)
+
 		reads := make(chan readOp)
 		go job.run(reads)
 		go func() {
 			read := readOp{resp: make(chan *jobState)}
 			reads <- read
-			g.jobStates[name] = <-read.resp
+			for _, jr := range g.jobRuns {
+				if jr.name() == jobRun.name() {
+					jr.JobState = <-read.resp
+				}
+			}
 		}()
-		c.String(http.StatusOK, "job submitted")
+		c.String(http.StatusOK, fmt.Sprintf("submitted job run %s", jobRun.name()))
 	})
 
-	g.router.GET("/jobs/:name/state", func(c *gin.Context) {
+	g.router.GET("/jobs/:name/jobRuns", func(c *gin.Context) {
 		name := c.Param("name")
-		encoded, _ := json.Marshal(g.jobStates[name])
-		c.String(http.StatusOK, string(encoded))
+		jobRunList := newJobRunList(name, g.jobRuns)
+		c.JSON(http.StatusOK, jobRunList)
 	})
 
 	g.router.GET("/jobs/:name/dag", func(c *gin.Context) {
 		name := c.Param("name")
-		encoded, _ := json.Marshal(g.jobMap[name]().Dag)
-		c.String(http.StatusOK, string(encoded))
+		c.JSON(http.StatusOK, g.jobMap[name]().Dag)
 	})
 
 	return g
