@@ -10,9 +10,9 @@ import (
 )
 
 var router = exampleRouter()
-var w = httptest.NewRecorder()
 
 func TestIndexRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
 	router.ServeHTTP(w, req)
 
@@ -22,6 +22,7 @@ func TestIndexRoute(t *testing.T) {
 }
 
 func TestHealthRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/health", nil)
 	router.ServeHTTP(w, req)
 
@@ -31,6 +32,7 @@ func TestHealthRoute(t *testing.T) {
 }
 
 func TestJobsRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/jobs", nil)
 	router.ServeHTTP(w, req)
 
@@ -40,6 +42,7 @@ func TestJobsRoute(t *testing.T) {
 }
 
 func TestJobSubmitRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/jobs/example/submit", nil)
 	router.ServeHTTP(w, req)
 
@@ -48,8 +51,19 @@ func TestJobSubmitRoute(t *testing.T) {
 	}
 }
 
-func TestJobStateRoute(t *testing.T) {
-	req, _ := http.NewRequest("GET", "/jobs/example/state", nil)
+func TestRouteNotFound(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/blaaaa", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
+	}
+}
+
+func TestJobOverviewRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/jobs/example", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -58,7 +72,18 @@ func TestJobStateRoute(t *testing.T) {
 }
 
 func TestJobDagRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/jobs/example/dag", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
+func TestJobRunRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/jobs/example/jobRuns", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
