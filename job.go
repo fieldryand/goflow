@@ -13,8 +13,8 @@ import (
 type Job struct {
 	Name     string
 	Tasks    map[string]*Task
-	jobState *jobState
 	Dag      Dag
+	jobState *jobState
 }
 
 // NewJob returns a new job.
@@ -185,7 +185,7 @@ func (j *Job) anyFailed() bool {
 // calls its associated operator.
 type Task struct {
 	Name     string
-	operator op.Operator
+	Operator op.Operator
 }
 
 func newTask(name string, op op.Operator) *Task {
@@ -194,7 +194,7 @@ func newTask(name string, op op.Operator) *Task {
 }
 
 func (t *Task) run(writes chan writeOp) error {
-	res, err := t.operator.Run()
+	res, err := t.Operator.Run()
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
 	logMsg := "task %v reached state %v with result %v"

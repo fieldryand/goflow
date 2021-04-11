@@ -1,4 +1,5 @@
-//Package goflow implements a minimal workflow scheduler.
+// Package goflow implements a workflow scheduler geared
+// toward orchestration of ETL or analytics workloads.
 package goflow
 
 import (
@@ -9,15 +10,15 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// The Goflow engine contains job data and a router.
-type Goflow struct {
+// Engine contains job data and a router.
+type Engine struct {
 	jobMap  map[string](func() *Job)
 	jobRuns []*jobRun
 	router  *gin.Engine
 }
 
-// New returns a Goflow engine.
-func New(jobs ...func() *Job) *Goflow {
+// NewEngine returns a Goflow engine.
+func NewEngine(jobs ...func() *Job) *Engine {
 	jobMap := make(map[string](func() *Job))
 
 	for _, job := range jobs {
@@ -26,7 +27,7 @@ func New(jobs ...func() *Job) *Goflow {
 
 	router := gin.New()
 
-	g := Goflow{
+	g := Engine{
 		jobMap:  jobMap,
 		jobRuns: make([]*jobRun, 0),
 		router:  router,
@@ -36,18 +37,18 @@ func New(jobs ...func() *Job) *Goflow {
 }
 
 // Use passes middleware to the Gin router.
-func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
+func (g *Engine) Use(middleware gin.HandlerFunc) *Engine {
 	g.router.Use(middleware)
 	return g
 }
 
 // Run runs the webserver.
-func (g *Goflow) Run(port string) {
+func (g *Engine) Run(port string) {
 	g.addRoutes()
 	g.router.Run(port)
 }
 
-func (g *Goflow) addRoutes() *Goflow {
+func (g *Engine) addRoutes() *Engine {
 	goPath := os.Getenv("GOPATH")
 	assetPath := "/src/github.com/fieldryand/goflow/assets/*.html.tmpl"
 

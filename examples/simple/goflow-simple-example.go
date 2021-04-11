@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	gf := goflow.New(complexAnalyticsJob, messedUpJob, customOperatorJob)
+	gf := goflow.NewEngine(complexAnalyticsJob, messedUpJob, customOperatorJob)
 	gf.Use(goflow.DefaultLogger())
 	gf.Run(":8100")
 }
