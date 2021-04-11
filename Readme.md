@@ -21,8 +21,14 @@ import (
 )
 
 func main() {
-	gf := goflow.NewEngine(complexAnalyticsJob, messedUpJob, customOperatorJob)
+	gf := goflow.NewEngine()
+
+	gf.AddJob(complexAnalyticsJob)
+	gf.AddJob(messedUpJob)
+	gf.AddJob(customOperatorJob)
+
 	gf.Use(goflow.DefaultLogger())
+
 	gf.Run(":8100")
 }
 

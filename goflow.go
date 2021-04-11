@@ -12,31 +12,28 @@ import (
 
 // Engine contains job data and a router.
 type Engine struct {
-	jobMap  map[string](func() *Job)
+	Jobs    map[string](func() *Job)
 	jobRuns []*jobRun
 	router  *gin.Engine
 }
 
 // NewEngine returns a Goflow engine.
-func NewEngine(jobs ...func() *Job) *Engine {
-	jobMap := make(map[string](func() *Job))
-
-	for _, job := range jobs {
-		jobMap[job().Name] = job
-	}
-
-	router := gin.New()
-
-	g := Engine{
-		jobMap:  jobMap,
+func NewEngine() *Engine {
+	return &Engine{
+		Jobs:    make(map[string](func() *Job)),
 		jobRuns: make([]*jobRun, 0),
-		router:  router,
+		router:  gin.New(),
 	}
-
-	return &g
 }
 
-// Use passes middleware to the Gin router.
+// AddJob takes a job-emitting function and registers it
+// with the engine.
+func (g *Engine) AddJob(jobFn func() *Job) *Engine {
+	g.Jobs[jobFn().Name] = jobFn
+	return g
+}
+
+// Use middleware in the Gin router.
 func (g *Engine) Use(middleware gin.HandlerFunc) *Engine {
 	g.router.Use(middleware)
 	return g
@@ -57,7 +54,7 @@ func (g *Engine) addRoutes() *Engine {
 
 	g.router.GET("/", func(c *gin.Context) {
 		jobNames := make([]string, 0)
-		for _, job := range g.jobMap {
+		for _, job := range g.Jobs {
 			jobNames = append(jobNames, job().Name)
 		}
 
@@ -72,7 +69,7 @@ func (g *Engine) addRoutes() *Engine {
 
 	g.router.GET("/jobs", func(c *gin.Context) {
 		jobNames := make([]string, 0)
-		for _, job := range g.jobMap {
+		for _, job := range g.Jobs {
 			jobNames = append(jobNames, job().Name)
 		}
 		c.JSON(http.StatusOK, jobNames)
@@ -96,7 +93,7 @@ func (g *Engine) addRoutes() *Engine {
 
 	g.router.GET("/jobs/:name/submit", func(c *gin.Context) {
 		name := c.Param("name")
-		job := g.jobMap[name]()
+		job := g.Jobs[name]()
 		jobRun := newJobRun(name)
 
 		g.jobRuns = append(g.jobRuns, jobRun)
@@ -123,7 +120,7 @@ func (g *Engine) addRoutes() *Engine {
 
 	g.router.GET("/jobs/:name/dag", func(c *gin.Context) {
 		name := c.Param("name")
-		c.JSON(http.StatusOK, g.jobMap[name]().Dag)
+		c.JSON(http.StatusOK, g.Jobs[name]().Dag)
 	})
 
 	return g

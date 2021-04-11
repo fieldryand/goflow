@@ -96,7 +96,8 @@ func exampleJob() *Job {
 }
 
 func exampleRouter() *gin.Engine {
-	g := NewEngine(exampleJob)
+	g := NewEngine()
+	g.AddJob(exampleJob)
 	g.Use(DefaultLogger())
 	g.addRoutes()
 	return g.router
