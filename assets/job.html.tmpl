@@ -1,16 +1,16 @@
 <html>
 	<head>
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css" integrity="sha256-ogmFxjqiTMnZhxCqVmcqTvjfe1Y/ec4WaRj/aQPvn+I=" crossorigin="anonymous">
 		<link rel="stylesheet" href="/static/css/styles.css">
 		<script src="/static/viz.js"></script>
 		<script src="/static/full.render.js"></script>
 		<title>Goflow</title>
 	</head>
 	<body>
+		<div class="top-nav">
+			<h1><a href="/">Goflow</a></h1>
+		</div>
 		<div class="job-info">
-			<h1>
-				{{ .jobName }}
-			</h1>
+			<h2>{{ .jobName }}</h2>
 			<div id="graph"></div>
 			<div>
 				<script>

@@ -13,8 +13,8 @@ import (
 type Job struct {
 	Name     string
 	Tasks    map[string]*Task
-	jobState *jobState
 	Dag      Dag
+	jobState *jobState
 }
 
 // NewJob returns a new job.
@@ -59,11 +59,17 @@ type readOp struct {
 }
 
 // AddTask adds a task to a job.
-func (j *Job) AddTask(t *Task) *Job {
+func (j *Job) AddTask(name string, op op.Operator) *Job {
+	t := newTask(name, op)
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
 	j.jobState.TaskState[t.Name] = none
 	return j
+}
+
+// Task getter
+func (j *Job) Task(name string) *Task {
+	return j.Tasks[name]
 }
 
 // SetDownstream sets a dependency relationship between two tasks in the job.
@@ -179,17 +185,16 @@ func (j *Job) anyFailed() bool {
 // calls its associated operator.
 type Task struct {
 	Name     string
-	operator op.Operator
+	Operator op.Operator
 }
 
-// NewTask returns a Task.
-func NewTask(name string, op op.Operator) *Task {
+func newTask(name string, op op.Operator) *Task {
 	t := Task{name, op}
 	return &t
 }
 
 func (t *Task) run(writes chan writeOp) error {
-	res, err := t.operator.Run()
+	res, err := t.Operator.Run()
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
 	logMsg := "task %v reached state %v with result %v"

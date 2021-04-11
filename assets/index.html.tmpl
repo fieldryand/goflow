@@ -1,40 +1,31 @@
 <html>
 	<head>
-		<!-- Compressed CSS -->
-		<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/foundation-sites@6.6.3/dist/css/foundation.min.css" integrity="sha256-ogmFxjqiTMnZhxCqVmcqTvjfe1Y/ec4WaRj/aQPvn+I=" crossorigin="anonymous">
 		<link rel="stylesheet" href="/static/css/styles.css">
 		<script src="/static/submit.js"></script>
 		<script src="/static/pollster.js"></script>
 		<script>
-		{{ range $key, $value := .jobStates }}
-			pollster("{{ $key }}")();
+		{{ range $ix, $jobName := .jobNames }}
+			pollster("{{ $jobName }}")();
 		{{ end }}
 		</script>
 		<title>Goflow</title>
 	</head>
 	<body>
+		<div class="top-nav">
+			<h1><a href="/">Goflow</a></h1>
+		</div>
 		<div class="job-container">
-			<h1>
-				Jobs
-			</h1>
-			<table class="pure-table">
-				<thead>
-					<tr>
-						<th style="width:50%">Job</th>
-						<th style="width:25%">State</th>
-						<th style="width:25%"></th>
-					</tr>
-				</thead>
-				<tbody>
-				{{ range $key, $value := .jobStates }}
-					<tr>
-						<td><a href="/jobs/{{ $key }}">{{ $key }}</a></td>
-						<td id="{{ $key }}"></td>
-						<td><button class="button primary" onclick="submit({{ $key }})">Submit</button></td>
-					</tr>
+			<h2>Jobs</h2>
+			<div class="table">
+				<div>Job</div>
+				<div>State</div>
+				<div></div>
+				{{ range $ix, $jobName := .jobNames }}
+				<div><a href="/jobs/{{ $jobName }}">{{ $jobName }}</a></div>
+				<div id="{{ $jobName }}"></div>
+				<div class="button-container"><button class="button primary" onclick="submit({{ $jobName }})">Submit</button></div>
 				{{ end }}
-				</tbody>
-			</table>
+			</div>
 		</div>
 	</body>
 </html>

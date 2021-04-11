@@ -13,11 +13,11 @@ type Operator interface {
 
 // A bash operator executes a shell command.
 type BashOperator struct {
-	cmd  string
-	args []string
+	Cmd  string
+	Args []string
 }
 
-// NewBashOperator returns a bash operator.
+// Bash returns a bash operator.
 func Bash(cmd string, args ...string) *BashOperator {
 	o := BashOperator{cmd, args}
 	return &o
@@ -26,6 +26,6 @@ func Bash(cmd string, args ...string) *BashOperator {
 // Run passes the command and arguments to exec.Command and captures the
 // output.
 func (o BashOperator) Run() (interface{}, error) {
-	out, err := exec.Command(o.cmd, o.args...).Output()
+	out, err := exec.Command(o.Cmd, o.Args...).Output()
 	return string(out), err
 }

@@ -4,7 +4,9 @@ import (
 	"github.com/ef-ds/deque"
 )
 
-// A Dag is a directed acyclic graph.
+// A Dag is a directed acyclic graph represented by a simple map
+// where a key is a node in the graph, and a value is a slice of
+// immediately downstream dependent nodes.
 type Dag map[string][]string
 
 // A node has a name and 0 or more dependent nodes
