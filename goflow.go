@@ -91,7 +91,7 @@ func (g *Engine) addRoutes() *Engine {
 		})
 	})
 
-	g.router.GET("/jobs/:name/submit", func(c *gin.Context) {
+	g.router.POST("/jobs/:name/submit", func(c *gin.Context) {
 		name := c.Param("name")
 		job := g.Jobs[name]()
 		jobRun := newJobRun(name)

@@ -1,5 +1,5 @@
 function submit(jobName) {
   var xhttp = new XMLHttpRequest();
-  xhttp.open("GET", `/jobs/${jobName}/submit`, true);
+  xhttp.open("POST", `/jobs/${jobName}/submit`, true);
   xhttp.send();
 }

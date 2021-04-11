@@ -43,7 +43,7 @@ func TestJobsRoute(t *testing.T) {
 
 func TestJobSubmitRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/jobs/example/submit", nil)
+	req, _ := http.NewRequest("POST", "/jobs/example/submit", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
