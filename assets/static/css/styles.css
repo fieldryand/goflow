@@ -27,12 +27,21 @@ body {
 	align-items: flex-start
 }
 
+.top-nav {
+	padding-left: 5em;
+	padding-right: 5em;
+	padding-top: 1em;
+	padding-bottom: 1em;
+}
+
 .job-container {
-	padding: 5em
+	padding-left: 5em;
+	padding-right: 5em;
 }
 
 .job-info {
-	padding: 5em;
+	padding-left: 5em;
+	padding-right: 5em;
 	display: grid;
 	grid-template-columns: auto;
 	grid-gap: 3em;
