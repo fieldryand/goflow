@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"time"
-
-	"github.com/fieldryand/goflow/op"
 )
 
 // A Job is a workflow consisting of independent and dependent tasks
@@ -59,7 +57,7 @@ type readOp struct {
 }
 
 // AddTask adds a task to a job.
-func (j *Job) AddTask(name string, op op.Operator) *Job {
+func (j *Job) AddTask(name string, op Operator) *Job {
 	t := newTask(name, op)
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
@@ -185,10 +183,10 @@ func (j *Job) anyFailed() bool {
 // calls its associated operator.
 type Task struct {
 	Name     string
-	Operator op.Operator
+	Operator Operator
 }
 
-func newTask(name string, op op.Operator) *Task {
+func newTask(name string, op Operator) *Task {
 	t := Task{name, op}
 	return &t
 }

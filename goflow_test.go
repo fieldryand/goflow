@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/fieldryand/goflow/op"
 	"github.com/gin-gonic/gin"
 )
 
@@ -92,7 +91,7 @@ func TestJobRunRoute(t *testing.T) {
 }
 
 func exampleJob() *Job {
-	return NewJob("example").AddTask("sleepOne", op.Bash("sleep", "1"))
+	return NewJob("example").AddTask("sleepOne", BashOp("sleep", "1"))
 }
 
 func exampleRouter() *gin.Engine {

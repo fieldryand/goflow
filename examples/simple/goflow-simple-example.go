@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/fieldryand/goflow"
-	"github.com/fieldryand/goflow/op"
 )
 
 func main() {
@@ -24,11 +23,11 @@ func main() {
 func complexAnalyticsJob() *goflow.Job {
 	j := goflow.NewJob("ComplexAnalytics")
 
-	j.AddTask("sleepOne", op.Bash("sleep", "1"))
-	j.AddTask("addOneOne", op.Bash("sh", "-c", "echo $((1 + 1))"))
-	j.AddTask("sleepTwo", op.Bash("sleep", "2"))
-	j.AddTask("addTwoFour", op.Bash("sh", "-c", "echo $((2 + 4))"))
-	j.AddTask("addThreeFour", op.Bash("sh", "-c", "echo $((2 + 4))"))
+	j.AddTask("sleepOne", goflow.BashOp("sleep", "1"))
+	j.AddTask("addOneOne", goflow.BashOp("sh", "-c", "echo $((1 + 1))"))
+	j.AddTask("sleepTwo", goflow.BashOp("sleep", "2"))
+	j.AddTask("addTwoFour", goflow.BashOp("sh", "-c", "echo $((2 + 4))"))
+	j.AddTask("addThreeFour", goflow.BashOp("sh", "-c", "echo $((2 + 4))"))
 
 	j.SetDownstream(j.Task("sleepOne"), j.Task("addOneOne"))
 	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
@@ -40,7 +39,7 @@ func complexAnalyticsJob() *goflow.Job {
 
 // A task that throws an error
 func messedUpJob() *goflow.Job {
-	return goflow.NewJob("MessedUp").AddTask("whoops", op.Bash("whoops"))
+	return goflow.NewJob("MessedUp").AddTask("whoops", goflow.BashOp("whoops"))
 }
 
 // We can create custom operators by implementing the Run() method.

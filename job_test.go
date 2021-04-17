@@ -4,8 +4,6 @@ import (
 	"errors"
 	"reflect"
 	"testing"
-
-	"github.com/fieldryand/goflow/op"
 )
 
 var reads = make(chan readOp)
@@ -14,8 +12,8 @@ func TestJob(t *testing.T) {
 	j := NewJob("example")
 
 	j.AddTask("addOneOne", NewAddition(1, 1))
-	j.AddTask("sleepTwo", op.Bash("sleep", "2"))
-	j.AddTask("addTwoFour", op.Bash("sh", "-c", "echo $((2 + 4))"))
+	j.AddTask("sleepTwo", BashOp("sleep", "2"))
+	j.AddTask("addTwoFour", BashOp("sh", "-c", "echo $((2 + 4))"))
 	j.AddTask("addThreeFour", NewAddition(3, 4))
 
 	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
