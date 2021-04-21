@@ -25,7 +25,20 @@ function getJobRunState(jobRun) {
   stateColor = stateColorMap[jobRun.jobState.state];
   stateCircle = `
     <svg height="20" width="20">
-      <circle cx="10" cy="10" r="10" fill="${stateColor}"/>
+      <circle cx="10" cy="10" r="9" stroke="black" fill="${stateColor}"/>
     </svg>`;
   return stateCircle
+}
+
+function getDag(jobName) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.open("GET", `/jobs/${jobName}/dag`, false);
+  xhttp.send();
+  return xhttp.responseText;
+}
+
+function submit(jobName) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.open("POST", `/jobs/${jobName}/submit`, true);
+  xhttp.send();
 }

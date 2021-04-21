@@ -1,0 +1,18 @@
+<html>
+  <head>
+    <link rel="stylesheet" href="/css/styles.css">
+    <title>Goflow</title>
+    <script src="/src/plain.js"></script>
+  </head>
+  <body>
+    <div class="top-nav">
+      <h1><a href="/">Goflow</a></h1>
+    </div>
+    <div class="job-info">
+      <h2>{{ .jobName }}</h2>
+    </div>
+    <svg width=960 height=600><g/></svg>
+  </body>
+</html>
+<script src="/dist/dist.js"></script>
+<script>goflowUI.graphViz(getDag({{ .jobName }}))</script>

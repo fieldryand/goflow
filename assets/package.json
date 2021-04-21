@@ -1,0 +1,17 @@
+{
+  "name": "assets",
+  "version": "1.0.0",
+  "description": "",
+  "private": true,
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "dagre-d3": "^0.6.4",
+    "webpack": "^5.33.2",
+    "webpack-cli": "^4.6.0"
+  }
+}

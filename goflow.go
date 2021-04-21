@@ -47,9 +47,11 @@ func (g *Engine) Run(port string) {
 
 func (g *Engine) addRoutes() *Engine {
 	goPath := os.Getenv("GOPATH")
-	assetPath := "/src/github.com/fieldryand/goflow/assets/*.html.tmpl"
+	assetPath := "/src/github.com/fieldryand/goflow/assets/html/*.html.tmpl"
 
-	g.router.Static("/static", "assets/static")
+	g.router.Static("/css", "./assets/css")
+	g.router.Static("/dist", "./assets/dist")
+	g.router.Static("/src", "./assets/src")
 	g.router.LoadHTMLGlob(goPath + assetPath)
 
 	g.router.GET("/", func(c *gin.Context) {
