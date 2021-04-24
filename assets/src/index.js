@@ -34,8 +34,8 @@ export function graphViz(dag) {
   render(inner, g);
   
   // Center the graph
-  var initialScale = 0.75;
-  svg.call(zoom.transform, d3.zoomIdentity.translate((svg.attr("width") - g.graph().width * initialScale) / 2, 20).scale(initialScale));
+  var initialScale = 1.00;
+  svg.call(zoom.transform, d3.zoomIdentity.translate(20, 20).scale(initialScale));
   
   svg.attr('height', g.graph().height * initialScale + 40);
 }

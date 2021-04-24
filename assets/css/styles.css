@@ -70,3 +70,13 @@ a {
   fill: #333;
   stroke-width: 1.5px;
 }
+
+.graph {
+  border: 1px solid #ccc;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.graph-container {
+  padding-top: 2em;
+}

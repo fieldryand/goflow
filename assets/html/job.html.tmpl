@@ -3,6 +3,7 @@
     <link rel="stylesheet" href="/css/styles.css">
     <title>Goflow</title>
     <script src="/src/plain.js"></script>
+    <script>pollingTaskState({{ .jobName }})()</script>
   </head>
   <body>
     <div class="top-nav">
@@ -11,7 +12,21 @@
     <div class="job-info">
       <h2>{{ .jobName }}</h2>
     </div>
-    <svg width=960 height=600><g/></svg>
+    <div class="job-container">
+      <div class="table">
+        <div>Task</div>
+        <div>State</div>
+        <div></div>
+        {{ range $ix, $taskName := .taskNames }}
+        <div>{{ $taskName }}</div>
+        <div id="{{ $taskName }}"></div>
+        <div></div>
+        {{ end }}
+      </div>
+      <div class="graph-container">
+        <svg class="graph" width="100%"><g/></svg>
+      </div>
+    </div>
   </body>
 </html>
 <script src="/dist/dist.js"></script>

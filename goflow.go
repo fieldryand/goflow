@@ -80,6 +80,12 @@ func (g *Engine) addRoutes() *Engine {
 	g.router.GET("/jobs/:name", func(c *gin.Context) {
 		name := c.Param("name")
 
+		tasks := g.Jobs[name]().Tasks
+		taskNames := make([]string, 0)
+		for _, task := range tasks {
+			taskNames = append(taskNames, task.Name)
+		}
+
 		jobRuns := make([]*jobRun, 0)
 		for _, jr := range g.jobRuns {
 			if jr.JobName == name {
@@ -88,8 +94,9 @@ func (g *Engine) addRoutes() *Engine {
 		}
 
 		c.HTML(http.StatusOK, "job.html.tmpl", gin.H{
-			"jobName": name,
-			"jobRuns": jobRuns,
+			"jobName":   name,
+			"taskNames": taskNames,
+			"jobRuns":   jobRuns,
 		})
 	})
 
