@@ -47,12 +47,11 @@ func (g *Engine) Run(port string) {
 
 func (g *Engine) addRoutes() *Engine {
 	goPath := os.Getenv("GOPATH")
-	assetPath := "/src/github.com/fieldryand/goflow/assets/html/*.html.tmpl"
-
-	g.router.Static("/css", "./assets/css")
-	g.router.Static("/dist", "./assets/dist")
-	g.router.Static("/src", "./assets/src")
-	g.router.LoadHTMLGlob(goPath + assetPath)
+	assetPath := goPath + "/src/github.com/fieldryand/goflow/assets/"
+	g.router.Static("/css", assetPath+"css")
+	g.router.Static("/dist", assetPath+"dist")
+	g.router.Static("/src", assetPath+"src")
+	g.router.LoadHTMLGlob(assetPath + "html/*.html.tmpl")
 
 	g.router.GET("/", func(c *gin.Context) {
 		jobNames := make([]string, 0)
