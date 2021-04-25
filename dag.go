@@ -61,7 +61,7 @@ func (d Dag) validate() bool {
 	for {
 		popped, ok := deq.PopBack()
 
-		if ok == false {
+		if !ok {
 			break
 		} else {
 			node := popped.(string)
@@ -75,11 +75,7 @@ func (d Dag) validate() bool {
 		}
 	}
 
-	if len(l) == len(d) {
-		return true
-	}
-
-	return false
+	return len(l) == len(d)
 }
 
 // Return the immediately upstream nodes for a given node
@@ -104,9 +100,7 @@ func (d Dag) independentNodes() []string {
 	downstream := make([]string, 0)
 
 	for _, ds := range d {
-		for _, i := range ds {
-			downstream = append(downstream, i)
-		}
+		downstream = append(downstream, ds...)
 	}
 
 	ind := make([]string, 0)

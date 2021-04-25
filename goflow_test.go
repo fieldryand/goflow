@@ -91,7 +91,9 @@ func TestJobRunRoute(t *testing.T) {
 }
 
 func exampleJob() *Job {
-	return NewJob("example").AddTask("sleepOne", BashOp("sleep", "1"))
+	j := NewJob("example", JobParams{})
+	j.AddTask("sleepOne", BashOp("sleep", "1"), TaskParams{})
+	return j
 }
 
 func exampleRouter() *gin.Engine {

@@ -21,13 +21,36 @@ func main() {
 
 // Crunch some numbers
 func complexAnalyticsJob() *goflow.Job {
-	j := goflow.NewJob("ComplexAnalytics")
+	j := goflow.NewJob(
+		"ComplexAnalytics",
+		goflow.JobParams{},
+	)
 
-	j.AddTask("sleepOne", goflow.BashOp("sleep", "1"))
-	j.AddTask("addOneOne", goflow.BashOp("sh", "-c", "echo $((1 + 1))"))
-	j.AddTask("sleepTwo", goflow.BashOp("sleep", "2"))
-	j.AddTask("addTwoFour", goflow.BashOp("sh", "-c", "echo $((2 + 4))"))
-	j.AddTask("addThreeFour", goflow.BashOp("sh", "-c", "echo $((2 + 4))"))
+	j.AddTask(
+		"sleepOne",
+		goflow.BashOp("sleep", "1"),
+		goflow.TaskParams{},
+	)
+	j.AddTask(
+		"addOneOne",
+		goflow.BashOp("sh", "-c", "echo $((1 + 1))"),
+		goflow.TaskParams{},
+	)
+	j.AddTask(
+		"sleepTwo",
+		goflow.BashOp("sleep", "2"),
+		goflow.TaskParams{},
+	)
+	j.AddTask(
+		"addTwoFour",
+		goflow.BashOp("sh", "-c", "echo $((2 + 4))"),
+		goflow.TaskParams{},
+	)
+	j.AddTask(
+		"addThreeFour",
+		goflow.BashOp("sh", "-c", "echo $((3 + 4))"),
+		goflow.TaskParams{},
+	)
 
 	j.SetDownstream(j.Task("sleepOne"), j.Task("addOneOne"))
 	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
@@ -39,7 +62,9 @@ func complexAnalyticsJob() *goflow.Job {
 
 // A task that throws an error
 func messedUpJob() *goflow.Job {
-	return goflow.NewJob("MessedUp").AddTask("whoops", goflow.BashOp("whoops"))
+	j := goflow.NewJob("MessedUp", goflow.JobParams{})
+	j.AddTask("whoops", goflow.BashOp("whoops"), goflow.TaskParams{})
+	return j
 }
 
 // We can create custom operators by implementing the Run() method.
@@ -63,7 +88,7 @@ func (o positiveAdditionOperator) Run() (interface{}, error) {
 
 // Use our custom operation in a job
 func customOperatorJob() *goflow.Job {
-	j := goflow.NewJob("CustomOperator")
-	j.AddTask("posAdd", positiveAddition(5, 6))
+	j := goflow.NewJob("CustomOperator", goflow.JobParams{})
+	j.AddTask("posAdd", positiveAddition(5, 6), goflow.TaskParams{})
 	return j
 }

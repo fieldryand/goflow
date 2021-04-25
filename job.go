@@ -12,17 +12,23 @@ type Job struct {
 	Name     string
 	Tasks    map[string]*Task
 	Dag      Dag
+	Params   JobParams
 	jobState *jobState
 }
 
 // NewJob returns a new job.
-func NewJob(name string) *Job {
+func NewJob(name string, p JobParams) *Job {
 	j := Job{
 		Name:     name,
 		Dag:      make(Dag),
 		Tasks:    make(map[string]*Task),
+		Params:   p,
 		jobState: newJobState()}
 	return &j
+}
+
+// JobParams define optional job parameters.
+type JobParams struct {
 }
 
 // Jobs and tasks are stateful.
@@ -30,10 +36,10 @@ type state string
 
 const (
 	none       state = "None"
-	running          = "Running"
-	upForRetry       = "UpForRetry"
-	failed           = "Failed"
-	successful       = "Successful"
+	running    state = "Running"
+	upForRetry state = "UpForRetry"
+	failed     state = "Failed"
+	successful state = "Successful"
 )
 
 type jobState struct {
@@ -56,9 +62,13 @@ type readOp struct {
 	resp chan *jobState
 }
 
+// TaskParams define optional task parameters.
+type TaskParams struct {
+}
+
 // AddTask adds a task to a job.
-func (j *Job) AddTask(name string, op Operator) *Job {
-	t := newTask(name, op)
+func (j *Job) AddTask(name string, op Operator, p TaskParams) *Job {
+	t := &Task{Name: name, Operator: op, Params: p}
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
 	j.jobState.TaskState[t.Name] = none
@@ -184,11 +194,7 @@ func (j *Job) anyFailed() bool {
 type Task struct {
 	Name     string
 	Operator Operator
-}
-
-func newTask(name string, op Operator) *Task {
-	t := Task{name, op}
-	return &t
+	Params   TaskParams
 }
 
 func (t *Task) run(writes chan writeOp) error {

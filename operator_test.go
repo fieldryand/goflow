@@ -7,8 +7,6 @@ import (
 	"testing"
 )
 
-var engine = operatorTestEngine()
-
 func TestBash(t *testing.T) {
 	result, _ := BashOp("sh", "-c", "echo $((2 + 4))").Run()
 	resultStr := fmt.Sprintf("%v", result)
@@ -48,11 +46,4 @@ func TestGetNotFound(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected an error")
 	}
-}
-
-func operatorTestEngine() *Engine {
-	g := NewEngine()
-	g.Use(DefaultLogger())
-	g.addRoutes()
-	return g
 }
