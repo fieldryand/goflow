@@ -48,6 +48,7 @@ const stateColorMap = {
   "Running": "lime",
   "UpForRetry": "yellow",
   "Successful": "green",
+  "Skipped": "orange",
   "Failed": "red",
 }
 

@@ -11,22 +11,63 @@ var reads = make(chan readOp)
 func TestJob(t *testing.T) {
 	j := NewJob("example", JobParams{})
 
-	j.AddTask("addOneOne", NewAddition(1, 1), TaskParams{})
-	j.AddTask("sleepTwo", BashOp("sleep", "2"), TaskParams{})
-	j.AddTask("addTwoFour", BashOp("sh", "-c", "echo $((2 + 4))"), TaskParams{})
-	j.AddTask("addThreeFour", NewAddition(3, 4), TaskParams{})
+	j.AddTask(
+		"addOneOne",
+		NewAddition(1, 1),
+		TaskParams{},
+	)
+	j.AddTask(
+		"sleepTwo",
+		BashOp("sleep", "2"),
+		TaskParams{},
+	)
+	j.AddTask(
+		"addTwoFour",
+		BashOp("sh", "-c", "echo $((2 + 4))"),
+		TaskParams{},
+	)
+	j.AddTask(
+		"addThreeFour",
+		NewAddition(3, 4),
+		TaskParams{},
+	)
+	j.AddTask(
+		"whoops",
+		BashOp("whoops"),
+		TaskParams{},
+	)
+	j.AddTask(
+		"totallySkippable",
+		BashOp("sh", "-c", "echo 'everything succeeded'"),
+		TaskParams{
+			TriggerRule: "allSuccessful",
+		},
+	)
+	j.AddTask(
+		"cleanUp",
+		BashOp("sh", "-c", "echo 'cleaning up now'"),
+		TaskParams{
+			TriggerRule: "allDone",
+		},
+	)
 
 	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
 	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
 	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
+	j.SetDownstream(j.Task("addOneOne"), j.Task("whoops"))
+	j.SetDownstream(j.Task("whoops"), j.Task("totallySkippable"))
+	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
 
 	j.run(reads)
 
 	expectedState := map[string]state{
-		"addOneOne":    successful,
-		"sleepTwo":     successful,
-		"addTwoFour":   successful,
-		"addThreeFour": successful,
+		"addOneOne":        successful,
+		"sleepTwo":         successful,
+		"addTwoFour":       successful,
+		"addThreeFour":     successful,
+		"whoops":           failed,
+		"totallySkippable": skipped,
+		"cleanUp":          successful,
 	}
 
 	if !reflect.DeepEqual(j.jobState.TaskState, expectedState) {

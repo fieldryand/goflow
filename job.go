@@ -38,6 +38,7 @@ const (
 	none       state = "None"
 	running    state = "Running"
 	upForRetry state = "UpForRetry"
+	skipped    state = "Skipped"
 	failed     state = "Failed"
 	successful state = "Successful"
 )
@@ -46,6 +47,13 @@ type jobState struct {
 	State     state            `json:"state"`
 	TaskState map[string]state `json:"taskState"`
 }
+
+type triggerRule string
+
+const (
+	allDone       triggerRule = "allDone"
+	allSuccessful triggerRule = "allSuccessful"
+)
 
 func newJobState() *jobState {
 	js := jobState{none, make(map[string]state)}
@@ -64,10 +72,14 @@ type readOp struct {
 
 // TaskParams define optional task parameters.
 type TaskParams struct {
+	TriggerRule triggerRule
 }
 
 // AddTask adds a task to a job.
 func (j *Job) AddTask(name string, op Operator, p TaskParams) *Job {
+	if !(p.TriggerRule == allDone || p.TriggerRule == allSuccessful) {
+		p.TriggerRule = allSuccessful
+	}
 	t := &Task{Name: name, Operator: op, Params: p}
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
@@ -107,15 +119,28 @@ func (j *Job) run(reads chan readOp) error {
 			// If dependencies are done, start the dependent tasks
 			if j.jobState.TaskState[t] == none && j.Dag.isDownstream(t) {
 				upstreamDone := true
+				upstreamSuccessful := false
 				for _, us := range j.Dag.dependencies(t) {
 					if j.jobState.TaskState[us] == none || j.jobState.TaskState[us] == running {
 						upstreamDone = false
 					}
+					if j.jobState.TaskState[us] == successful {
+						upstreamSuccessful = true
+					}
 				}
 
-				if upstreamDone {
+				if upstreamDone && task.Params.TriggerRule == "allDone" {
 					j.jobState.TaskState[t] = running
 					go task.run(writes)
+				}
+
+				if upstreamSuccessful && task.Params.TriggerRule == "allSuccessful" {
+					j.jobState.TaskState[t] = running
+					go task.run(writes)
+				}
+
+				if upstreamDone && !upstreamSuccessful && task.Params.TriggerRule == "allSuccessful" {
+					j.jobState.TaskState[t] = skipped
 				}
 			}
 		}

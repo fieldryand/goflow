@@ -11,7 +11,6 @@ func main() {
 	gf := goflow.NewEngine()
 
 	gf.AddJob(complexAnalyticsJob)
-	gf.AddJob(messedUpJob)
 	gf.AddJob(customOperatorJob)
 
 	gf.Use(goflow.DefaultLogger())
@@ -51,19 +50,34 @@ func complexAnalyticsJob() *goflow.Job {
 		goflow.BashOp("sh", "-c", "echo $((3 + 4))"),
 		goflow.TaskParams{},
 	)
+	j.AddTask(
+		"whoops",
+		goflow.BashOp("whoops"),
+		goflow.TaskParams{},
+	)
+	j.AddTask(
+		"totallySkippable",
+		goflow.BashOp("sh", "-c", "echo 'everything succeeded'"),
+		goflow.TaskParams{
+			TriggerRule: "allSuccessful",
+		},
+	)
+	j.AddTask(
+		"cleanUp",
+		goflow.BashOp("sh", "-c", "echo 'cleaning up now'"),
+		goflow.TaskParams{
+			TriggerRule: "allDone",
+		},
+	)
 
 	j.SetDownstream(j.Task("sleepOne"), j.Task("addOneOne"))
 	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
 	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
 	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
+	j.SetDownstream(j.Task("sleepOne"), j.Task("whoops"))
+	j.SetDownstream(j.Task("whoops"), j.Task("totallySkippable"))
+	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
 
-	return j
-}
-
-// A task that throws an error
-func messedUpJob() *goflow.Job {
-	j := goflow.NewJob("MessedUp", goflow.JobParams{})
-	j.AddTask("whoops", goflow.BashOp("whoops"), goflow.TaskParams{})
 	return j
 }
 
