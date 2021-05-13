@@ -4,6 +4,7 @@ go:
         - master
 
 before_install:
+        - go get -u golang.org/x/lint/golint
         - curl https://pre-commit.com/install-local.py | python -
 
 script:
