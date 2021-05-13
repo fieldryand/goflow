@@ -53,7 +53,9 @@ func complexAnalyticsJob() *goflow.Job {
 	j.AddTask(
 		"whoops",
 		goflow.BashOp("whoops"),
-		goflow.TaskParams{},
+		goflow.TaskParams{
+			Retries: 5,
+		},
 	)
 	j.AddTask(
 		"totallySkippable",

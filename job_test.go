@@ -34,7 +34,9 @@ func TestJob(t *testing.T) {
 	j.AddTask(
 		"whoops",
 		BashOp("whoops"),
-		TaskParams{},
+		TaskParams{
+			Retries: 5,
+		},
 	)
 	j.AddTask(
 		"totallySkippable",

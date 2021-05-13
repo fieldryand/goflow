@@ -73,6 +73,7 @@ type readOp struct {
 // TaskParams define optional task parameters.
 type TaskParams struct {
 	TriggerRule triggerRule
+	Retries     int
 }
 
 // AddTask adds a task to a job.
@@ -80,7 +81,14 @@ func (j *Job) AddTask(name string, op Operator, p TaskParams) *Job {
 	if !(p.TriggerRule == allDone || p.TriggerRule == allSuccessful) {
 		p.TriggerRule = allSuccessful
 	}
-	t := &Task{Name: name, Operator: op, Params: p}
+
+	t := &Task{
+		Name:              name,
+		Operator:          op,
+		Params:            p,
+		attemptsRemaining: p.Retries,
+	}
+
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
 	j.jobState.TaskState[t.Name] = none
@@ -107,40 +115,47 @@ func (j *Job) run(reads chan readOp) error {
 	}
 
 	writes := make(chan writeOp)
+	taskState := j.jobState.TaskState
 
 	for {
 		for t, task := range j.Tasks {
 			// Start the independent tasks
-			if j.jobState.TaskState[t] == none && !j.Dag.isDownstream(t) {
-				j.jobState.TaskState[t] = running
+			if taskState[t] == none && !j.Dag.isDownstream(t) {
+				taskState[t] = running
+				go task.run(writes)
+			}
+
+			// Start the tasks that need to be re-tried
+			if taskState[t] == upForRetry {
+				taskState[t] = running
 				go task.run(writes)
 			}
 
 			// If dependencies are done, start the dependent tasks
-			if j.jobState.TaskState[t] == none && j.Dag.isDownstream(t) {
+			if taskState[t] == none && j.Dag.isDownstream(t) {
 				upstreamDone := true
 				upstreamSuccessful := false
 				for _, us := range j.Dag.dependencies(t) {
-					if j.jobState.TaskState[us] == none || j.jobState.TaskState[us] == running {
+					if taskState[us] == none || taskState[us] == running || taskState[us] == upForRetry {
 						upstreamDone = false
 					}
-					if j.jobState.TaskState[us] == successful {
+					if taskState[us] == successful {
 						upstreamSuccessful = true
 					}
 				}
 
 				if upstreamDone && task.Params.TriggerRule == "allDone" {
-					j.jobState.TaskState[t] = running
+					taskState[t] = running
 					go task.run(writes)
 				}
 
 				if upstreamSuccessful && task.Params.TriggerRule == "allSuccessful" {
-					j.jobState.TaskState[t] = running
+					taskState[t] = running
 					go task.run(writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.Params.TriggerRule == "allSuccessful" {
-					j.jobState.TaskState[t] = skipped
+					taskState[t] = skipped
 				}
 			}
 		}
@@ -151,7 +166,7 @@ func (j *Job) run(reads chan readOp) error {
 			read.resp <- j.jobState
 		// Receive updates on task state
 		case write := <-writes:
-			j.jobState.TaskState[write.key] = write.val
+			taskState[write.key] = write.val
 			// Acknowledge the update
 			write.resp <- true
 		}
@@ -217,26 +232,36 @@ func (j *Job) anyFailed() bool {
 // A Task is the unit of work that makes up a job. Whenever a task is executed, it
 // calls its associated operator.
 type Task struct {
-	Name     string
-	Operator Operator
-	Params   TaskParams
+	Name              string
+	Operator          Operator
+	Params            TaskParams
+	attemptsRemaining int
 }
 
 func (t *Task) run(writes chan writeOp) error {
 	res, err := t.Operator.Run()
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
-	logMsg := "task %v reached state %v with result %v"
+	logMsg := "task %v reached state %v - %v attempt(s) remaining - result %v"
 
-	if err != nil {
-		log.Printf(logMsg, t.Name, "failure", err)
+	if err != nil && t.attemptsRemaining > 0 {
+		log.Printf(logMsg, t.Name, "failure", t.attemptsRemaining, err)
+		t.attemptsRemaining = t.attemptsRemaining - 1
+		write := writeOp{t.Name, upForRetry, make(chan bool)}
+		writes <- write
+		<-write.resp
+		return nil
+	}
+
+	if err != nil && t.attemptsRemaining <= 0 {
+		log.Printf(logMsg, t.Name, "failure", t.attemptsRemaining, err)
 		write := writeOp{t.Name, failed, make(chan bool)}
 		writes <- write
 		<-write.resp
 		return err
 	}
 
-	log.Printf(logMsg, t.Name, "success", res)
+	log.Printf(logMsg, t.Name, "success", t.attemptsRemaining, res)
 	write := writeOp{t.Name, successful, make(chan bool)}
 	writes <- write
 	<-write.resp
