@@ -51,10 +51,19 @@ func complexAnalyticsJob() *goflow.Job {
 		goflow.TaskParams{},
 	)
 	j.AddTask(
-		"whoops",
+		"whoopsWithConstantDelay",
 		goflow.BashOp("whoops"),
 		goflow.TaskParams{
-			Retries: 5,
+			Retries:    5,
+			RetryDelay: goflow.ConstantDelay(1),
+		},
+	)
+	j.AddTask(
+		"whoopsWithExponentialBackoff",
+		goflow.BashOp("whoops"),
+		goflow.TaskParams{
+			Retries:    1,
+			RetryDelay: goflow.ExponentialBackoff(),
 		},
 	)
 	j.AddTask(
@@ -76,8 +85,10 @@ func complexAnalyticsJob() *goflow.Job {
 	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
 	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
 	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
-	j.SetDownstream(j.Task("sleepOne"), j.Task("whoops"))
-	j.SetDownstream(j.Task("whoops"), j.Task("totallySkippable"))
+	j.SetDownstream(j.Task("sleepOne"), j.Task("whoopsWithConstantDelay"))
+	j.SetDownstream(j.Task("sleepOne"), j.Task("whoopsWithExponentialBackoff"))
+	j.SetDownstream(j.Task("whoopsWithConstantDelay"), j.Task("totallySkippable"))
+	j.SetDownstream(j.Task("whoopsWithExponentialBackoff"), j.Task("totallySkippable"))
 	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
 
 	return j

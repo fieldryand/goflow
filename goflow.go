@@ -4,8 +4,10 @@ package goflow
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -45,6 +47,13 @@ func (g *Engine) Run(port string) {
 	g.router.Run(port)
 }
 
+type logWriter struct {
+}
+
+func (writer logWriter) Write(bytes []byte) (int, error) {
+	return fmt.Print(time.Now().Format(time.RFC3339) + " [GOFLOW] - " + string(bytes))
+}
+
 func (g *Engine) addRoutes() *Engine {
 	goPath := os.Getenv("GOPATH")
 	assetPath := goPath + "/src/github.com/fieldryand/goflow/assets/"
@@ -52,6 +61,9 @@ func (g *Engine) addRoutes() *Engine {
 	g.router.Static("/dist", assetPath+"dist")
 	g.router.Static("/src", assetPath+"src")
 	g.router.LoadHTMLGlob(assetPath + "html/*.html.tmpl")
+
+	log.SetFlags(0)
+	log.SetOutput(new(logWriter))
 
 	g.router.GET("/", func(c *gin.Context) {
 		jobNames := make([]string, 0)

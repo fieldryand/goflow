@@ -32,10 +32,19 @@ func TestJob(t *testing.T) {
 		TaskParams{},
 	)
 	j.AddTask(
-		"whoops",
+		"whoopsWithConstantDelay",
 		BashOp("whoops"),
 		TaskParams{
-			Retries: 5,
+			Retries:    5,
+			RetryDelay: ConstantDelay(1),
+		},
+	)
+	j.AddTask(
+		"whoopsWithExponentialBackoff",
+		BashOp("whoops"),
+		TaskParams{
+			Retries:    1,
+			RetryDelay: ExponentialBackoff(),
 		},
 	)
 	j.AddTask(
@@ -56,20 +65,23 @@ func TestJob(t *testing.T) {
 	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
 	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
 	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("whoops"))
-	j.SetDownstream(j.Task("whoops"), j.Task("totallySkippable"))
+	j.SetDownstream(j.Task("addOneOne"), j.Task("whoopsWithConstantDelay"))
+	j.SetDownstream(j.Task("addOneOne"), j.Task("whoopsWithExponentialBackoff"))
+	j.SetDownstream(j.Task("whoopsWithConstantDelay"), j.Task("totallySkippable"))
+	j.SetDownstream(j.Task("whoopsWithExponentialBackoff"), j.Task("totallySkippable"))
 	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
 
 	j.run(reads)
 
 	expectedState := map[string]state{
-		"addOneOne":        successful,
-		"sleepTwo":         successful,
-		"addTwoFour":       successful,
-		"addThreeFour":     successful,
-		"whoops":           failed,
-		"totallySkippable": skipped,
-		"cleanUp":          successful,
+		"addOneOne":                    successful,
+		"sleepTwo":                     successful,
+		"addTwoFour":                   successful,
+		"addThreeFour":                 successful,
+		"whoopsWithConstantDelay":      failed,
+		"whoopsWithExponentialBackoff": failed,
+		"totallySkippable":             skipped,
+		"cleanUp":                      successful,
 	}
 
 	if !reflect.DeepEqual(j.jobState.TaskState, expectedState) {

@@ -2,8 +2,6 @@ package goflow
 
 import (
 	"fmt"
-	"log"
-	"time"
 )
 
 // A Job is a workflow consisting of independent and dependent tasks
@@ -68,12 +66,6 @@ type writeOp struct {
 
 type readOp struct {
 	resp chan *jobState
-}
-
-// TaskParams define optional task parameters.
-type TaskParams struct {
-	TriggerRule triggerRule
-	Retries     int
 }
 
 // AddTask adds a task to a job.
@@ -227,50 +219,4 @@ func (j *Job) anyFailed() bool {
 		}
 	}
 	return false
-}
-
-// A Task is the unit of work that makes up a job. Whenever a task is executed, it
-// calls its associated operator.
-type Task struct {
-	Name              string
-	Operator          Operator
-	Params            TaskParams
-	attemptsRemaining int
-}
-
-func (t *Task) run(writes chan writeOp) error {
-	res, err := t.Operator.Run()
-	log.SetFlags(0)
-	log.SetOutput(new(logWriter))
-	logMsg := "task %v reached state %v - %v attempt(s) remaining - result %v"
-
-	if err != nil && t.attemptsRemaining > 0 {
-		log.Printf(logMsg, t.Name, "failure", t.attemptsRemaining, err)
-		t.attemptsRemaining = t.attemptsRemaining - 1
-		write := writeOp{t.Name, upForRetry, make(chan bool)}
-		writes <- write
-		<-write.resp
-		return nil
-	}
-
-	if err != nil && t.attemptsRemaining <= 0 {
-		log.Printf(logMsg, t.Name, "failure", t.attemptsRemaining, err)
-		write := writeOp{t.Name, failed, make(chan bool)}
-		writes <- write
-		<-write.resp
-		return err
-	}
-
-	log.Printf(logMsg, t.Name, "success", t.attemptsRemaining, res)
-	write := writeOp{t.Name, successful, make(chan bool)}
-	writes <- write
-	<-write.resp
-	return nil
-}
-
-type logWriter struct {
-}
-
-func (writer logWriter) Write(bytes []byte) (int, error) {
-	return fmt.Print(time.Now().Format(time.RFC3339) + " [GOFLOW] - " + string(bytes))
 }
