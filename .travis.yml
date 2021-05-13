@@ -3,7 +3,11 @@ language: go
 go:
         - master
 
+before_install:
+        - curl https://pre-commit.com/install-local.py | python -
+
 script:
+        - pre-commit run --all-files
         - go test ./... -coverprofile=coverage.txt
 
 after_success:
