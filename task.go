@@ -28,9 +28,6 @@ func (t *Task) run(writes chan writeOp) error {
 
 	if err != nil && t.attemptsRemaining > 0 {
 		log.Printf(logMsg, t.Name, upForRetry, t.attemptsRemaining, err)
-		t.Params.RetryDelay.wait(t.Name, t.Params.Retries-t.attemptsRemaining)
-		t.attemptsRemaining = t.attemptsRemaining - 1
-
 		write := writeOp{t.Name, upForRetry, make(chan bool)}
 		writes <- write
 		<-write.resp

@@ -119,6 +119,8 @@ func (j *Job) run(reads chan readOp) error {
 
 			// Start the tasks that need to be re-tried
 			if taskState[t] == upForRetry {
+				task.Params.RetryDelay.wait(task.Name, task.Params.Retries-task.attemptsRemaining)
+				task.attemptsRemaining = task.attemptsRemaining - 1
 				taskState[t] = running
 				go task.run(writes)
 			}
@@ -176,7 +178,7 @@ func (j *Job) run(reads chan readOp) error {
 }
 
 func (j *Job) updateJobState() {
-	if j.isRunning() {
+	if !j.allDone() {
 		j.jobState.State = running
 	}
 	if j.allSuccessful() {
@@ -203,15 +205,6 @@ func (j *Job) allSuccessful() bool {
 		}
 	}
 	return true
-}
-
-func (j *Job) isRunning() bool {
-	for _, v := range j.jobState.TaskState {
-		if v == running || v == upForRetry {
-			return true
-		}
-	}
-	return false
 }
 
 func (j *Job) anyFailed() bool {
