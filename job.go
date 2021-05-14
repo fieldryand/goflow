@@ -126,13 +126,13 @@ func (j *Job) run(reads chan readOp) error {
 			// If dependencies are done, start the dependent tasks
 			if taskState[t] == none && j.Dag.isDownstream(t) {
 				upstreamDone := true
-				upstreamSuccessful := false
+				upstreamSuccessful := true
 				for _, us := range j.Dag.dependencies(t) {
 					if taskState[us] == none || taskState[us] == running || taskState[us] == upForRetry {
 						upstreamDone = false
 					}
-					if taskState[us] == successful {
-						upstreamSuccessful = true
+					if taskState[us] != successful {
+						upstreamSuccessful = false
 					}
 				}
 
@@ -148,7 +148,9 @@ func (j *Job) run(reads chan readOp) error {
 
 				if upstreamDone && !upstreamSuccessful && task.Params.TriggerRule == "allSuccessful" {
 					taskState[t] = skipped
+					go task.skip(writes)
 				}
+
 			}
 		}
 
@@ -187,7 +189,7 @@ func (j *Job) updateJobState() {
 
 func (j *Job) allDone() bool {
 	for _, v := range j.jobState.TaskState {
-		if v == none || v == running {
+		if v == none || v == running || v == upForRetry {
 			return false
 		}
 	}

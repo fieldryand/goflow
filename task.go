@@ -27,7 +27,7 @@ func (t *Task) run(writes chan writeOp) error {
 	logMsg := "task %v reached state %v - %v attempt(s) remaining - result %v"
 
 	if err != nil && t.attemptsRemaining > 0 {
-		log.Printf(logMsg, t.Name, "failure", t.attemptsRemaining, err)
+		log.Printf(logMsg, t.Name, upForRetry, t.attemptsRemaining, err)
 		t.Params.RetryDelay.wait(t.Name, t.Params.Retries-t.attemptsRemaining)
 		t.attemptsRemaining = t.attemptsRemaining - 1
 
@@ -38,15 +38,24 @@ func (t *Task) run(writes chan writeOp) error {
 	}
 
 	if err != nil && t.attemptsRemaining <= 0 {
-		log.Printf(logMsg, t.Name, "failure", t.attemptsRemaining, err)
+		log.Printf(logMsg, t.Name, failed, t.attemptsRemaining, err)
 		write := writeOp{t.Name, failed, make(chan bool)}
 		writes <- write
 		<-write.resp
 		return err
 	}
 
-	log.Printf(logMsg, t.Name, "success", t.attemptsRemaining, res)
+	log.Printf(logMsg, t.Name, successful, t.attemptsRemaining, res)
 	write := writeOp{t.Name, successful, make(chan bool)}
+	writes <- write
+	<-write.resp
+	return nil
+}
+
+func (t *Task) skip(writes chan writeOp) error {
+	logMsg := "task %v reached state %v"
+	log.Printf(logMsg, t.Name, skipped)
+	write := writeOp{t.Name, skipped, make(chan bool)}
 	writes <- write
 	<-write.resp
 	return nil
@@ -69,7 +78,7 @@ func ConstantDelay(period int) *ConstantRetryDelay {
 }
 
 func (d *ConstantRetryDelay) wait(taskName string, attempt int) {
-	log.Printf("waiting %v seconds to retry task %v", d.Period, taskName)
+	log.Printf("waiting %v second(s) to retry task %v", d.Period, taskName)
 	time.Sleep(time.Duration(d.Period) * time.Second)
 }
 
