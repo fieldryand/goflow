@@ -37,33 +37,50 @@ function pollingTaskState(jobName) {
   return pollTaskState
 }
 
-function stateCircle(stateColor) {
+function stateCircle(taskState) {
+  switch (taskState) {
+    case "Running":
+      color = "lime";
+      opacity = "100%";
+      break;
+    case "UpForRetry":
+      color = "yellow";
+      opacity = "100%";
+      break;
+    case "Successful":
+      color = "green";
+      opacity = "100%";
+      break;
+    case "Skipped":
+      color = "orange";
+      opacity = "100%";
+      break;
+    case "Failed":
+      color = "red";
+      opacity = "100%";
+      break;
+    case "None":
+      color = "white";
+      opacity = "0%";
+      break;
+  }
+
   return `
   <svg height="20" width="20">
-    <circle cx="10" cy="10" r="9" stroke="black" fill="${stateColor}"/>
+    <circle cx="10" cy="10" r="9" stroke="black" fill="${color}" fill-opacity="${opacity}"/>
   </svg>`
-}
-
-const stateColorMap = {
-  "Running": "lime",
-  "UpForRetry": "yellow",
-  "Successful": "green",
-  "Skipped": "orange",
-  "Failed": "red",
 }
 
 function gettingJobRunTaskState(task) {
   function getJobRunTaskState(jobRun) {
     taskState = jobRun.jobState.taskState[task];
-    stateColor = stateColorMap[taskState];
-    return stateCircle(stateColor)
+    return stateCircle(taskState)
   }
   return getJobRunTaskState
 }
 
 function getJobRunState(jobRun) {
-  stateColor = stateColorMap[jobRun.jobState.state];
-  return stateCircle(stateColor)
+  return stateCircle(jobRun.jobState.state)
 }
 
 function getDag(jobName) {
