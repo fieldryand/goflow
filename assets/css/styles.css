@@ -2,22 +2,41 @@ body {
   font-family: sans-serif;
 }
 
-.table {
+.job-table {
+  display: grid;
+  grid-template-columns: 1fr 1fr 2fr 0.5fr;
+  word-break: break-all;
+}
+
+.job-table > div {
+  padding: .5em
+}
+
+.job-table>div:nth-child(-n+5) {
+  background-color: mediumslateblue;
+  color:white;
+}
+
+.job-table>div:nth-child(8n+5), .job-table>div:nth-child(8n+6), .job-table>div:nth-child(8n+7), .job-table>div:nth-child(8n+8) {
+  background-color: whitesmoke
+}
+
+.task-table {
   display: grid;
   grid-template-columns: 1fr 2fr 0.5fr;
   word-break: break-all;
 }
 
-.table > div {
+.task-table > div {
   padding: .5em
 }
 
-.table>div:nth-child(-n+3) {
+.task-table>div:nth-child(-n+3) {
   background-color: mediumslateblue;
   color:white;
 }
 
-.table>div:nth-child(6n+4), .table>div:nth-child(6n+5), .table>div:nth-child(6n+6) {
+.task-table>div:nth-child(6n+4), .task-table>div:nth-child(6n+5), .task-table>div:nth-child(6n+6) {
   background-color: whitesmoke
 }
 
@@ -42,9 +61,14 @@ body {
 .job-info {
   padding-left: 5em;
   padding-right: 5em;
+  padding-bottom: 1em;
   display: grid;
   grid-template-columns: auto;
-  grid-gap: 3em;
+  grid-gap: 1em;
+}
+
+.job-info-title {
+  font-size: 1.5em;
 }
 
 button {

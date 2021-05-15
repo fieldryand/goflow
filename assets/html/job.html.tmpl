@@ -10,10 +10,14 @@
       <h1><a href="/">Goflow</a></h1>
     </div>
     <div class="job-info">
-      <h2>{{ .jobName }}</h2>
+      <strong class="job-info-title">{{ .jobName }}</strong>
+      <div>
+        <button class="button primary" onclick="submit({{ .jobName }})">Submit</button>
+        </label>
+      </div>
     </div>
     <div class="job-container">
-      <div class="table">
+      <div class="task-table">
         <div>Task</div>
         <div>State</div>
         <div></div>

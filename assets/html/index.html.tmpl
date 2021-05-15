@@ -13,14 +13,18 @@
     <div class="top-nav">
       <h1><a href="/">Goflow</a></h1>
     </div>
+    <div class="job-info">
+      <strong class="job-info-title">Jobs</strong>
+    </div>
     <div class="job-container">
-      <h2>Jobs</h2>
-      <div class="table">
+      <div class="job-table">
         <div>Job</div>
+        <div>Schedule</div>
         <div>State</div>
         <div></div>
         {{ range $ix, $jobName := .jobNames }}
         <div><a href="/jobs/{{ $jobName }}">{{ $jobName }}</a></div>
+        <div></div>
         <div id="{{ $jobName }}"></div>
         <div class="button-container"><button class="button primary" onclick="submit({{ $jobName }})">Submit</button></div>
         {{ end }}
