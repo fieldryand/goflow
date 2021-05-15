@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+	"time"
 )
 
 var reads = make(chan readOp)
@@ -71,7 +72,14 @@ func TestJob(t *testing.T) {
 	j.SetDownstream(j.Task("whoopsWithExponentialBackoff"), j.Task("totallySkippable"))
 	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
 
-	j.run(reads)
+	go j.run(reads)
+	go func() {
+		read := readOp{resp: make(chan *jobState), allDone: j.allDone()}
+		reads <- read
+		<-read.resp
+	}()
+
+	time.Sleep(time.Duration(7) * time.Second)
 
 	expectedState := map[string]state{
 		"addOneOne":                    successful,
@@ -103,7 +111,15 @@ func TestCyclicJob(t *testing.T) {
 func TestTaskFailure(t *testing.T) {
 	j := NewJob("with bad task", JobParams{})
 	j.AddTask("badTask", NewAddition(-1, -1), TaskParams{})
-	j.run(reads)
+
+	go j.run(reads)
+	go func() {
+		read := readOp{resp: make(chan *jobState), allDone: j.allDone()}
+		reads <- read
+		<-read.resp
+	}()
+
+	time.Sleep(time.Duration(1) * time.Second)
 
 	if j.jobState.State != failed {
 		t.Errorf("Got status %v, expected %v", j.jobState.State, failed)

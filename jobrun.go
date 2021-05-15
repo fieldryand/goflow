@@ -14,7 +14,7 @@ type jobRun struct {
 func newJobRun(name string) *jobRun {
 	return &jobRun{
 		JobName:   name,
-		StartedAt: time.Now().UTC().Format(time.RFC3339),
+		StartedAt: time.Now().UTC().Format(time.RFC3339Nano),
 		JobState:  newJobState()}
 }
 

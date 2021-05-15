@@ -65,7 +65,8 @@ type writeOp struct {
 }
 
 type readOp struct {
-	resp chan *jobState
+	resp    chan *jobState
+	allDone bool
 }
 
 // AddTask adds a task to a job.
@@ -156,20 +157,22 @@ func (j *Job) run(reads chan readOp) error {
 			}
 		}
 
+		allDone := false
+
 		select {
 		// Respond to requests for job state
 		case read := <-reads:
+			allDone = read.allDone
 			read.resp <- j.jobState
 		// Receive updates on task state
 		case write := <-writes:
 			taskState[write.key] = write.val
+			j.updateJobState()
 			// Acknowledge the update
 			write.resp <- true
 		}
 
-		j.updateJobState()
-
-		if j.allDone() {
+		if allDone {
 			break
 		}
 	}

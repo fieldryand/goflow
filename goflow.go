@@ -121,7 +121,7 @@ func (g *Engine) addRoutes() *Engine {
 		reads := make(chan readOp)
 		go job.run(reads)
 		go func() {
-			read := readOp{resp: make(chan *jobState)}
+			read := readOp{resp: make(chan *jobState), allDone: job.allDone()}
 			reads <- read
 			for _, jr := range g.jobRuns {
 				if jr.name() == jobRun.name() {
