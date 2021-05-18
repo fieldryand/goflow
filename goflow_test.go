@@ -92,7 +92,7 @@ func TestJobRunRoute(t *testing.T) {
 
 func exampleJob() *Job {
 	j := NewJob("example", JobParams{})
-	j.AddTask("sleepOne", BashOp("sleep", "1"), TaskParams{})
+	j.AddTask("sleepOne", Bash{Cmd: "sleep", Args: []string{"1"}}, TaskParams{})
 	return j
 }
 

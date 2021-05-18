@@ -8,7 +8,7 @@ import (
 )
 
 func TestBash(t *testing.T) {
-	result, _ := BashOp("sh", "-c", "echo $((2 + 4))").Run()
+	result, _ := Bash{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}}.Run()
 	resultStr := fmt.Sprintf("%v", result)
 	expected := "6\n"
 
@@ -26,7 +26,7 @@ func TestGetSuccess(t *testing.T) {
 		}))
 	defer srv.Close()
 
-	result, _ := GetOp(srv.URL).Run()
+	result, _ := Get{srv.URL}.Run()
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -41,7 +41,7 @@ func TestGetNotFound(t *testing.T) {
 		}))
 	defer srv.Close()
 
-	_, err := GetOp(srv.URL).Run()
+	_, err := Get{srv.URL}.Run()
 
 	if err == nil {
 		t.Errorf("Expected an error")

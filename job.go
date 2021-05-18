@@ -9,7 +9,7 @@ import (
 type Job struct {
 	Name     string
 	Tasks    map[string]*Task
-	Dag      Dag
+	Dag      dag
 	Params   JobParams
 	jobState *jobState
 }
@@ -18,7 +18,7 @@ type Job struct {
 func NewJob(name string, p JobParams) *Job {
 	j := Job{
 		Name:     name,
-		Dag:      make(Dag),
+		Dag:      make(dag),
 		Tasks:    make(map[string]*Task),
 		Params:   p,
 		jobState: newJobState()}
@@ -139,17 +139,17 @@ func (j *Job) run(reads chan readOp) error {
 					}
 				}
 
-				if upstreamDone && task.Params.TriggerRule == "allDone" {
+				if upstreamDone && task.Params.TriggerRule == allDone {
 					taskState[t] = running
 					go task.run(writes)
 				}
 
-				if upstreamSuccessful && task.Params.TriggerRule == "allSuccessful" {
+				if upstreamSuccessful && task.Params.TriggerRule == allSuccessful {
 					taskState[t] = running
 					go task.run(writes)
 				}
 
-				if upstreamDone && !upstreamSuccessful && task.Params.TriggerRule == "allSuccessful" {
+				if upstreamDone && !upstreamSuccessful && task.Params.TriggerRule == allSuccessful {
 					taskState[t] = skipped
 					go task.skip(writes)
 				}

@@ -64,31 +64,18 @@ type RetryDelay interface {
 	wait(taskName string, attempt int)
 }
 
-// ConstantRetryDelay waits a constant number of seconds between task retries.
-type ConstantRetryDelay struct {
-	Period int
-}
+// ConstantDelay waits a constant number of seconds between task retries.
+type ConstantDelay struct{ Period int }
 
-// ConstantDelay returns a ConstantRetryDelay.
-func ConstantDelay(period int) *ConstantRetryDelay {
-	return &ConstantRetryDelay{Period: period}
-}
-
-func (d *ConstantRetryDelay) wait(taskName string, attempt int) {
+func (d *ConstantDelay) wait(taskName string, attempt int) {
 	log.Printf("waiting %v second(s) to retry task %v", d.Period, taskName)
 	time.Sleep(time.Duration(d.Period) * time.Second)
 }
 
-// ExpBackoffRetryDelay waits exponentially longer between each retry attempt.
-type ExpBackoffRetryDelay struct {
-}
+// ExponentialBackoff waits exponentially longer between each retry attempt.
+type ExponentialBackoff struct{}
 
-// ExponentialBackoff returns an ExpBackoffRetryDelay.
-func ExponentialBackoff() *ExpBackoffRetryDelay {
-	return &ExpBackoffRetryDelay{}
-}
-
-func (d *ExpBackoffRetryDelay) wait(taskName string, attempt int) {
+func (d *ExponentialBackoff) wait(taskName string, attempt int) {
 	delay := math.Pow(2, float64(attempt))
 	log.Printf("waiting %v seconds to retry task %v", delay, taskName)
 	time.Sleep(time.Duration(delay) * time.Second)

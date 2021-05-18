@@ -5,7 +5,7 @@ import (
 )
 
 func TestDag(t *testing.T) {
-	d := make(Dag)
+	d := make(dag)
 
 	d.addNode("a")
 	d.addNode("b")
@@ -32,7 +32,7 @@ func TestDag(t *testing.T) {
 			[]string{"a"})
 	}
 
-	e := make(Dag)
+	e := make(dag)
 
 	e.addNode("a")
 	e.addNode("b")
@@ -45,7 +45,7 @@ func TestDag(t *testing.T) {
 }
 
 func TestDagWithSingleNode(t *testing.T) {
-	d := make(Dag)
+	d := make(dag)
 	d.addNode("a")
 	res := d.isDownstream("a")
 

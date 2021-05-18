@@ -14,50 +14,50 @@ func TestJob(t *testing.T) {
 
 	j.AddTask(
 		"addOneOne",
-		NewAddition(1, 1),
+		Addition{1, 1},
 		TaskParams{},
 	)
 	j.AddTask(
 		"sleepTwo",
-		BashOp("sleep", "2"),
+		Bash{Cmd: "sleep", Args: []string{"2"}},
 		TaskParams{},
 	)
 	j.AddTask(
 		"addTwoFour",
-		BashOp("sh", "-c", "echo $((2 + 4))"),
+		Bash{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
 		TaskParams{},
 	)
 	j.AddTask(
 		"addThreeFour",
-		NewAddition(3, 4),
+		Addition{3, 4},
 		TaskParams{},
 	)
 	j.AddTask(
 		"whoopsWithConstantDelay",
-		BashOp("whoops"),
+		Bash{Cmd: "whoops", Args: []string{}},
 		TaskParams{
 			Retries:    5,
-			RetryDelay: ConstantDelay(1),
+			RetryDelay: &ConstantDelay{1},
 		},
 	)
 	j.AddTask(
 		"whoopsWithExponentialBackoff",
-		BashOp("whoops"),
+		Bash{Cmd: "whoops", Args: []string{}},
 		TaskParams{
 			Retries:    1,
-			RetryDelay: ExponentialBackoff(),
+			RetryDelay: &ExponentialBackoff{},
 		},
 	)
 	j.AddTask(
 		"totallySkippable",
-		BashOp("sh", "-c", "echo 'everything succeeded'"),
+		Bash{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
 		TaskParams{
 			TriggerRule: "allSuccessful",
 		},
 	)
 	j.AddTask(
 		"cleanUp",
-		BashOp("sh", "-c", "echo 'cleaning up now'"),
+		Bash{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
 		TaskParams{
 			TriggerRule: "allDone",
 		},
@@ -100,8 +100,8 @@ func TestJob(t *testing.T) {
 func TestCyclicJob(t *testing.T) {
 	j := NewJob("cyclic", JobParams{})
 
-	j.AddTask("addTwoTwo", NewAddition(2, 2), TaskParams{})
-	j.AddTask("addFourFour", NewAddition(4, 4), TaskParams{})
+	j.AddTask("addTwoTwo", Addition{2, 2}, TaskParams{})
+	j.AddTask("addFourFour", Addition{4, 4}, TaskParams{})
 	j.SetDownstream(j.Task("addTwoTwo"), j.Task("addFourFour"))
 	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
 
@@ -110,7 +110,7 @@ func TestCyclicJob(t *testing.T) {
 
 func TestTaskFailure(t *testing.T) {
 	j := NewJob("with bad task", JobParams{})
-	j.AddTask("badTask", NewAddition(-1, -1), TaskParams{})
+	j.AddTask("badTask", Addition{-1, -1}, TaskParams{})
 
 	go j.run(reads)
 	go func() {
@@ -128,11 +128,6 @@ func TestTaskFailure(t *testing.T) {
 
 // Adds two nonnegative numbers.
 type Addition struct{ a, b int }
-
-func NewAddition(a, b int) *Addition {
-	o := Addition{a, b}
-	return &o
-}
 
 func (o Addition) Run() (interface{}, error) {
 

@@ -4,25 +4,25 @@ import (
 	"github.com/ef-ds/deque"
 )
 
-// A Dag is a directed acyclic graph represented by a simple map
+// A DAG is a directed acyclic graph represented by a simple map
 // where a key is a node in the graph, and a value is a slice of
 // immediately downstream dependent nodes.
-type Dag map[string][]string
+type dag map[string][]string
 
 // A node has a name and 0 or more dependent nodes
-func (d Dag) addNode(name string) {
+func (d dag) addNode(name string) {
 	deps := make([]string, 0)
 	d[name] = deps
 }
 
 // Create an edge between an independent and dependent node
-func (d Dag) setDownstream(ind, dep string) {
+func (d dag) setDownstream(ind, dep string) {
 	d[ind] = append(d[ind], dep)
 }
 
 // Returns true if a node is a downstream node, false if it
 // is independent.
-func (d Dag) isDownstream(nodeName string) bool {
+func (d dag) isDownstream(nodeName string) bool {
 	ind := d.independentNodes()
 
 	for _, name := range ind {
@@ -35,7 +35,7 @@ func (d Dag) isDownstream(nodeName string) bool {
 }
 
 // Ensure the DAG is acyclic
-func (d Dag) validate() bool {
+func (d dag) validate() bool {
 	degree := make(map[string]int)
 
 	for node := range d {
@@ -79,7 +79,7 @@ func (d Dag) validate() bool {
 }
 
 // Return the immediately upstream nodes for a given node
-func (d Dag) dependencies(node string) []string {
+func (d dag) dependencies(node string) []string {
 
 	dependencies := make([]string, 0)
 
@@ -95,7 +95,7 @@ func (d Dag) dependencies(node string) []string {
 }
 
 // Return all the independent nodes in the graph
-func (d Dag) independentNodes() []string {
+func (d dag) independentNodes() []string {
 
 	downstream := make([]string, 0)
 
