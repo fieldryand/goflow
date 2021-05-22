@@ -7,6 +7,8 @@
 
 A workflow scheduler written in Go and geared toward orchestration of ETL or analytics workloads. Goflow comes complete with a web UI for inspecting and triggering jobs. It is heavily inspired by Apache Airflow and [Dagobah](https://github.com/thieman/dagobah), but the emphasis is on ease of setup and cost (runnable on an EC2 or GCE micro instance).
 
+![screenshot-jobs-complex-analytics](https://user-images.githubusercontent.com/3333324/119238771-ee975f00-bb44-11eb-9a65-df758a922651.png)
+
 ## Usage
 
 ```go
