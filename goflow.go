@@ -12,16 +12,16 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Engine contains job data and a router.
-type Engine struct {
+// Goflow contains job data and a router.
+type Goflow struct {
 	Jobs    map[string](func() *Job)
 	jobRuns []*jobRun
 	router  *gin.Engine
 }
 
-// NewEngine returns a Goflow engine.
-func NewEngine() *Engine {
-	return &Engine{
+// New returns a Goflow engine.
+func New() *Goflow {
+	return &Goflow{
 		Jobs:    make(map[string](func() *Job)),
 		jobRuns: make([]*jobRun, 0),
 		router:  gin.New(),
@@ -30,19 +30,19 @@ func NewEngine() *Engine {
 
 // AddJob takes a job-emitting function and registers it
 // with the engine.
-func (g *Engine) AddJob(jobFn func() *Job) *Engine {
+func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
 	g.Jobs[jobFn().Name] = jobFn
 	return g
 }
 
 // Use middleware in the Gin router.
-func (g *Engine) Use(middleware gin.HandlerFunc) *Engine {
+func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
 	g.router.Use(middleware)
 	return g
 }
 
 // Run runs the webserver.
-func (g *Engine) Run(port string) {
+func (g *Goflow) Run(port string) {
 	g.addRoutes()
 	g.router.Run(port)
 }
@@ -54,7 +54,7 @@ func (writer logWriter) Write(bytes []byte) (int, error) {
 	return fmt.Print(time.Now().Format(time.RFC3339) + " [GOFLOW] - " + string(bytes))
 }
 
-func (g *Engine) addRoutes() *Engine {
+func (g *Goflow) addRoutes() *Goflow {
 	goPath := os.Getenv("GOPATH")
 	assetPath := goPath + "/src/github.com/fieldryand/goflow/assets/"
 	g.router.Static("/css", assetPath+"css")

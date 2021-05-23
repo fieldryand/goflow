@@ -12,56 +12,44 @@ var reads = make(chan readOp)
 func TestJob(t *testing.T) {
 	j := NewJob("example", JobParams{})
 
-	j.AddTask(
-		"addOneOne",
-		Addition{1, 1},
-		TaskParams{},
-	)
-	j.AddTask(
-		"sleepTwo",
-		Bash{Cmd: "sleep", Args: []string{"2"}},
-		TaskParams{},
-	)
-	j.AddTask(
-		"addTwoFour",
-		Bash{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
-		TaskParams{},
-	)
-	j.AddTask(
-		"addThreeFour",
-		Addition{3, 4},
-		TaskParams{},
-	)
-	j.AddTask(
-		"whoopsWithConstantDelay",
-		Bash{Cmd: "whoops", Args: []string{}},
-		TaskParams{
-			Retries:    5,
-			RetryDelay: &ConstantDelay{1},
-		},
-	)
-	j.AddTask(
-		"whoopsWithExponentialBackoff",
-		Bash{Cmd: "whoops", Args: []string{}},
-		TaskParams{
-			Retries:    1,
-			RetryDelay: &ExponentialBackoff{},
-		},
-	)
-	j.AddTask(
-		"totallySkippable",
-		Bash{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
-		TaskParams{
-			TriggerRule: "allSuccessful",
-		},
-	)
-	j.AddTask(
-		"cleanUp",
-		Bash{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
-		TaskParams{
-			TriggerRule: "allDone",
-		},
-	)
+	j.Add(&Task{
+		Name:     "addOneOne",
+		Operator: Addition{1, 1},
+	})
+	j.Add(&Task{
+		Name:     "sleepTwo",
+		Operator: Bash{Cmd: "sleep", Args: []string{"2"}},
+	})
+	j.Add(&Task{
+		Name:     "addTwoFour",
+		Operator: Bash{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+	})
+	j.Add(&Task{
+		Name:     "addThreeFour",
+		Operator: Addition{3, 4},
+	})
+	j.Add(&Task{
+		Name:       "whoopsWithConstantDelay",
+		Operator:   Bash{Cmd: "whoops", Args: []string{}},
+		Retries:    5,
+		RetryDelay: &ConstantDelay{1},
+	})
+	j.Add(&Task{
+		Name:       "whoopsWithExponentialBackoff",
+		Operator:   Bash{Cmd: "whoops", Args: []string{}},
+		Retries:    1,
+		RetryDelay: &ExponentialBackoff{},
+	})
+	j.Add(&Task{
+		Name:        "totallySkippable",
+		Operator:    Bash{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
+		TriggerRule: "allSuccessful",
+	})
+	j.Add(&Task{
+		Name:        "cleanUp",
+		Operator:    Bash{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
+		TriggerRule: "allDone",
+	})
 
 	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
 	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
@@ -100,8 +88,8 @@ func TestJob(t *testing.T) {
 func TestCyclicJob(t *testing.T) {
 	j := NewJob("cyclic", JobParams{})
 
-	j.AddTask("addTwoTwo", Addition{2, 2}, TaskParams{})
-	j.AddTask("addFourFour", Addition{4, 4}, TaskParams{})
+	j.Add(&Task{Name: "addTwoTwo", Operator: Addition{2, 2}})
+	j.Add(&Task{Name: "addFourFour", Operator: Addition{4, 4}})
 	j.SetDownstream(j.Task("addTwoTwo"), j.Task("addFourFour"))
 	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
 
@@ -110,7 +98,7 @@ func TestCyclicJob(t *testing.T) {
 
 func TestTaskFailure(t *testing.T) {
 	j := NewJob("with bad task", JobParams{})
-	j.AddTask("badTask", Addition{-1, -1}, TaskParams{})
+	j.Add(&Task{Name: "badTask", Operator: Addition{-1, -1}})
 
 	go j.run(reads)
 	go func() {

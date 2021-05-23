@@ -4,6 +4,9 @@ import (
 	"github.com/ef-ds/deque"
 )
 
+// Credit: The DAG implementation here is roughly a port of the
+// one from this Python project: https://github.com/thieman/dagobah
+
 // A DAG is a directed acyclic graph represented by a simple map
 // where a key is a node in the graph, and a value is a slice of
 // immediately downstream dependent nodes.

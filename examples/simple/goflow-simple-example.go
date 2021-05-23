@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	gf := goflow.NewEngine()
+	gf := goflow.New()
 
 	gf.AddJob(complexAnalyticsJob)
 	gf.AddJob(customOperatorJob)
@@ -25,61 +25,48 @@ func complexAnalyticsJob() *goflow.Job {
 		goflow.JobParams{},
 	)
 
-	j.AddTask(
-		"sleepOne",
-		goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
-		goflow.TaskParams{},
-	)
-	j.AddTask(
-		"addOneOne",
-		goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
-		goflow.TaskParams{},
-	)
-	j.AddTask(
-		"sleepTwo",
-		goflow.Bash{Cmd: "sleep", Args: []string{"2"}},
-		goflow.TaskParams{},
-	)
-	j.AddTask(
-		"addTwoFour",
-		goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
-		goflow.TaskParams{},
-	)
-	j.AddTask(
-		"addThreeFour",
-		goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
-		goflow.TaskParams{},
-	)
-	j.AddTask(
-		"whoopsWithConstantDelay",
-		goflow.Bash{Cmd: "whoops", Args: []string{}},
-		goflow.TaskParams{
-			Retries:    5,
-			RetryDelay: &goflow.ConstantDelay{Period: 1},
-		},
-	)
-	j.AddTask(
-		"whoopsWithExponentialBackoff",
-		goflow.Bash{Cmd: "whoops", Args: []string{}},
-		goflow.TaskParams{
-			Retries:    1,
-			RetryDelay: &goflow.ExponentialBackoff{},
-		},
-	)
-	j.AddTask(
-		"totallySkippable",
-		goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
-		goflow.TaskParams{
-			TriggerRule: "allSuccessful",
-		},
-	)
-	j.AddTask(
-		"cleanUp",
-		goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
-		goflow.TaskParams{
-			TriggerRule: "allDone",
-		},
-	)
+	j.Add(&goflow.Task{
+		Name:     "sleepOne",
+		Operator: goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
+	})
+	j.Add(&goflow.Task{
+		Name:     "addOneOne",
+		Operator: goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
+	})
+	j.Add(&goflow.Task{
+		Name:     "sleepTwo",
+		Operator: goflow.Bash{Cmd: "sleep", Args: []string{"2"}},
+	})
+	j.Add(&goflow.Task{
+		Name:     "addTwoFour",
+		Operator: goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+	})
+	j.Add(&goflow.Task{
+		Name:     "addThreeFour",
+		Operator: goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
+	})
+	j.Add(&goflow.Task{
+		Name:       "whoopsWithConstantDelay",
+		Operator:   goflow.Bash{Cmd: "whoops", Args: []string{}},
+		Retries:    5,
+		RetryDelay: &goflow.ConstantDelay{Period: 1},
+	})
+	j.Add(&goflow.Task{
+		Name:       "whoopsWithExponentialBackoff",
+		Operator:   goflow.Bash{Cmd: "whoops", Args: []string{}},
+		Retries:    1,
+		RetryDelay: &goflow.ExponentialBackoff{},
+	})
+	j.Add(&goflow.Task{
+		Name:        "totallySkippable",
+		Operator:    goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
+		TriggerRule: "allSuccessful",
+	})
+	j.Add(&goflow.Task{
+		Name:        "cleanUp",
+		Operator:    goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
+		TriggerRule: "allDone",
+	})
 
 	j.SetDownstream(j.Task("sleepOne"), j.Task("addOneOne"))
 	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
@@ -109,6 +96,6 @@ func (o PositiveAddition) Run() (interface{}, error) {
 // Use our custom operation in a job.
 func customOperatorJob() *goflow.Job {
 	j := goflow.NewJob("CustomOperator", goflow.JobParams{})
-	j.AddTask("posAdd", PositiveAddition{5, 6}, goflow.TaskParams{})
+	j.Add(&goflow.Task{Name: "posAdd", Operator: PositiveAddition{5, 6}})
 	return j
 }

@@ -6,19 +6,14 @@ import (
 	"time"
 )
 
-// TaskParams define optional task parameters.
-type TaskParams struct {
-	TriggerRule triggerRule
-	Retries     int
-	RetryDelay  RetryDelay
-}
-
 // A Task is the unit of work that makes up a job. Whenever a task is executed, it
 // calls its associated operator.
 type Task struct {
 	Name              string
 	Operator          Operator
-	Params            TaskParams
+	TriggerRule       triggerRule
+	Retries           int
+	RetryDelay        RetryDelay
 	attemptsRemaining int
 }
 

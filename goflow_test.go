@@ -92,12 +92,12 @@ func TestJobRunRoute(t *testing.T) {
 
 func exampleJob() *Job {
 	j := NewJob("example", JobParams{})
-	j.AddTask("sleepOne", Bash{Cmd: "sleep", Args: []string{"1"}}, TaskParams{})
+	j.Add(&Task{Name: "sleepOne", Operator: Bash{Cmd: "sleep", Args: []string{"1"}}})
 	return j
 }
 
 func exampleRouter() *gin.Engine {
-	g := NewEngine()
+	g := New()
 	g.AddJob(exampleJob)
 	g.Use(DefaultLogger())
 	g.addRoutes()

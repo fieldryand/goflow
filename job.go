@@ -69,18 +69,13 @@ type readOp struct {
 	allDone bool
 }
 
-// AddTask adds a task to a job.
-func (j *Job) AddTask(name string, op Operator, p TaskParams) *Job {
-	if !(p.TriggerRule == allDone || p.TriggerRule == allSuccessful) {
-		p.TriggerRule = allSuccessful
+// Add a task to a job.
+func (j *Job) Add(t *Task) *Job {
+	if !(t.TriggerRule == allDone || t.TriggerRule == allSuccessful) {
+		t.TriggerRule = allSuccessful
 	}
 
-	t := &Task{
-		Name:              name,
-		Operator:          op,
-		Params:            p,
-		attemptsRemaining: p.Retries,
-	}
+	t.attemptsRemaining = t.Retries
 
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
@@ -120,7 +115,7 @@ func (j *Job) run(reads chan readOp) error {
 
 			// Start the tasks that need to be re-tried
 			if taskState[t] == upForRetry {
-				task.Params.RetryDelay.wait(task.Name, task.Params.Retries-task.attemptsRemaining)
+				task.RetryDelay.wait(task.Name, task.Retries-task.attemptsRemaining)
 				task.attemptsRemaining = task.attemptsRemaining - 1
 				taskState[t] = running
 				go task.run(writes)
@@ -139,17 +134,17 @@ func (j *Job) run(reads chan readOp) error {
 					}
 				}
 
-				if upstreamDone && task.Params.TriggerRule == allDone {
+				if upstreamDone && task.TriggerRule == allDone {
 					taskState[t] = running
 					go task.run(writes)
 				}
 
-				if upstreamSuccessful && task.Params.TriggerRule == allSuccessful {
+				if upstreamSuccessful && task.TriggerRule == allSuccessful {
 					taskState[t] = running
 					go task.run(writes)
 				}
 
-				if upstreamDone && !upstreamSuccessful && task.Params.TriggerRule == allSuccessful {
+				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
 					taskState[t] = skipped
 					go task.skip(writes)
 				}
