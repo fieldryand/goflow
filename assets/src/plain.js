@@ -40,34 +40,28 @@ function pollingTaskState(jobName) {
 function stateCircle(taskState) {
   switch (taskState) {
     case "Running":
-      color = "lime";
-      opacity = "100%";
+      color = "#dffbe3";
       break;
     case "UpForRetry":
-      color = "yellow";
-      opacity = "100%";
+      color = "#ffc620";
       break;
     case "Successful":
-      color = "green";
-      opacity = "100%";
+      color = "#39c84e";
       break;
     case "Skipped":
-      color = "orange";
-      opacity = "100%";
+      color = "#abbefb";
       break;
     case "Failed":
-      color = "red";
-      opacity = "100%";
+      color = "#ff4020";
       break;
     case "None":
       color = "white";
-      opacity = "0%";
       break;
   }
 
   return `
   <svg height="20" width="20">
-    <circle cx="10" cy="10" r="9" stroke="black" fill="${color}" fill-opacity="${opacity}"/>
+    <circle cx="10" cy="10" r="9" stroke="#676767" fill="${color}"/>
   </svg>`
 }
 
