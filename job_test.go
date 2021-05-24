@@ -32,13 +32,13 @@ func TestJob(t *testing.T) {
 		Name:       "whoopsWithConstantDelay",
 		Operator:   Bash{Cmd: "whoops", Args: []string{}},
 		Retries:    5,
-		RetryDelay: &ConstantDelay{1},
+		RetryDelay: ConstantDelay{1},
 	})
 	j.Add(&Task{
 		Name:       "whoopsWithExponentialBackoff",
 		Operator:   Bash{Cmd: "whoops", Args: []string{}},
 		Retries:    1,
-		RetryDelay: &ExponentialBackoff{},
+		RetryDelay: ExponentialBackoff{},
 	})
 	j.Add(&Task{
 		Name:        "totallySkippable",

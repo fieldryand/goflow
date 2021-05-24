@@ -33,7 +33,11 @@ TODO: scheduling
 ```go
 package main
 
-import "github.com/fieldryand/goflow"
+import (
+	"errors"
+
+	"github.com/fieldryand/goflow"
+)
 
 func myJob() *goflow.Job {
 	j := goflow.NewJob("myJob", goflow.JobParams{})
@@ -72,7 +76,7 @@ func myJob() *goflow.Job {
 		Name:       "sleepForOneSecond",
 		Operator:   goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
 		Retries:    5,
-		RetryDelay: &goflow.ConstantDelay{Period: 1},
+		RetryDelay: goflow.ConstantDelay{Period: 1},
 	})
 	return j
 }
@@ -98,7 +102,7 @@ func myJob() *goflow.Job {
 		Name:        "sleepForOneSecond",
 		Operator:    goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
 		Retries:     5,
-		RetryDelay:  &goflow.ConstantDelay{Period: 1},
+		RetryDelay:  goflow.ConstantDelay{Period: 1},
 		TriggerRule: "allDone",
 	})
 	return j

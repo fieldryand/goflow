@@ -49,13 +49,13 @@ func complexAnalyticsJob() *goflow.Job {
 		Name:       "whoopsWithConstantDelay",
 		Operator:   goflow.Bash{Cmd: "whoops", Args: []string{}},
 		Retries:    5,
-		RetryDelay: &goflow.ConstantDelay{Period: 1},
+		RetryDelay: goflow.ConstantDelay{Period: 1},
 	})
 	j.Add(&goflow.Task{
 		Name:       "whoopsWithExponentialBackoff",
 		Operator:   goflow.Bash{Cmd: "whoops", Args: []string{}},
 		Retries:    1,
-		RetryDelay: &goflow.ExponentialBackoff{},
+		RetryDelay: goflow.ExponentialBackoff{},
 	})
 	j.Add(&goflow.Task{
 		Name:        "totallySkippable",
