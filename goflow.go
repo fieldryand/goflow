@@ -97,17 +97,9 @@ func (g *Goflow) addRoutes() *Goflow {
 			taskNames = append(taskNames, task.Name)
 		}
 
-		jobRuns := make([]*jobRun, 0)
-		for _, jr := range g.jobRuns {
-			if jr.JobName == name {
-				jobRuns = append(jobRuns, jr)
-			}
-		}
-
 		c.HTML(http.StatusOK, "job.html.tmpl", gin.H{
 			"jobName":   name,
 			"taskNames": taskNames,
-			"jobRuns":   jobRuns,
 		})
 	})
 

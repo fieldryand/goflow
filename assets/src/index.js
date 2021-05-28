@@ -1,13 +1,21 @@
 var dagreD3 = require("dagre-d3");
 var d3 = require("d3");
 
-export function graphViz(dag) {
+async function getDag(jobName) {
+  const response = await fetch(`/jobs/${jobName}/dag`);
+  const json = await response.json();
+  return json
+}
+
+export async function graphViz(jobName) {
+
+  const dag = await getDag(jobName);
+
   // Create a new directed graph
-  var dag = JSON.parse(dag);
   var g = new dagreD3.graphlib.Graph().setGraph({});
 
   for (var key in dag) {
-    g.setNode(key, { label: key });
+    g.setNode(key, { id: "node-" + key, label: key });
     for (var val in dag[key]) {
       g.setEdge(key, dag[key][val], {});
     }
