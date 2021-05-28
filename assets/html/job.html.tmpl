@@ -3,7 +3,6 @@
     <link rel="stylesheet" href="/css/styles.css">
     <title>Goflow</title>
     <script src="/src/plain.js"></script>
-    <script>pollingTaskState({{ .jobName }})()</script>
   </head>
   <body>
     <div class="top-nav">
@@ -28,10 +27,12 @@
         {{ end }}
       </div>
       <div class="graph-container">
+        <div class="lastJobRunTs">Last run: {{ .lastJobRunTs }}</div>
         <svg class="graph" width="100%"><g/></svg>
       </div>
     </div>
   </body>
 </html>
 <script src="/dist/dist.js"></script>
-<script>goflowUI.graphViz(getDag({{ .jobName }}))</script>
+<script>goflowUI.graphViz({{ .jobName }})</script>
+<script>pollingTaskState({{ .jobName }})()</script>
