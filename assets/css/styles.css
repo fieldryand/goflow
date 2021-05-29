@@ -104,3 +104,15 @@ a {
 .graph-container {
   padding-top: 2em;
 }
+
+.status-indicator {
+  height: 20px;
+  width: 20px;
+  border-radius: 50%;
+  border: 1px solid #676767;
+  margin-right: 0.5em;
+}
+
+.status-wrapper {
+  display: flex;
+}

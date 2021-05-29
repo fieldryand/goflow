@@ -23,7 +23,7 @@
         <div></div>
         {{ range $ix, $taskName := .taskNames }}
         <div>{{ $taskName }}</div>
-        <div id="{{ $taskName }}"></div>
+        <div class="status-wrapper" id="{{ $taskName }}"></div>
         <div></div>
         {{ end }}
       </div>

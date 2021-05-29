@@ -60,9 +60,8 @@ function stateCircle(taskState) {
   }
 
   return `
-  <svg height="20" width="20">
-    <circle cx="10" cy="10" r="9" stroke="#676767" fill="${color}"/>
-  </svg>`
+  <div class="status-indicator" style="background-color:${color};"></div>
+  `
 }
 
 function gettingJobRunTaskState(task) {
