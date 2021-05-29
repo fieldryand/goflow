@@ -13,11 +13,22 @@ function updateGraphViz(jobRuns) {
     lastJobRun = jobRuns.reverse()[0]
     taskState = lastJobRun.jobState.taskState;
     for (taskName in taskState) {
-      taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
-      rect = document.getElementById("node-" + taskName).querySelector("rect").outerHTML;
-      newHTML = rect.replace("<rect ", '<rect style="stroke-width: 2; stroke: ' + taskRunColor + '" ');
-      document.getElementById("node-" + taskName).querySelector("rect").outerHTML = newHTML;
+      if (document.getElementsByClassName("output")) {
+        taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
+        rect = document.getElementById("node-" + taskName).querySelector("rect").outerHTML;
+        newHTML = rect.replace("<rect ", '<rect style="stroke-width: 2; stroke: ' + taskRunColor + '" ');
+        document.getElementById("node-" + taskName).querySelector("rect").outerHTML = newHTML;
+      }
     }
+  }
+}
+
+function updateLastRunTs(jobRuns) {
+  if (jobRuns.reverse()[0]) {
+    lastJobRunTs = jobRuns.reverse()[0].startedAt;
+    lastJobRunTsHTML = document.getElementById("last-job-run-ts-wrapper").innerHTML;
+    newHTML = lastJobRunTsHTML.replace(/.*/, `Last run: ${lastJobRunTs}`);
+    document.getElementById("last-job-run-ts-wrapper").innerHTML = newHTML;
   }
 }
 
@@ -41,6 +52,7 @@ function pollingTaskState(jobName) {
       .then(data => {
         updateTaskStateCircles(data.jobRuns);
         updateGraphViz(data.jobRuns);
+        updateLastRunTs(data.jobRuns);
       })
     setTimeout(pollTaskState, 2000);
   }
