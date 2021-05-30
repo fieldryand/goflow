@@ -9,17 +9,19 @@ import (
 type Job struct {
 	Name     string
 	Tasks    map[string]*Task
+	Schedule string
 	Dag      dag
 	Params   JobParams
 	jobState *jobState
 }
 
 // NewJob returns a new job.
-func NewJob(name string, p JobParams) *Job {
+func NewJob(name string, schedule string, p JobParams) *Job {
 	j := Job{
 		Name:     name,
 		Dag:      make(dag),
 		Tasks:    make(map[string]*Task),
+		Schedule: schedule,
 		Params:   p,
 		jobState: newJobState()}
 	return &j

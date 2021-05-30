@@ -3,8 +3,8 @@
     <link rel="stylesheet" href="/css/styles.css">
     <script src="src/plain.js"></script>
     <script>
-    {{ range $ix, $jobName := .jobNames }}
-      pollingJobState("{{ $jobName }}")();
+    {{ range .jobs }}
+      pollingJobState("{{ .Name }}")();
     {{ end }}
     </script>
     <title>Goflow</title>
@@ -22,11 +22,11 @@
         <div>Schedule</div>
         <div>State</div>
         <div></div>
-        {{ range $ix, $jobName := .jobNames }}
-        <div><a href="/jobs/{{ $jobName }}">{{ $jobName }}</a></div>
-        <div></div>
-        <div class="status-wrapper" id="{{ $jobName }}"></div>
-        <div class="button-container"><button class="button primary" onclick="submit({{ $jobName }})">Submit</button></div>
+        {{ range .jobs }}
+        <div><a href="/jobs/{{ .Name }}">{{ .Name }}</a></div>
+        <div>{{ .Schedule }}</div>
+        <div id="{{ .Name }}"></div>
+        <div class="button-container"><button class="button primary" onclick="submit({{ .Name }})">Submit</button></div>
         {{ end }}
       </div>
     </div>

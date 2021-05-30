@@ -10,7 +10,7 @@ import (
 var reads = make(chan readOp)
 
 func TestJob(t *testing.T) {
-	j := NewJob("example", JobParams{})
+	j := NewJob("example", "* * * * *", JobParams{})
 
 	j.Add(&Task{
 		Name:     "addOneOne",
@@ -86,7 +86,7 @@ func TestJob(t *testing.T) {
 }
 
 func TestCyclicJob(t *testing.T) {
-	j := NewJob("cyclic", JobParams{})
+	j := NewJob("cyclic", "* * * * *", JobParams{})
 
 	j.Add(&Task{Name: "addTwoTwo", Operator: Addition{2, 2}})
 	j.Add(&Task{Name: "addFourFour", Operator: Addition{4, 4}})
@@ -97,7 +97,7 @@ func TestCyclicJob(t *testing.T) {
 }
 
 func TestTaskFailure(t *testing.T) {
-	j := NewJob("with bad task", JobParams{})
+	j := NewJob("with bad task", "* * * * *", JobParams{})
 	j.Add(&Task{Name: "badTask", Operator: Addition{-1, -1}})
 
 	go j.run(reads)

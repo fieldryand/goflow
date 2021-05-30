@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/robfig/cron/v3"
 )
 
 // Goflow contains job data and a router.
@@ -17,6 +18,7 @@ type Goflow struct {
 	Jobs    map[string](func() *Job)
 	jobRuns []*jobRun
 	router  *gin.Engine
+	cron    *cron.Cron
 }
 
 // New returns a Goflow engine.
@@ -25,6 +27,7 @@ func New() *Goflow {
 		Jobs:    make(map[string](func() *Job)),
 		jobRuns: make([]*jobRun, 0),
 		router:  gin.New(),
+		cron:    cron.New(),
 	}
 }
 
@@ -32,7 +35,31 @@ func New() *Goflow {
 // with the engine.
 func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
 	g.Jobs[jobFn().Name] = jobFn
+	g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobFn().Name) })
 	return g
+}
+
+// runJob tells the engine to run a given job and returns
+// the corresponding jobRun.
+func (g *Goflow) runJob(jobName string) *jobRun {
+	job := g.Jobs[jobName]()
+	jobRun := newJobRun(jobName)
+
+	g.jobRuns = append(g.jobRuns, jobRun)
+	reads := make(chan readOp)
+
+	go job.run(reads)
+	go func() {
+		read := readOp{resp: make(chan *jobState), allDone: job.allDone()}
+		reads <- read
+		for _, jr := range g.jobRuns {
+			if jr.name() == jobRun.name() {
+				jr.JobState = <-read.resp
+			}
+		}
+	}()
+
+	return jobRun
 }
 
 // Use middleware in the Gin router.
@@ -44,6 +71,7 @@ func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
 // Run runs the webserver.
 func (g *Goflow) Run(port string) {
 	g.addRoutes()
+	g.cron.Start()
 	g.router.Run(port)
 }
 
@@ -66,14 +94,11 @@ func (g *Goflow) addRoutes() *Goflow {
 	log.SetOutput(new(logWriter))
 
 	g.router.GET("/", func(c *gin.Context) {
-		jobNames := make([]string, 0)
+		jobs := make([]*Job, 0)
 		for _, job := range g.Jobs {
-			jobNames = append(jobNames, job().Name)
+			jobs = append(jobs, job())
 		}
-
-		c.HTML(http.StatusOK, "index.html.tmpl", gin.H{
-			"jobNames": jobNames,
-		})
+		c.HTML(http.StatusOK, "index.html.tmpl", gin.H{"jobs": jobs})
 	})
 
 	g.router.GET("/health", func(c *gin.Context) {
@@ -105,22 +130,7 @@ func (g *Goflow) addRoutes() *Goflow {
 
 	g.router.POST("/jobs/:name/submit", func(c *gin.Context) {
 		name := c.Param("name")
-		job := g.Jobs[name]()
-		jobRun := newJobRun(name)
-
-		g.jobRuns = append(g.jobRuns, jobRun)
-
-		reads := make(chan readOp)
-		go job.run(reads)
-		go func() {
-			read := readOp{resp: make(chan *jobState), allDone: job.allDone()}
-			reads <- read
-			for _, jr := range g.jobRuns {
-				if jr.name() == jobRun.name() {
-					jr.JobState = <-read.resp
-				}
-			}
-		}()
+		jobRun := g.runJob(name)
 		c.String(http.StatusOK, fmt.Sprintf("submitted job run %s", jobRun.name()))
 	})
 

@@ -22,6 +22,7 @@ func main() {
 func complexAnalyticsJob() *goflow.Job {
 	j := goflow.NewJob(
 		"ComplexAnalytics",
+		"* * * * *",
 		goflow.JobParams{},
 	)
 
@@ -95,7 +96,7 @@ func (o PositiveAddition) Run() (interface{}, error) {
 
 // Use our custom operation in a job.
 func customOperatorJob() *goflow.Job {
-	j := goflow.NewJob("CustomOperator", goflow.JobParams{})
+	j := goflow.NewJob("CustomOperator", "* * * * *", goflow.JobParams{})
 	j.Add(&goflow.Task{Name: "posAdd", Operator: PositiveAddition{5, 6}})
 	return j
 }
