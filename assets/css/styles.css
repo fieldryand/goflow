@@ -23,20 +23,19 @@ body {
 
 .task-table {
   display: grid;
-  grid-template-columns: 1fr 2fr 0.5fr;
-  word-break: break-all;
+  grid-template-columns: max-content auto;
 }
 
 .task-table > div {
   padding: .5em
 }
 
-.task-table>div:nth-child(-n+3) {
+.task-table>div:nth-child(-n+2) {
   background-color: mediumslateblue;
   color:white;
 }
 
-.task-table>div:nth-child(6n+4), .task-table>div:nth-child(6n+5), .task-table>div:nth-child(6n+6) {
+.task-table>div:nth-child(4n+3), .task-table>div:nth-child(4n+4) {
   background-color: whitesmoke
 }
 
@@ -106,13 +105,14 @@ a {
 }
 
 .status-indicator {
-  height: 20px;
-  width: 20px;
+  height: 1em;
+  width: 1em;
   border-radius: 50%;
   border: 1px solid #676767;
-  margin-right: 0.5em;
 }
 
 .status-wrapper {
   display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em
 }

@@ -19,11 +19,9 @@
       <div class="task-table">
         <div>Task</div>
         <div>State</div>
-        <div></div>
         {{ range $ix, $taskName := .taskNames }}
         <div>{{ $taskName }}</div>
         <div class="status-wrapper" id="{{ $taskName }}"></div>
-        <div></div>
         {{ end }}
       </div>
       <div class="graph-container">
