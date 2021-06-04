@@ -11,24 +11,7 @@ type Job struct {
 	Tasks    map[string]*Task
 	Schedule string
 	Dag      dag
-	Params   JobParams
 	jobState *jobState
-}
-
-// NewJob returns a new job.
-func NewJob(name string, schedule string, p JobParams) *Job {
-	j := Job{
-		Name:     name,
-		Dag:      make(dag),
-		Tasks:    make(map[string]*Task),
-		Schedule: schedule,
-		Params:   p,
-		jobState: newJobState()}
-	return &j
-}
-
-// JobParams define optional job parameters.
-type JobParams struct {
 }
 
 // Jobs and tasks are stateful.
@@ -69,6 +52,14 @@ type writeOp struct {
 type readOp struct {
 	resp    chan *jobState
 	allDone bool
+}
+
+// Initialize a job.
+func (j *Job) Initialize() *Job {
+	j.Dag = make(dag)
+	j.Tasks = make(map[string]*Task)
+	j.jobState = newJobState()
+	return j
 }
 
 // Add a task to a job.

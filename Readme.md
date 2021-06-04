@@ -16,7 +16,7 @@ Goflow was built as a simple replacement for Apache Airflow to manage some small
 
 ## Concepts & features
 
-- `Job`: A Goflow workflow is called a `Job`. ~Jobs can be scheduled using cron syntax.~
+- `Job`: A Goflow workflow is called a `Job`. Jobs can be scheduled using cron syntax.
 - `Task`: Each job consists of one or more tasks organized into a dependency graph. A task can be run under certain conditions; by default, a task runs when all of its dependencies finish successfully.
 - Concurrency: Jobs and tasks execute concurrently.
 - `Operator`: An `Operator` defines the work done by a `Task`. Goflow comes with two basic operators: `Bash` for running shell commands and `Get` for HTTP GET requests. Implementing your own `Operator` is straightforward.
@@ -28,7 +28,6 @@ Goflow is pretty basic and doesn't support a database, queueing, alerting, or co
 ### Jobs and tasks
 
 Let's start by creating a function that returns a job called `myJob`. There is a single task in this job that sleeps for one second.
-TODO: scheduling
 
 ```go
 package main
@@ -40,7 +39,8 @@ import (
 )
 
 func myJob() *goflow.Job {
-	j := goflow.NewJob("myJob", goflow.JobParams{})
+	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *"}
+	j.Initialize()
 	j.Add(&goflow.Task{
 		Name:     "sleepForOneSecond",
 		Operator: goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
@@ -71,7 +71,8 @@ Let's add a retry strategy to `myJob`:
 
 ```go
 func myJob() *goflow.Job {
-	j := goflow.NewJob("myJob", goflow.JobParams{})
+	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *"}
+	j.Initialize()
 	j.Add(&goflow.Task{
 		Name:       "sleepForOneSecond",
 		Operator:   goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
@@ -97,7 +98,8 @@ Let's modify `myJob` to have the trigger rule `allDone`.
 
 ```go
 func myJob() *goflow.Job {
-	j := goflow.NewJob("myJob", goflow.JobParams{})
+	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *"}
+	j.Initialize()
 	j.Add(&goflow.Task{
 		Name:        "sleepForOneSecond",
 		Operator:    goflow.Bash{Cmd: "sleep", Args: []string{"1"}},

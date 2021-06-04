@@ -20,11 +20,12 @@ func main() {
 
 // Crunch some numbers
 func complexAnalyticsJob() *goflow.Job {
-	j := goflow.NewJob(
-		"ComplexAnalytics",
-		"* * * * *",
-		goflow.JobParams{},
-	)
+	j := &goflow.Job{
+		Name:     "ComplexAnalytics",
+		Schedule: "* * * * *",
+	}
+
+	j.Initialize()
 
 	j.Add(&goflow.Task{
 		Name:     "sleepOne",
@@ -96,7 +97,8 @@ func (o PositiveAddition) Run() (interface{}, error) {
 
 // Use our custom operation in a job.
 func customOperatorJob() *goflow.Job {
-	j := goflow.NewJob("CustomOperator", "* * * * *", goflow.JobParams{})
+	j := &goflow.Job{Name: "CustomOperator", Schedule: "* * * * *"}
+	j.Initialize()
 	j.Add(&goflow.Task{Name: "posAdd", Operator: PositiveAddition{5, 6}})
 	return j
 }
