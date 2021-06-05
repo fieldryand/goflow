@@ -45,6 +45,22 @@ function pollingJobState(jobName) {
   return pollJobState
 }
 
+function pollingJobActive(jobName) {
+  function pollJobActive() {
+    fetch(`/jobs/${jobName}/isActive`)
+      .then(response => response.json())
+      .then(data => {
+        if (data) {
+          document.getElementById("schedule-badge-" + jobName).setAttribute("class", "schedule-badge-active");
+        } else {
+          document.getElementById("schedule-badge-" + jobName).setAttribute("class", "schedule-badge-inactive");
+        }
+      })
+    setTimeout(pollJobActive, 2000);
+  }
+  return pollJobActive
+}
+
 function pollingTaskState(jobName) {
   function pollTaskState() {
     fetch(`/jobs/${jobName}/jobRuns`)
@@ -111,5 +127,11 @@ function getJobRunState(jobRun) {
 function submit(jobName) {
   var xhttp = new XMLHttpRequest();
   xhttp.open("POST", `/jobs/${jobName}/submit`, true);
+  xhttp.send();
+}
+
+function toggleActive(jobName) {
+  var xhttp = new XMLHttpRequest();
+  xhttp.open("POST", `/jobs/${jobName}/toggleActive`, true);
   xhttp.send();
 }

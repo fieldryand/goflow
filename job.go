@@ -7,11 +7,12 @@ import (
 // A Job is a workflow consisting of independent and dependent tasks
 // organized into a graph.
 type Job struct {
-	Name     string
-	Tasks    map[string]*Task
-	Schedule string
-	Dag      dag
-	jobState *jobState
+	Name            string
+	Tasks           map[string]*Task
+	Schedule        string
+	Dag             dag
+	ActiveByDefault bool
+	jobState        *jobState
 }
 
 // Jobs and tasks are stateful.

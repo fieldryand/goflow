@@ -5,6 +5,7 @@
     <script>
     {{ range .jobs }}
       pollingJobState("{{ .Name }}")();
+      pollingJobActive("{{ .Name }}")();
     {{ end }}
     </script>
     <title>Goflow</title>
@@ -24,9 +25,14 @@
         <div></div>
         {{ range .jobs }}
         <div><a href="/jobs/{{ .Name }}">{{ .Name }}</a></div>
-        <div>{{ .Schedule }}</div>
+        <div>
+          <div id="schedule-badge-{{ .Name }}">{{ .Schedule }}</div>
+        </div>
         <div class="status-wrapper" id="{{ .Name }}"></div>
-        <div class="button-container"><button class="button primary" onclick="submit({{ .Name }})">Submit</button></div>
+        <div class="button-container">
+          <button class="button primary" onclick="toggleActive({{ .Name }})">Toggle scheduling</button>
+          <button class="button primary" onclick="submit({{ .Name }})">Submit</button>
+        </div>
         {{ end }}
       </div>
     </div>

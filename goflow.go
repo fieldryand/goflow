@@ -15,19 +15,23 @@ import (
 
 // Goflow contains job data and a router.
 type Goflow struct {
-	Jobs    map[string](func() *Job)
-	jobRuns []*jobRun
-	router  *gin.Engine
-	cron    *cron.Cron
+	Jobs             map[string](func() *Job)
+	jobRuns          []*jobRun
+	router           *gin.Engine
+	cron             *cron.Cron
+	activeJobFlags   map[string]bool
+	activeJobCronIDs map[string]cron.EntryID
 }
 
 // New returns a Goflow engine.
 func New() *Goflow {
 	return &Goflow{
-		Jobs:    make(map[string](func() *Job)),
-		jobRuns: make([]*jobRun, 0),
-		router:  gin.New(),
-		cron:    cron.New(),
+		Jobs:             make(map[string](func() *Job)),
+		jobRuns:          make([]*jobRun, 0),
+		router:           gin.New(),
+		cron:             cron.New(),
+		activeJobFlags:   make(map[string]bool),
+		activeJobCronIDs: make(map[string]cron.EntryID),
 	}
 }
 
@@ -35,8 +39,34 @@ func New() *Goflow {
 // with the engine.
 func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
 	g.Jobs[jobFn().Name] = jobFn
-	g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobFn().Name) })
+
+	if jobFn().ActiveByDefault {
+		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobFn().Name) })
+		g.activeJobCronIDs[jobFn().Name] = entryID
+		g.activeJobFlags[jobFn().Name] = true
+	} else {
+		g.activeJobFlags[jobFn().Name] = false
+	}
+
 	return g
+}
+
+// toggleActive flips a job's cron schedule status from active to inactive
+// and vice versa. It returns true if the new status is active and false
+// if it is inactive.
+func (g *Goflow) toggleActive(jobName string) (bool, error) {
+	if g.activeJobFlags[jobName] {
+		g.cron.Remove(g.activeJobCronIDs[jobName])
+		delete(g.activeJobCronIDs, jobName)
+		g.activeJobFlags[jobName] = false
+		return false, nil
+	}
+
+	jobFn := g.Jobs[jobName]
+	entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobName) })
+	g.activeJobCronIDs[jobName] = entryID
+	g.activeJobFlags[jobName] = true
+	return true, nil
 }
 
 // runJob tells the engine to run a given job and returns
@@ -132,6 +162,18 @@ func (g *Goflow) addRoutes() *Goflow {
 		name := c.Param("name")
 		jobRun := g.runJob(name)
 		c.String(http.StatusOK, fmt.Sprintf("submitted job run %s", jobRun.name()))
+	})
+
+	g.router.POST("/jobs/:name/toggleActive", func(c *gin.Context) {
+		name := c.Param("name")
+		isActive, _ := g.toggleActive(name)
+		c.String(http.StatusOK, fmt.Sprintf("isActive flag for job %s set to %v", name, isActive))
+	})
+
+	g.router.GET("/jobs/:name/isActive", func(c *gin.Context) {
+		name := c.Param("name")
+		isActive := g.activeJobFlags[name]
+		c.JSON(http.StatusOK, isActive)
 	})
 
 	g.router.GET("/jobs/:name/jobRuns", func(c *gin.Context) {
