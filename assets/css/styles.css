@@ -45,6 +45,12 @@ body {
   gap: 0.5em;
 }
 
+.button-container-job-page {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5em;
+}
+
 .top-nav {
   padding-left: 5em;
   padding-right: 5em;

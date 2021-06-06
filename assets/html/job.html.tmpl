@@ -11,8 +11,11 @@
     <div class="job-info">
       <strong class="job-info-title">{{ .jobName }}</strong>
       <div>
+        <div id="schedule-badge-{{ .jobName }}">{{ .schedule }}</div>
+      </div>
+      <div class="button-container-job-page">
+        <button class="button primary" onclick="toggleActive({{ .jobName }})">Toggle scheduling</button>
         <button class="button primary" onclick="submit({{ .jobName }})">Submit</button>
-        </label>
       </div>
     </div>
     <div class="job-container">
@@ -34,3 +37,4 @@
 <script src="/dist/dist.js"></script>
 <script>goflowUI.graphViz({{ .jobName }})</script>
 <script>pollingTaskState({{ .jobName }})()</script>
+<script>pollingJobActive({{ .jobName }})()</script>

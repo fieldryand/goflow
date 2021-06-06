@@ -155,6 +155,7 @@ func (g *Goflow) addRoutes() *Goflow {
 		c.HTML(http.StatusOK, "job.html.tmpl", gin.H{
 			"jobName":   name,
 			"taskNames": taskNames,
+			"schedule":  g.Jobs[name]().Schedule,
 		})
 	})
 
