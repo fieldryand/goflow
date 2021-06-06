@@ -50,6 +50,33 @@ func TestJobSubmitRoute(t *testing.T) {
 	}
 }
 
+func TestJobToggleActiveRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/jobs/example/toggleActive", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+
+	req, _ = http.NewRequest("POST", "/jobs/exampleActiveSchedule/toggleActive", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
+func TestJobIsActiveRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/jobs/example/isActive", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
 func TestRouteNotFound(t *testing.T) {
 	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/blaaaa", nil)
@@ -97,9 +124,21 @@ func exampleJob() *Job {
 	return j
 }
 
+func exampleActiveJob() *Job {
+	j := &Job{
+		Name:            "exampleActiveSchedule",
+		Schedule:        "* * * * *",
+		ActiveByDefault: true,
+	}
+	j.Initialize()
+	j.Add(&Task{Name: "sleepOne", Operator: Bash{Cmd: "sleep", Args: []string{"1"}}})
+	return j
+}
+
 func exampleRouter() *gin.Engine {
 	g := New()
 	g.AddJob(exampleJob)
+	g.AddJob(exampleActiveJob)
 	g.Use(DefaultLogger())
 	g.addRoutes()
 	return g.router
