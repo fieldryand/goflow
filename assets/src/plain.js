@@ -15,9 +15,8 @@ function updateGraphViz(jobRuns) {
     for (taskName in taskState) {
       if (document.getElementsByClassName("output")) {
         taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
-        rect = document.getElementById("node-" + taskName).querySelector("rect").outerHTML;
-        newHTML = rect.replace("<rect ", '<rect style="stroke-width: 2; stroke: ' + taskRunColor + '" ');
-        document.getElementById("node-" + taskName).querySelector("rect").outerHTML = newHTML;
+        rect = document.getElementById("node-" + taskName).querySelector("rect");
+        rect.setAttribute("style", "stroke-width: 2; stroke: " + taskRunColor);
       }
     }
   }
