@@ -8,7 +8,7 @@
 
 A workflow/DAG orchestrator written in Go and meant for ETL or analytics pipelines. Goflow comes complete with a web UI for inspecting and triggering jobs.
 
-![screenshot-jobs-complex-analytics](https://user-images.githubusercontent.com/3333324/119273683-48af2780-bc0c-11eb-94af-c6324e8fa311.png)
+![screenshot-jobs-complex-analytics-02](https://user-images.githubusercontent.com/3333324/120916675-3375d680-c6ab-11eb-8a28-a5adecd34512.png)
 
 ## Motivation
 
