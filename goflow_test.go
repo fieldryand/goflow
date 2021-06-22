@@ -48,6 +48,14 @@ func TestJobSubmitRoute(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/jobs/bla/submit", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
+	}
 }
 
 func TestJobToggleActiveRoute(t *testing.T) {
@@ -65,6 +73,14 @@ func TestJobToggleActiveRoute(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/jobs/bla/toggleActive", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
+	}
 }
 
 func TestJobIsActiveRoute(t *testing.T) {
@@ -74,6 +90,14 @@ func TestJobIsActiveRoute(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/jobs/bla/isActive", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
 	}
 }
 
@@ -95,6 +119,14 @@ func TestJobOverviewRoute(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/jobs/bla", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
+	}
 }
 
 func TestJobDagRoute(t *testing.T) {
@@ -105,6 +137,14 @@ func TestJobDagRoute(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/jobs/bla/dag", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
+	}
 }
 
 func TestJobRunRoute(t *testing.T) {
@@ -114,6 +154,14 @@ func TestJobRunRoute(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("GET", "/jobs/bla/jobRuns", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
 	}
 }
 
