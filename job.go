@@ -56,7 +56,7 @@ type readOp struct {
 }
 
 // Initialize a job.
-func (j *Job) Initialize() *Job {
+func (j *Job) initialize() *Job {
 	j.Dag = make(dag)
 	j.Tasks = make(map[string]*Task)
 	j.jobState = newJobState()
@@ -65,6 +65,10 @@ func (j *Job) Initialize() *Job {
 
 // Add a task to a job.
 func (j *Job) Add(t *Task) *Job {
+	if j.Dag == nil {
+		j.initialize()
+	}
+
 	if !(t.TriggerRule == allDone || t.TriggerRule == allSuccessful) {
 		t.TriggerRule = allSuccessful
 	}

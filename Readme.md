@@ -40,7 +40,6 @@ import (
 
 func myJob() *goflow.Job {
 	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *"}
-	j.Initialize()
 	j.Add(&goflow.Task{
 		Name:     "sleepForOneSecond",
 		Operator: goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
@@ -72,7 +71,6 @@ Let's add a retry strategy to `myJob`:
 ```go
 func myJob() *goflow.Job {
 	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *"}
-	j.Initialize()
 	j.Add(&goflow.Task{
 		Name:       "sleepForOneSecond",
 		Operator:   goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
@@ -99,7 +97,6 @@ Let's modify `myJob` to have the trigger rule `allDone`.
 ```go
 func myJob() *goflow.Job {
 	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *"}
-	j.Initialize()
 	j.Add(&goflow.Task{
 		Name:        "sleepForOneSecond",
 		Operator:    goflow.Bash{Cmd: "sleep", Args: []string{"1"}},

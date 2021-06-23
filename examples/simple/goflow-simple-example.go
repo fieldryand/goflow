@@ -25,8 +25,6 @@ func complexAnalyticsJob() *goflow.Job {
 		Schedule: "* * * * *",
 	}
 
-	j.Initialize()
-
 	j.Add(&goflow.Task{
 		Name:     "sleepOne",
 		Operator: goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
@@ -98,7 +96,6 @@ func (o PositiveAddition) Run() (interface{}, error) {
 // Use our custom operation in a job.
 func customOperatorJob() *goflow.Job {
 	j := &goflow.Job{Name: "CustomOperator", Schedule: "* * * * *"}
-	j.Initialize()
 	j.Add(&goflow.Task{Name: "posAdd", Operator: PositiveAddition{5, 6}})
 	return j
 }
