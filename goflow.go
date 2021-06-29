@@ -24,7 +24,7 @@ type Goflow struct {
 	db               database
 }
 
-// Options contains options.
+// Options to control various Goflow behavior.
 type Options struct {
 	DBType     string
 	BoltDBPath string

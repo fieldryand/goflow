@@ -8,22 +8,38 @@
 
 A workflow/DAG orchestrator written in Go and meant for ETL or analytics pipelines. Goflow comes complete with a web UI for inspecting and triggering jobs.
 
+## Contents
+
+1. [Screenshots](#screenshots)
+2. [Motivation](#motivation)
+3. [Concepts and features](#concepts-and-features)
+   1. [Jobs and tasks](#jobs-and-tasks)
+   2. [Custom Operators](#custom-operators)
+   3. [Retries](#retries)
+   4. [Trigger rules](#trigger-rules)
+   5. [The Goflow engine](#the-goflow-engine)
+4. [Installation and development](#installation-and-development)
+   1. [Running the example](#running-the-example)
+   2. [TODO: Docker image](#todo-docker-image)
+
+## Screenshots
+
+Job details page:
+
 ![screenshot-jobs-complex-analytics-02](https://user-images.githubusercontent.com/3333324/120916675-3375d680-c6ab-11eb-8a28-a5adecd34512.png)
 
 ## Motivation
 
 Goflow was built as a simple replacement for Apache Airflow to manage some small data pipeline projects. Airflow started to feel too heavyweight for these projects where all the computation was offloaded to independent services. I wanted a solution with minimal memory requirements to save costs and avoid the occasional high memory usage/leak issues I was facing with Airflow.
 
-## Concepts & features
+## Concepts and features
 
 - `Job`: A Goflow workflow is called a `Job`. Jobs can be scheduled using cron syntax.
 - `Task`: Each job consists of one or more tasks organized into a dependency graph. A task can be run under certain conditions; by default, a task runs when all of its dependencies finish successfully.
 - Concurrency: Jobs and tasks execute concurrently.
 - `Operator`: An `Operator` defines the work done by a `Task`. Goflow comes with two basic operators: `Bash` for running shell commands and `Get` for HTTP GET requests. Implementing your own `Operator` is straightforward.
 - Retries: You can allow a `Task` a given number of retry attempts. Goflow comes with two retry strategies, `ConstantDelay` and `ExponentialBackoff`.
-- Jobrun: Goflow maintains a history of jobruns in memory.
-
-Goflow is pretty basic and doesn't support a database, queueing, alerting, or concurrency limits. It may support these features in the future.
+- Database: Goflow supports two database types, in-memory and BoltDB. BoltDB will persist your history of job runs, whereas in-memory means the history will be lost each time the Goflow server is stopped. The default is BoltDB.
 
 ### Jobs and tasks
 
@@ -114,12 +130,16 @@ Finally, let's create a Goflow engine, register our job, attach a logger, and ru
 
 ```go
 func main() {
-	gf := goflow.New()
+	gf := goflow.New(goflow.Options{})
 	gf.AddJob(myJob)
 	gf.Use(goflow.DefaultLogger())
 	gf.Run(":8100")
 }
 ```
+
+You can pass different options to the engine. Options currently supported:
+- `DBType`: `boltdb` (default) or `memory`
+- `BoltDBPath`: This will be the filepath of the Bolt database on disk.
 
 Goflow is built on the [Gin framework](https://github.com/gin-gonic/gin), so you can pass any Gin handler to `Use`.
 
