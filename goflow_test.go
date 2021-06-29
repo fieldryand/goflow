@@ -9,6 +9,7 @@ import (
 )
 
 var router = exampleRouter()
+var routerWithMemoryDB = exampleRouterWithMemoryDB()
 
 func TestIndexRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
@@ -44,6 +45,12 @@ func TestJobSubmitRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/jobs/example/submit", nil)
 	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+
+	routerWithMemoryDB.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
@@ -156,6 +163,12 @@ func TestJobRunRoute(t *testing.T) {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 
+	routerWithMemoryDB.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/jobs/bla/jobRuns", nil)
 	router.ServeHTTP(w, req)
@@ -185,6 +198,14 @@ func exampleRouter() *gin.Engine {
 	g := New(Options{})
 	g.AddJob(exampleJob)
 	g.AddJob(exampleActiveJob)
+	g.Use(DefaultLogger())
+	g.addRoutes()
+	return g.router
+}
+
+func exampleRouterWithMemoryDB() *gin.Engine {
+	g := New(Options{DBType: "memory"})
+	g.AddJob(exampleJob)
 	g.Use(DefaultLogger())
 	g.addRoutes()
 	return g.router
