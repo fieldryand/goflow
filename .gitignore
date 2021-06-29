@@ -9,3 +9,6 @@ assets/node_modules
 
 # Front-end compiled assets
 assets/dist
+
+# The default goflow database
+goflow.db

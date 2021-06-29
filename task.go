@@ -17,6 +17,13 @@ type Task struct {
 	attemptsRemaining int
 }
 
+type triggerRule string
+
+const (
+	allDone       triggerRule = "allDone"
+	allSuccessful triggerRule = "allSuccessful"
+)
+
 func (t *Task) run(writes chan writeOp) error {
 	res, err := t.Operator.Run()
 	logMsg := "task %v reached state %v - %v attempt(s) remaining - result %v"

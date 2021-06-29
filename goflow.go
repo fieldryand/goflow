@@ -1,5 +1,5 @@
-// Package goflow implements a workflow scheduler geared
-// toward orchestration of ETL or analytics workloads.
+// Package goflow implements a web UI-based workflow orchestrator
+// inspired by Apache Airflow.
 package goflow
 
 import (
@@ -7,32 +7,54 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 
+	"github.com/boltdb/bolt"
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
 )
 
 // Goflow contains job data and a router.
 type Goflow struct {
+	Options          Options
 	Jobs             map[string](func() *Job)
-	jobRuns          []*jobRun
 	router           *gin.Engine
 	cron             *cron.Cron
 	activeJobFlags   map[string]bool
 	activeJobCronIDs map[string]cron.EntryID
+	db               database
+}
+
+// Options contains options.
+type Options struct {
+	DBType     string
+	BoltDBPath string
 }
 
 // New returns a Goflow engine.
-func New() *Goflow {
-	return &Goflow{
+func New(opts Options) *Goflow {
+	if opts.DBType == "" {
+		opts.DBType = "boltdb"
+	}
+	if opts.BoltDBPath == "" {
+		opts.BoltDBPath = "goflow.db"
+	}
+
+	g := &Goflow{
+		Options:          opts,
 		Jobs:             make(map[string](func() *Job)),
-		jobRuns:          make([]*jobRun, 0),
 		router:           gin.New(),
 		cron:             cron.New(),
 		activeJobFlags:   make(map[string]bool),
 		activeJobCronIDs: make(map[string]cron.EntryID),
 	}
+
+	if opts.DBType == "boltdb" {
+		g.initializeBoltDB()
+	} else {
+		g.initializeMemoryDB()
+	}
+
+	return g
 }
 
 // AddJob takes a job-emitting function and registers it
@@ -73,23 +95,21 @@ func (g *Goflow) toggleActive(jobName string) (bool, error) {
 // the corresponding jobRun.
 func (g *Goflow) runJob(jobName string) *jobRun {
 	job := g.Jobs[jobName]()
-	jobRun := newJobRun(jobName)
-
-	g.jobRuns = append(g.jobRuns, jobRun)
+	jr := newJobRun(jobName)
+	g.db.writeJobRun(jr)
 	reads := make(chan readOp)
 
 	go job.run(reads)
 	go func() {
-		read := readOp{resp: make(chan *jobState), allDone: job.allDone()}
-		reads <- read
-		for _, jr := range g.jobRuns {
-			if jr.name() == jobRun.name() {
-				jr.JobState = <-read.resp
-			}
+		for {
+			read := readOp{resp: make(chan *jobState), allDone: job.allDone()}
+			reads <- read
+			updatedJobState := <-read.resp
+			g.db.updateJobState(jr, updatedJobState)
 		}
 	}()
 
-	return jobRun
+	return jr
 }
 
 // Use middleware in the Gin router.
@@ -106,20 +126,41 @@ func (g *Goflow) Run(port string) {
 	g.router.Run(port)
 }
 
-type logWriter struct {
+func (g *Goflow) initializeMemoryDB() *Goflow {
+	g.db = &memoryDB{make([]*jobRun, 0)}
+	return g
 }
 
-func (writer logWriter) Write(bytes []byte) (int, error) {
-	return fmt.Print(time.Now().Format(time.RFC3339) + " [GOFLOW] - " + string(bytes))
+func (g *Goflow) initializeBoltDB() *Goflow {
+	db, err := bolt.Open(g.Options.BoltDBPath, 0600, nil)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucket([]byte(jobRunBucket))
+		if err != nil {
+			return fmt.Errorf("create bucket: %s", err)
+		}
+		return nil
+	})
+
+	g.db = &boltDB{db}
+	return g
 }
 
-func (g *Goflow) addRoutes() *Goflow {
+func (g *Goflow) addStaticRoutes() *Goflow {
 	goPath := os.Getenv("GOPATH")
 	assetPath := goPath + "/src/github.com/fieldryand/goflow/assets/"
 	g.router.Static("/css", assetPath+"css")
 	g.router.Static("/dist", assetPath+"dist")
 	g.router.Static("/src", assetPath+"src")
 	g.router.LoadHTMLGlob(assetPath + "html/*.html.tmpl")
+	return g
+}
+
+func (g *Goflow) addRoutes() *Goflow {
+	g.addStaticRoutes()
 
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
@@ -206,7 +247,7 @@ func (g *Goflow) addRoutes() *Goflow {
 		_, ok := g.Jobs[name]
 
 		if ok {
-			jobRunList := newJobRunList(name, g.jobRuns)
+			jobRunList, _ := g.db.readJobRuns(name)
 			c.JSON(http.StatusOK, jobRunList)
 		} else {
 			c.String(http.StatusNotFound, "Not found")

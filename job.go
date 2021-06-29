@@ -32,13 +32,6 @@ type jobState struct {
 	TaskState map[string]state `json:"taskState"`
 }
 
-type triggerRule string
-
-const (
-	allDone       triggerRule = "allDone"
-	allSuccessful triggerRule = "allSuccessful"
-)
-
 func newJobState() *jobState {
 	js := jobState{none, make(map[string]state)}
 	return &js

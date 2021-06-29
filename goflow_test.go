@@ -182,7 +182,7 @@ func exampleActiveJob() *Job {
 }
 
 func exampleRouter() *gin.Engine {
-	g := New()
+	g := New(Options{})
 	g.AddJob(exampleJob)
 	g.AddJob(exampleActiveJob)
 	g.Use(DefaultLogger())
