@@ -5,7 +5,7 @@
     <script>
     {{ range .jobs }}
       pollingJobState("{{ .Name }}")();
-      updateJobActive("{{ .Name }}")();
+      updateJobActive("{{ .Name }}");
     {{ end }}
     </script>
     <title>Goflow</title>
