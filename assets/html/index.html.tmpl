@@ -4,7 +4,6 @@
     <script src="src/plain.js"></script>
     <script>
     {{ range .jobs }}
-      pollingJobState("{{ .Name }}")();
       updateJobActive("{{ .Name }}");
     {{ end }}
     </script>

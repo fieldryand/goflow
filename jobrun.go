@@ -11,11 +11,11 @@ type jobRun struct {
 	JobState  *jobState `json:"jobState"`
 }
 
-func newJobRun(name string) *jobRun {
+func (j *Job) newJobRun() *jobRun {
 	return &jobRun{
-		JobName:   name,
+		JobName:   j.Name,
 		StartedAt: time.Now().UTC().Format(time.RFC3339Nano),
-		JobState:  newJobState()}
+		JobState:  j.jobState}
 }
 
 func (j *jobRun) name() string {

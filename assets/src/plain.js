@@ -31,19 +31,6 @@ function updateLastRunTs(jobRuns) {
   }
 }
 
-function pollingJobState(jobName) {
-  function pollJobState() {
-    fetch(`/jobs/${jobName}/jobRuns`)
-      .then(response => response.json())
-      .then(data => {
-        jobRunStates = data.jobRuns.map(getJobRunState).join("");
-        document.getElementById(jobName).innerHTML = jobRunStates;
-      })
-    setTimeout(pollJobState, 2000);
-  }
-  return pollJobState
-}
-
 function updateJobActive(jobName) {
   fetch(`/jobs/${jobName}/isActive`)
     .then(response => response.json())
@@ -56,18 +43,14 @@ function updateJobActive(jobName) {
     })
 }
 
-function pollingTaskState(jobName) {
-  function pollTaskState() {
-    fetch(`/jobs/${jobName}/jobRuns`)
-      .then(response => response.json())
-      .then(data => {
-        updateTaskStateCircles(data.jobRuns);
-        updateGraphViz(data.jobRuns);
-        updateLastRunTs(data.jobRuns);
-      })
-    setTimeout(pollTaskState, 2000);
-  }
-  return pollTaskState
+function readTaskStream(jobName) {
+  var stream = new EventSource(`/jobs/${jobName}/jobRuns`);
+  stream.addEventListener("message", function(e) {
+    jobRuns = JSON.parse(e.data).jobRuns;
+    updateTaskStateCircles(jobRuns);
+    updateGraphViz(jobRuns);
+    updateLastRunTs(jobRuns);
+  });
 }
 
 function stateColor(taskState) {
@@ -126,8 +109,9 @@ function submit(jobName) {
 }
 
 function toggleActive(jobName) {
-  var xhttp = new XMLHttpRequest();
-  xhttp.open("POST", `/jobs/${jobName}/toggleActive`, true);
-  xhttp.send();
-  updateJobActive(jobName);
+  const options = {
+    method: 'POST'
+  }
+  fetch(`/jobs/${jobName}/toggleActive`, options)
+    .then(updateJobActive(jobName))
 }

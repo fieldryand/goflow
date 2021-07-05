@@ -3,10 +3,13 @@
 package goflow
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"reflect"
 
 	"github.com/boltdb/bolt"
 	"github.com/gin-gonic/gin"
@@ -95,7 +98,7 @@ func (g *Goflow) toggleActive(jobName string) (bool, error) {
 // the corresponding jobRun.
 func (g *Goflow) runJob(jobName string) *jobRun {
 	job := g.Jobs[jobName]()
-	jr := newJobRun(jobName)
+	jr := job.newJobRun()
 	g.db.writeJobRun(jr)
 	reads := make(chan readOp)
 
@@ -147,6 +150,44 @@ func (g *Goflow) initializeBoltDB() *Goflow {
 
 	g.db = &boltDB{db}
 	return g
+}
+
+func (g *Goflow) getJobRuns(c *gin.Context) {
+	name := c.Param("name")
+	_, ok := g.Jobs[name]
+
+	if ok {
+		chanStream := make(chan string)
+
+		go func() {
+			defer close(chanStream)
+
+			// Push the current list of job runs into the stream
+			jrl, _ := g.db.readJobRuns(name)
+			marshalled, _ := json.Marshal(jrl)
+			chanStream <- string(marshalled)
+
+			// If there are updates, push them into the stream
+			for {
+				newJRL, _ := g.db.readJobRuns(name)
+				if !reflect.DeepEqual(jrl, newJRL) {
+					marshalled, _ := json.Marshal(newJRL)
+					chanStream <- string(marshalled)
+					jrl = newJRL
+				}
+			}
+		}()
+
+		c.Stream(func(w io.Writer) bool {
+			if msg, ok := <-chanStream; ok {
+				c.SSEvent("message", msg)
+				return true
+			}
+			return false
+		})
+	} else {
+		c.String(http.StatusNotFound, "Not found")
+	}
 }
 
 func (g *Goflow) addStaticRoutes() *Goflow {
@@ -242,17 +283,7 @@ func (g *Goflow) addRoutes() *Goflow {
 		}
 	})
 
-	g.router.GET("/jobs/:name/jobRuns", func(c *gin.Context) {
-		name := c.Param("name")
-		_, ok := g.Jobs[name]
-
-		if ok {
-			jobRunList, _ := g.db.readJobRuns(name)
-			c.JSON(http.StatusOK, jobRunList)
-		} else {
-			c.String(http.StatusNotFound, "Not found")
-		}
-	})
+	g.router.GET("/jobs/:name/jobRuns", g.getJobRuns)
 
 	g.router.GET("/jobs/:name/dag", func(c *gin.Context) {
 		name := c.Param("name")
