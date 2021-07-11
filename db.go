@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"log"
 
-	"github.com/boltdb/bolt"
+	bolt "go.etcd.io/bbolt"
 )
 
 type database interface {
@@ -54,10 +54,9 @@ func (db *boltDB) updateJobState(jr *jobRun, js *jobState) error {
 		c := b.Cursor()
 		for k, v := c.First(); k != nil; k, v = c.Next() {
 			if string(k) == jr.name() {
-				j := jobRun{}
-				_ = json.Unmarshal(v, &j)
-				j.JobState = js
-				updatedJobRun, _ := json.Marshal(j)
+				j := &jobRun{}
+				_ = json.Unmarshal(v, j)
+				updatedJobRun, _ := js.TaskState.MarshalJobRun(j)
 				err := b.Put([]byte(jr.name()), updatedJobRun)
 				if err != nil {
 					log.Panicf("error: %v", err)
@@ -85,7 +84,7 @@ func (db *memoryDB) readJobRuns(jobName string) (*jobRunList, error) {
 func (db *memoryDB) updateJobState(jr *jobRun, js *jobState) error {
 	for _, jobRun := range db.jobRuns {
 		if jobRun.name() == jr.name() {
-			jr.JobState = js
+			jobRun.JobState = js
 		}
 	}
 	return nil

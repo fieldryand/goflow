@@ -12,3 +12,6 @@ assets/dist
 
 # The default goflow database
 goflow.db
+
+# The test database
+test.db

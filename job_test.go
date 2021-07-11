@@ -79,8 +79,8 @@ func TestJob(t *testing.T) {
 	expectedState.Store("totallySkippable", skipped)
 	expectedState.Store("cleanUp", successful)
 
-	if !reflect.DeepEqual(j.jobState.TaskState, expectedState) {
-		t.Errorf("Got status %v, expected %v", j.jobState.TaskState, expectedState)
+	if !reflect.DeepEqual(j.jobState.TaskState.Internal, expectedState.Internal) {
+		t.Errorf("Got status %v, expected %v", j.jobState.TaskState.Internal, expectedState.Internal)
 	}
 }
 

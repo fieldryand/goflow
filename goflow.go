@@ -10,10 +10,11 @@ import (
 	"net/http"
 	"os"
 	"reflect"
+	"time"
 
-	"github.com/boltdb/bolt"
 	"github.com/gin-gonic/gin"
 	"github.com/robfig/cron/v3"
+	bolt "go.etcd.io/bbolt"
 )
 
 // Goflow contains job data and a router.
@@ -174,6 +175,7 @@ func (g *Goflow) getJobRuns(c *gin.Context) {
 					marshalled, _ := json.Marshal(newJRL)
 					chanStream <- string(marshalled)
 					jrl = newJRL
+					time.Sleep(time.Second * 1)
 				}
 			}
 		}()

@@ -3,7 +3,6 @@ module github.com/fieldryand/goflow
 go 1.14
 
 require (
-	github.com/boltdb/bolt v1.3.1 // indirect
 	github.com/ef-ds/deque v1.0.4
 	github.com/gin-gonic/gin v1.7.1
 	github.com/go-playground/validator/v10 v10.5.0 // indirect
@@ -14,6 +13,7 @@ require (
 	github.com/modern-go/reflect2 v1.0.1 // indirect
 	github.com/robfig/cron/v3 v3.0.0 // indirect
 	github.com/ugorji/go v1.2.5 // indirect
+	go.etcd.io/bbolt v1.3.6 // indirect
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
 	golang.org/x/lint v0.0.0-20201208152925-83fdc39ff7b5 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c // indirect
