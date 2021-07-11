@@ -28,12 +28,12 @@ const (
 )
 
 type jobState struct {
-	State     state            `json:"state"`
-	TaskState map[string]state `json:"taskState"`
+	State     state           `json:"state"`
+	TaskState *stringStateMap `json:"taskState"`
 }
 
 func newJobState() *jobState {
-	js := jobState{none, make(map[string]state)}
+	js := jobState{none, newStringStateMap()}
 	return &js
 }
 
@@ -70,7 +70,7 @@ func (j *Job) Add(t *Task) *Job {
 
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
-	j.jobState.TaskState[t.Name] = none
+	j.jobState.TaskState.Store(t.Name, none)
 	return j
 }
 
@@ -99,44 +99,46 @@ func (j *Job) run(reads chan readOp) error {
 	for {
 		for t, task := range j.Tasks {
 			// Start the independent tasks
-			if taskState[t] == none && !j.Dag.isDownstream(t) {
-				taskState[t] = running
+			v, _ := taskState.Load(t)
+			if v == none && !j.Dag.isDownstream(t) {
+				taskState.Store(t, running)
 				go task.run(writes)
 			}
 
 			// Start the tasks that need to be re-tried
-			if taskState[t] == upForRetry {
+			if v == upForRetry {
 				task.RetryDelay.wait(task.Name, task.Retries-task.attemptsRemaining)
 				task.attemptsRemaining = task.attemptsRemaining - 1
-				taskState[t] = running
+				taskState.Store(t, running)
 				go task.run(writes)
 			}
 
 			// If dependencies are done, start the dependent tasks
-			if taskState[t] == none && j.Dag.isDownstream(t) {
+			if v == none && j.Dag.isDownstream(t) {
 				upstreamDone := true
 				upstreamSuccessful := true
 				for _, us := range j.Dag.dependencies(t) {
-					if taskState[us] == none || taskState[us] == running || taskState[us] == upForRetry {
+					w, _ := taskState.Load(us)
+					if w == none || w == running || w == upForRetry {
 						upstreamDone = false
 					}
-					if taskState[us] != successful {
+					if w != successful {
 						upstreamSuccessful = false
 					}
 				}
 
 				if upstreamDone && task.TriggerRule == allDone {
-					taskState[t] = running
+					taskState.Store(t, running)
 					go task.run(writes)
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
-					taskState[t] = running
+					taskState.Store(t, running)
 					go task.run(writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
-					taskState[t] = skipped
+					taskState.Store(t, skipped)
 					go task.skip(writes)
 				}
 
@@ -152,7 +154,7 @@ func (j *Job) run(reads chan readOp) error {
 			read.resp <- j.jobState
 		// Receive updates on task state
 		case write := <-writes:
-			taskState[write.key] = write.val
+			taskState.Store(write.key, write.val)
 			j.updateJobState()
 			// Acknowledge the update
 			write.resp <- true
@@ -179,28 +181,34 @@ func (j *Job) updateJobState() {
 }
 
 func (j *Job) allDone() bool {
-	for _, v := range j.jobState.TaskState {
+	out := true
+	j.jobState.TaskState.Range(func(k string, v state) bool {
 		if v == none || v == running || v == upForRetry {
-			return false
+			out = false
 		}
-	}
-	return true
+		return out
+	})
+	return out
 }
 
 func (j *Job) allSuccessful() bool {
-	for _, v := range j.jobState.TaskState {
+	out := true
+	j.jobState.TaskState.Range(func(k string, v state) bool {
 		if v != successful {
-			return false
+			out = false
 		}
-	}
-	return true
+		return out
+	})
+	return out
 }
 
 func (j *Job) anyFailed() bool {
-	for _, v := range j.jobState.TaskState {
+	out := false
+	j.jobState.TaskState.Range(func(k string, v state) bool {
 		if v == failed {
-			return true
+			out = true
 		}
-	}
-	return false
+		return out
+	})
+	return out
 }

@@ -69,16 +69,15 @@ func TestJob(t *testing.T) {
 
 	time.Sleep(time.Duration(7) * time.Second)
 
-	expectedState := map[string]state{
-		"addOneOne":                    successful,
-		"sleepTwo":                     successful,
-		"addTwoFour":                   successful,
-		"addThreeFour":                 successful,
-		"whoopsWithConstantDelay":      failed,
-		"whoopsWithExponentialBackoff": failed,
-		"totallySkippable":             skipped,
-		"cleanUp":                      successful,
-	}
+	expectedState := newStringStateMap()
+	expectedState.Store("addOneOne", successful)
+	expectedState.Store("sleepTwo", successful)
+	expectedState.Store("addTwoFour", successful)
+	expectedState.Store("addThreeFour", successful)
+	expectedState.Store("whoopsWithConstantDelay", failed)
+	expectedState.Store("whoopsWithExponentialBackoff", failed)
+	expectedState.Store("totallySkippable", skipped)
+	expectedState.Store("cleanUp", successful)
 
 	if !reflect.DeepEqual(j.jobState.TaskState, expectedState) {
 		t.Errorf("Got status %v, expected %v", j.jobState.TaskState, expectedState)
