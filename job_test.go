@@ -4,7 +4,6 @@ import (
 	"errors"
 	"reflect"
 	"testing"
-	"time"
 )
 
 var reads = make(chan readOp)
@@ -61,13 +60,14 @@ func TestJob(t *testing.T) {
 	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
 
 	go j.run(reads)
-	go func() {
+	for {
 		read := readOp{resp: make(chan *jobState), allDone: j.allDone()}
 		reads <- read
 		<-read.resp
-	}()
-
-	time.Sleep(time.Duration(7) * time.Second)
+		if j.allDone() {
+			break
+		}
+	}
 
 	expectedState := newStringStateMap()
 	expectedState.Store("addOneOne", successful)
@@ -93,24 +93,6 @@ func TestCyclicJob(t *testing.T) {
 	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
 
 	j.run(reads)
-}
-
-func TestTaskFailure(t *testing.T) {
-	j := &Job{Name: "with bad task", Schedule: "* * * * *"}
-	j.Add(&Task{Name: "badTask", Operator: Addition{-1, -1}})
-
-	go j.run(reads)
-	go func() {
-		read := readOp{resp: make(chan *jobState), allDone: j.allDone()}
-		reads <- read
-		<-read.resp
-	}()
-
-	time.Sleep(time.Duration(1) * time.Second)
-
-	if j.jobState.State != failed {
-		t.Errorf("Got status %v, expected %v", j.jobState.State, failed)
-	}
 }
 
 // Adds two nonnegative numbers.
