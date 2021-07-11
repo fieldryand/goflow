@@ -1,6 +1,6 @@
 function updateTaskStateCircles(jobRuns) {
   for (i in jobRuns) {
-    taskState = jobRuns[i].jobState.taskState;
+    taskState = jobRuns[i].jobState.taskState.internal;
     for (taskName in taskState) {
       taskRunStates = jobRuns.map(gettingJobRunTaskState(taskName)).join("");
       document.getElementById(taskName).innerHTML = taskRunStates;
@@ -11,7 +11,7 @@ function updateTaskStateCircles(jobRuns) {
 function updateGraphViz(jobRuns) {
   if (jobRuns.length) {
     lastJobRun = jobRuns.reverse()[0]
-    taskState = lastJobRun.jobState.taskState;
+    taskState = lastJobRun.jobState.taskState.internal;
     for (taskName in taskState) {
       if (document.getElementsByClassName("output")) {
         taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
@@ -87,14 +87,14 @@ function stateCircle(taskState) {
 
 function gettingJobRunTaskState(task) {
   function getJobRunTaskState(jobRun) {
-    taskState = jobRun.jobState.taskState[task];
+    taskState = jobRun.jobState.taskState.internal[task];
     return stateCircle(taskState)
   }
   return getJobRunTaskState
 }
 
 function getJobRunTaskColor(jobRun, task) {
-  taskState = jobRun.jobState.taskState[task];
+  taskState = jobRun.jobState.taskState.internal[task];
   return stateColor(taskState)
 }
 
