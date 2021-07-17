@@ -30,8 +30,9 @@ type Goflow struct {
 
 // Options to control various Goflow behavior.
 type Options struct {
-	DBType     string
-	BoltDBPath string
+	DBType        string
+	BoltDBPath    string
+	StreamJobRuns bool
 }
 
 // New returns a Goflow engine.
@@ -153,42 +154,44 @@ func (g *Goflow) initializeBoltDB() *Goflow {
 	return g
 }
 
-func (g *Goflow) getJobRuns(c *gin.Context) {
-	name := c.Param("name")
-	_, ok := g.Jobs[name]
+func (g *Goflow) getJobRuns(clientDisconnect bool) func(*gin.Context) {
+	return func(c *gin.Context) {
+		name := c.Param("name")
+		_, ok := g.Jobs[name]
 
-	if ok {
-		chanStream := make(chan string)
+		if ok {
+			chanStream := make(chan string)
 
-		go func() {
-			defer close(chanStream)
+			go func() {
+				defer close(chanStream)
 
-			// Push the current list of job runs into the stream
-			jrl, _ := g.db.readJobRuns(name)
-			marshalled, _ := json.Marshal(jrl)
-			chanStream <- string(marshalled)
+				// Push the current list of job runs into the stream
+				jrl, _ := g.db.readJobRuns(name)
+				marshalled, _ := json.Marshal(jrl)
+				chanStream <- string(marshalled)
 
-			// If there are updates, push them into the stream
-			for {
-				newJRL, _ := g.db.readJobRuns(name)
-				if !reflect.DeepEqual(jrl, newJRL) {
-					marshalled, _ := json.Marshal(newJRL)
-					chanStream <- string(marshalled)
-					jrl = newJRL
-					time.Sleep(time.Second * 1)
+				// If there are updates, push them into the stream
+				for {
+					newJRL, _ := g.db.readJobRuns(name)
+					if !reflect.DeepEqual(jrl, newJRL) {
+						marshalled, _ := json.Marshal(newJRL)
+						chanStream <- string(marshalled)
+						jrl = newJRL
+						time.Sleep(time.Second * 1)
+					}
 				}
-			}
-		}()
+			}()
 
-		c.Stream(func(w io.Writer) bool {
-			if msg, ok := <-chanStream; ok {
-				c.SSEvent("message", msg)
-				return true
-			}
-			return false
-		})
-	} else {
-		c.String(http.StatusNotFound, "Not found")
+			c.Stream(func(w io.Writer) bool {
+				if msg, ok := <-chanStream; ok {
+					c.SSEvent("message", msg)
+					return clientDisconnect
+				}
+				return false
+			})
+		} else {
+			c.String(http.StatusNotFound, "Not found")
+		}
 	}
 }
 
@@ -285,7 +288,7 @@ func (g *Goflow) addRoutes() *Goflow {
 		}
 	})
 
-	g.router.GET("/jobs/:name/jobRuns", g.getJobRuns)
+	g.router.GET("/jobs/:name/jobRuns", g.getJobRuns(g.Options.StreamJobRuns))
 
 	g.router.GET("/jobs/:name/dag", func(c *gin.Context) {
 		name := c.Param("name")

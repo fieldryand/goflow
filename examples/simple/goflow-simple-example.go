@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	gf := goflow.New(goflow.Options{})
+	gf := goflow.New(goflow.Options{StreamJobRuns: true})
 
 	gf.AddJob(complexAnalyticsJob)
 	gf.AddJob(customOperatorJob)

@@ -9,7 +9,7 @@ before_install:
 
 script:
         - pre-commit run --all-files
-        - go test ./... -coverprofile=coverage.txt
+        - go test ./... -coverprofile=coverage.txt -race
 
 after_success:
         - bash <(curl -s https://codecov.io/bash)

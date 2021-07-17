@@ -11,6 +11,22 @@ import (
 var router = exampleRouter()
 var routerWithMemoryDB = exampleRouterWithMemoryDB()
 
+type TestResponseRecorder struct {
+	*httptest.ResponseRecorder
+	closeChannel chan bool
+}
+
+func (r *TestResponseRecorder) CloseNotify() <-chan bool {
+	return r.closeChannel
+}
+
+func CreateTestResponseRecorder() *TestResponseRecorder {
+	return &TestResponseRecorder{
+		httptest.NewRecorder(),
+		make(chan bool, 1),
+	}
+}
+
 func TestIndexRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/", nil)
@@ -155,22 +171,22 @@ func TestJobDagRoute(t *testing.T) {
 }
 
 func TestJobRunRoute(t *testing.T) {
-	//var w = httptest.NewRecorder()
-	//req, _ := http.NewRequest("GET", "/jobs/example/jobRuns", nil)
-	//router.ServeHTTP(w, req)
+	var w = CreateTestResponseRecorder()
+	req, _ := http.NewRequest("GET", "/jobs/example/jobRuns", nil)
+	router.ServeHTTP(w, req)
 
-	//if w.Code != http.StatusOK {
-	//	t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-	//}
-	//
-	//	routerWithMemoryDB.ServeHTTP(w, req)
-	//
-	//	if w.Code != http.StatusOK {
-	//		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-	//	}
-	//
-	w := httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/jobs/bla/jobRuns", nil)
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+
+	routerWithMemoryDB.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+
+	w = CreateTestResponseRecorder()
+	req, _ = http.NewRequest("GET", "/jobs/bla/jobRuns", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusNotFound {
