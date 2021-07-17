@@ -2,6 +2,7 @@ package goflow
 
 import (
 	"fmt"
+	"sync"
 )
 
 // A Job is a workflow consisting of independent and dependent tasks
@@ -28,13 +29,20 @@ const (
 )
 
 type jobState struct {
+	sync.RWMutex
 	State     state           `json:"state"`
 	TaskState *stringStateMap `json:"taskState"`
 }
 
 func newJobState() *jobState {
-	js := jobState{none, newStringStateMap()}
+	js := jobState{State: none, TaskState: newStringStateMap()}
 	return &js
+}
+
+func (js *jobState) Update(value *jobState) {
+	js.Lock()
+	js = value
+	js.Unlock()
 }
 
 type writeOp struct {

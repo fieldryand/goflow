@@ -84,7 +84,7 @@ func (db *memoryDB) readJobRuns(jobName string) (*jobRunList, error) {
 func (db *memoryDB) updateJobState(jr *jobRun, js *jobState) error {
 	for _, jobRun := range db.jobRuns {
 		if jobRun.name() == jr.name() {
-			jobRun.JobState = js
+			jobRun.JobState.Update(js)
 		}
 	}
 	return nil
