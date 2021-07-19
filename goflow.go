@@ -3,13 +3,11 @@
 package goflow
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
 	"os"
-	"reflect"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -165,20 +163,12 @@ func (g *Goflow) getJobRuns(clientDisconnect bool) func(*gin.Context) {
 			go func() {
 				defer close(chanStream)
 
-				// Push the current list of job runs into the stream
-				jrl, _ := g.db.readJobRuns(name)
-				marshalled, _ := json.Marshal(jrl)
-				chanStream <- string(marshalled)
-
-				// If there are updates, push them into the stream
+				// Periodically push the list of job runs into the stream
 				for {
-					newJRL, _ := g.db.readJobRuns(name)
-					if !reflect.DeepEqual(jrl, newJRL) {
-						marshalled, _ := json.Marshal(newJRL)
-						chanStream <- string(marshalled)
-						jrl = newJRL
-						time.Sleep(time.Second * 1)
-					}
+					jrl, _ := g.db.readJobRuns(name)
+					marshalled, _ := marshalJobRunList(jrl)
+					chanStream <- string(marshalled)
+					time.Sleep(time.Second * 1)
 				}
 			}()
 

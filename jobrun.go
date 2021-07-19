@@ -1,6 +1,7 @@
 package goflow
 
 import (
+	"encoding/json"
 	"fmt"
 	"time"
 )
@@ -37,4 +38,18 @@ func newJobRunList(name string, jobRuns []*jobRun) *jobRunList {
 	}
 
 	return &jobRunList{JobName: name, JobRuns: list}
+}
+
+func marshalJobRunList(jrl *jobRunList) ([]byte, error) {
+	for _, jobRun := range jrl.JobRuns {
+		jobRun.JobState.TaskState.RLock()
+	}
+
+	result, ok := json.Marshal(jrl)
+
+	for _, jobRun := range jrl.JobRuns {
+		jobRun.JobState.TaskState.RUnlock()
+	}
+
+	return result, ok
 }
