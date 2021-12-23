@@ -56,7 +56,7 @@ func (db *boltDB) updateJobState(jr *jobRun, js *jobState) error {
 			if string(k) == jr.name() {
 				j := &jobRun{}
 				_ = json.Unmarshal(v, j)
-				updatedJobRun, _ := js.TaskState.MarshalJobRun(j)
+				updatedJobRun, _ := marshalJobRun(j, js)
 				err := b.Put([]byte(jr.name()), updatedJobRun)
 				if err != nil {
 					log.Panicf("error: %v", err)

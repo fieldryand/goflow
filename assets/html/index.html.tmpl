@@ -4,6 +4,7 @@
     <script src="src/plain.js"></script>
     <script>
     {{ range .jobs }}
+      updateJobStateCircles("{{ .Name }}");
       updateJobActive("{{ .Name }}");
     {{ end }}
     </script>

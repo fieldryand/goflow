@@ -25,6 +25,7 @@ const (
 )
 
 func (t *Task) run(writes chan writeOp) error {
+	log.Printf("starting task %v", t.Name)
 	res, err := t.Operator.Run()
 	logMsg := "task %v reached state %v - %v attempt(s) remaining - result %v"
 

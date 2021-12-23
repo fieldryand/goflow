@@ -15,7 +15,7 @@ func main() {
 
 	gf.Use(goflow.DefaultLogger())
 
-	gf.Run(":8100")
+	gf.Run(":8181")
 }
 
 // Crunch some numbers

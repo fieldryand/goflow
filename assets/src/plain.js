@@ -43,6 +43,15 @@ function updateJobActive(jobName) {
     })
 }
 
+function updateJobStateCircles(jobName) {
+  var stream = new EventSource(`/jobs/${jobName}/jobRuns`);
+  stream.addEventListener("message", function(e) {
+    data = JSON.parse(e.data);
+    jobRunStates = data.jobRuns.map(getJobRunState).join("");
+    document.getElementById(jobName).innerHTML = jobRunStates;
+  });
+}
+
 function readTaskStream(jobName) {
   var stream = new EventSource(`/jobs/${jobName}/jobRuns`);
   stream.addEventListener("message", function(e) {

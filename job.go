@@ -2,6 +2,7 @@ package goflow
 
 import (
 	"fmt"
+	"log"
 	"sync"
 )
 
@@ -101,6 +102,8 @@ func (j *Job) run(reads chan readOp) error {
 		return fmt.Errorf("Invalid Dag for job %s", j.Name)
 	}
 
+	log.Printf("starting job %v", j.Name)
+
 	writes := make(chan writeOp)
 	taskState := j.jobState.TaskState
 
@@ -172,6 +175,8 @@ func (j *Job) run(reads chan readOp) error {
 			break
 		}
 	}
+
+	log.Printf("job %v reached state %v", j.Name, j.jobState.State)
 
 	return nil
 }

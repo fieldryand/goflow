@@ -133,7 +133,7 @@ func main() {
 	gf := goflow.New(goflow.Options{})
 	gf.AddJob(myJob)
 	gf.Use(goflow.DefaultLogger())
-	gf.Run(":8100")
+	gf.Run(":8181")
 }
 ```
 
@@ -170,6 +170,6 @@ go get
 go run examples/simple/goflow-simple-example.go
 ```
 
-Finally, browse to `localhost:8100` to explore the UI, where you can submit jobs and view their current state.
+Finally, browse to `localhost:8181` to explore the UI, where you can submit jobs and view their current state.
 
 ### TODO: Docker image

@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"encoding/json"
 	"sync"
 )
 
@@ -49,12 +48,4 @@ func (ssm *stringStateMap) Range(f func(key string, value state) bool) {
 		}
 	}
 	ssm.Unlock()
-}
-
-func (ssm *stringStateMap) MarshalJobRun(jr *jobRun) ([]byte, error) {
-	ssm.RLock()
-	jr.JobState.TaskState = ssm
-	result, ok := json.Marshal(jr)
-	ssm.RUnlock()
-	return result, ok
 }

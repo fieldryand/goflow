@@ -53,3 +53,11 @@ func marshalJobRunList(jrl *jobRunList) ([]byte, error) {
 
 	return result, ok
 }
+
+func marshalJobRun(jr *jobRun, js *jobState) ([]byte, error) {
+	js.TaskState.RLock()
+	jr.JobState = js
+	result, ok := json.Marshal(jr)
+	js.TaskState.RUnlock()
+	return result, ok
+}
