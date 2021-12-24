@@ -1,7 +1,7 @@
 language: go
 
 go:
-        - master
+        - "1.14"
 
 before_install:
         - go get -u golang.org/x/lint/golint
