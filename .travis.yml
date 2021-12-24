@@ -6,6 +6,7 @@ go:
 before_install:
         - go get -u golang.org/x/lint/golint
         - curl https://pre-commit.com/install-local.py | python -
+        - curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.43.0
 
 script:
         - pre-commit run --all-files
