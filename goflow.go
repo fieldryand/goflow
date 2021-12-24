@@ -100,15 +100,16 @@ func (g *Goflow) runJob(jobName string) *jobRun {
 	job := g.Jobs[jobName]()
 	jr := job.newJobRun()
 	g.db.writeJobRun(jr)
-	reads := make(chan readOp)
 
-	go job.run(reads)
+	go job.run()
 	go func() {
 		for {
-			read := readOp{resp: make(chan *jobState), allDone: job.allDone()}
-			reads <- read
-			updatedJobState := <-read.resp
-			g.db.updateJobState(jr, updatedJobState)
+			jobState := job.getJobState()
+			g.db.updateJobState(jr, jobState)
+			if jobState.State != running && jobState.State != none {
+				log.Printf("job %v reached state %v", job.Name, job.jobState.State)
+				break
+			}
 		}
 	}()
 

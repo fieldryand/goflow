@@ -52,11 +52,6 @@ type writeOp struct {
 	resp chan bool
 }
 
-type readOp struct {
-	resp    chan *jobState
-	allDone bool
-}
-
 // Initialize a job.
 func (j *Job) initialize() *Job {
 	j.Dag = make(dag)
@@ -97,7 +92,7 @@ func (j *Job) SetDownstream(ind, dep *Task) *Job {
 	return j
 }
 
-func (j *Job) run(reads chan readOp) error {
+func (j *Job) run() error {
 	if !j.Dag.validate() {
 		return fmt.Errorf("Invalid Dag for job %s", j.Name)
 	}
@@ -156,41 +151,33 @@ func (j *Job) run(reads chan readOp) error {
 			}
 		}
 
-		allDone := false
-
-		select {
-		// Respond to requests for job state
-		case read := <-reads:
-			allDone = read.allDone
-			read.resp <- j.jobState
 		// Receive updates on task state
-		case write := <-writes:
-			taskState.Store(write.key, write.val)
-			j.updateJobState()
-			// Acknowledge the update
-			write.resp <- true
-		}
+		write := <-writes
+		taskState.Store(write.key, write.val)
 
-		if allDone {
+		// Acknowledge the update
+		write.resp <- true
+
+		if j.allDone() {
 			break
 		}
 	}
 
-	log.Printf("job %v reached state %v", j.Name, j.jobState.State)
-
 	return nil
 }
 
-func (j *Job) updateJobState() {
+func (j *Job) getJobState() *jobState {
+	out := j.jobState
 	if !j.allDone() {
-		j.jobState.State = running
+		out.State = running
 	}
 	if j.allSuccessful() {
-		j.jobState.State = successful
+		out.State = successful
 	}
-	if j.anyFailed() {
-		j.jobState.State = failed
+	if j.allDone() && j.anyFailed() {
+		out.State = failed
 	}
+	return out
 }
 
 func (j *Job) allDone() bool {

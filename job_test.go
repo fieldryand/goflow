@@ -6,8 +6,6 @@ import (
 	"testing"
 )
 
-var reads = make(chan readOp)
-
 func TestJob(t *testing.T) {
 	j := &Job{Name: "example", Schedule: "* * * * *"}
 
@@ -59,15 +57,15 @@ func TestJob(t *testing.T) {
 	j.SetDownstream(j.Task("whoopsWithExponentialBackoff"), j.Task("totallySkippable"))
 	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
 
-	go j.run(reads)
-	for {
-		read := readOp{resp: make(chan *jobState), allDone: j.allDone()}
-		reads <- read
-		<-read.resp
-		if j.allDone() {
-			break
+	go j.run()
+	func() {
+		for {
+			jobState := j.getJobState()
+			if jobState.State != running && jobState.State != none {
+				break
+			}
 		}
-	}
+	}()
 
 	expectedState := newStringStateMap()
 	expectedState.Store("addOneOne", successful)
@@ -92,7 +90,7 @@ func TestCyclicJob(t *testing.T) {
 	j.SetDownstream(j.Task("addTwoTwo"), j.Task("addFourFour"))
 	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
 
-	j.run(reads)
+	j.run()
 }
 
 // Adds two nonnegative numbers.
