@@ -31,8 +31,8 @@ function updateLastRunTs(jobRuns) {
   }
 }
 
-function updateJobActive(jobName) {
-  fetch(`/jobs/${jobName}/isActive`)
+async function updateJobActive(jobName) {
+  await fetch(`/jobs/${jobName}/isActive`)
     .then(response => response.json())
     .then(data => {
       if (data) {
@@ -117,10 +117,10 @@ function submit(jobName) {
   xhttp.send();
 }
 
-function toggleActive(jobName) {
+async function toggleActive(jobName) {
   const options = {
     method: 'POST'
   }
-  fetch(`/jobs/${jobName}/toggleActive`, options)
+  await fetch(`/jobs/${jobName}/toggleActive`, options)
     .then(updateJobActive(jobName))
 }
