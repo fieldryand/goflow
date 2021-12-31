@@ -10,7 +10,7 @@ A workflow/DAG orchestrator written in Go and meant for ETL or analytics pipelin
 
 ## Contents
 
-1. [Screenshots](#screenshots)
+1. [Demo](#demo)
 2. [Motivation](#motivation)
 3. [Concepts and features](#concepts-and-features)
    1. [Jobs and tasks](#jobs-and-tasks)
@@ -22,11 +22,9 @@ A workflow/DAG orchestrator written in Go and meant for ETL or analytics pipelin
    1. [Running the example](#running-the-example)
    2. [TODO: Docker image](#todo-docker-image)
 
-## Screenshots
+## Demo
 
-Job details page:
-
-![screenshot-jobs-complex-analytics-02](https://user-images.githubusercontent.com/3333324/120916675-3375d680-c6ab-11eb-8a28-a5adecd34512.png)
+![goflow-demo](https://user-images.githubusercontent.com/3333324/147818084-ade84547-4404-4d58-a697-c18ecb06fd30.gif)
 
 ## Motivation
 
