@@ -1,13 +1,8 @@
+<!DOCTYPE html>
 <html>
   <head>
     <link rel="stylesheet" href="/css/styles.css">
     <script src="src/plain.js"></script>
-    <script>
-    {{ range .jobs }}
-      updateJobStateCircles("{{ .Name }}");
-      updateJobActive("{{ .Name }}");
-    {{ end }}
-    </script>
     <title>Goflow</title>
   </head>
   <body>
@@ -38,3 +33,9 @@
     </div>
   </body>
 </html>
+<script>
+{{ range .jobs }}
+  updateJobStateCircles("{{ .Name }}");
+  updateJobActive("{{ .Name }}");
+{{ end }}
+</script>
