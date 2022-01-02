@@ -36,6 +36,6 @@
 <script>
 {{ range .jobs }}
   updateJobStateCircles("{{ .Name }}");
-  updateJobActive("{{ .Name }}");
 {{ end }}
+updateJobsActive();
 </script>

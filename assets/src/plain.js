@@ -31,6 +31,17 @@ function updateLastRunTs(jobRuns) {
   }
 }
 
+async function updateJobsActive() {
+  await fetch(`/jobs`)
+    .then(response => response.json())
+    .then(data => {
+      for (i in data) {
+        job = data[i]
+	updateJobActive(job)
+      }
+    })
+}
+
 async function updateJobActive(jobName) {
   await fetch(`/jobs/${jobName}/isActive`)
     .then(response => response.json())
