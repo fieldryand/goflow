@@ -54,6 +54,17 @@ async function updateJobActive(jobName) {
     })
 }
 
+async function updateAllJobStateCircles() {
+  await fetch(`/jobs`)
+    .then(response => response.json())
+    .then(data => {
+      for (i in data) {
+        job = data[i]
+	updateJobStateCircles(job)
+      }
+    })
+}
+
 function updateJobStateCircles(jobName) {
   var stream = new EventSource(`/jobs/${jobName}/jobRuns`);
   stream.addEventListener("message", function(e) {

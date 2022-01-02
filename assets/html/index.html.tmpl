@@ -34,8 +34,6 @@
   </body>
 </html>
 <script>
-{{ range .jobs }}
-  updateJobStateCircles("{{ .Name }}");
-{{ end }}
+updateAllJobStateCircles();
 updateJobsActive();
 </script>
