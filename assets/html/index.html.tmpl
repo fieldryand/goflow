@@ -21,7 +21,7 @@
         {{ range .jobs }}
         <div><a href="/jobs/{{ .Name }}">{{ .Name }}</a></div>
         <div>
-          <div id="schedule-badge-{{ .Name }}">{{ .Schedule }}</div>
+          <div id="schedule-badge-{{ .Name }}" class="schedule-badge-active-{{ .Active }}">{{ .Schedule }}</div>
         </div>
         <div class="status-wrapper" id="{{ .Name }}"></div>
         <div class="button-container">
@@ -35,5 +35,4 @@
 </html>
 <script>
 updateAllJobStateCircles();
-updateJobsActive();
 </script>

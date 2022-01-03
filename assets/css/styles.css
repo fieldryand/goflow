@@ -124,7 +124,7 @@ a {
   gap: 0.5em
 }
 
-.schedule-badge-active::after {
+.schedule-badge-active-true::after {
   content: 'Active';
   background-color: white;
   color:mediumslateblue;
@@ -135,5 +135,5 @@ a {
   margin-left: 1em;
 }
 
-.schedule-badge-inactive {
+.schedule-badge-active-false {
 }

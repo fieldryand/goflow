@@ -202,9 +202,9 @@ func exampleJob() *Job {
 
 func exampleActiveJob() *Job {
 	j := &Job{
-		Name:            "exampleActiveSchedule",
-		Schedule:        "* * * * *",
-		ActiveByDefault: true,
+		Name:     "exampleActiveSchedule",
+		Schedule: "* * * * *",
+		Active:   true,
 	}
 	j.Add(&Task{Name: "sleepOne", Operator: Bash{Cmd: "sleep", Args: []string{"1"}}})
 	return j
