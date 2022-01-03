@@ -196,7 +196,7 @@ func TestJobRunRoute(t *testing.T) {
 
 func exampleJob() *Job {
 	j := &Job{Name: "example", Schedule: "* * * * *"}
-	j.Add(&Task{Name: "sleepOne", Operator: Bash{Cmd: "sleep", Args: []string{"1"}}})
+	j.Add(&Task{Name: "sleepOne", Operator: Command{Cmd: "sleep", Args: []string{"1"}}})
 	return j
 }
 
@@ -206,7 +206,7 @@ func exampleActiveJob() *Job {
 		Schedule: "* * * * *",
 		Active:   true,
 	}
-	j.Add(&Task{Name: "sleepOne", Operator: Bash{Cmd: "sleep", Args: []string{"1"}}})
+	j.Add(&Task{Name: "sleepOne", Operator: Command{Cmd: "sleep", Args: []string{"1"}}})
 	return j
 }
 

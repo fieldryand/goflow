@@ -27,44 +27,44 @@ func complexAnalyticsJob() *goflow.Job {
 
 	j.Add(&goflow.Task{
 		Name:     "sleepOne",
-		Operator: goflow.Bash{Cmd: "sleep", Args: []string{"1"}},
+		Operator: goflow.Command{Cmd: "sleep", Args: []string{"1"}},
 	})
 	j.Add(&goflow.Task{
 		Name:     "addOneOne",
-		Operator: goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
+		Operator: goflow.Command{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
 	})
 	j.Add(&goflow.Task{
 		Name:     "sleepTwo",
-		Operator: goflow.Bash{Cmd: "sleep", Args: []string{"2"}},
+		Operator: goflow.Command{Cmd: "sleep", Args: []string{"2"}},
 	})
 	j.Add(&goflow.Task{
 		Name:     "addTwoFour",
-		Operator: goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		Operator: goflow.Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
 	})
 	j.Add(&goflow.Task{
 		Name:     "addThreeFour",
-		Operator: goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
+		Operator: goflow.Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
 	})
 	j.Add(&goflow.Task{
 		Name:       "whoopsWithConstantDelay",
-		Operator:   goflow.Bash{Cmd: "whoops", Args: []string{}},
+		Operator:   goflow.Command{Cmd: "whoops", Args: []string{}},
 		Retries:    5,
 		RetryDelay: goflow.ConstantDelay{Period: 1},
 	})
 	j.Add(&goflow.Task{
 		Name:       "whoopsWithExponentialBackoff",
-		Operator:   goflow.Bash{Cmd: "whoops", Args: []string{}},
+		Operator:   goflow.Command{Cmd: "whoops", Args: []string{}},
 		Retries:    1,
 		RetryDelay: goflow.ExponentialBackoff{},
 	})
 	j.Add(&goflow.Task{
 		Name:        "totallySkippable",
-		Operator:    goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
+		Operator:    goflow.Command{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
 		TriggerRule: "allSuccessful",
 	})
 	j.Add(&goflow.Task{
 		Name:        "cleanUp",
-		Operator:    goflow.Bash{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
+		Operator:    goflow.Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
 		TriggerRule: "allDone",
 	})
 

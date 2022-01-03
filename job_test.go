@@ -15,11 +15,11 @@ func TestJob(t *testing.T) {
 	})
 	j.Add(&Task{
 		Name:     "sleepTwo",
-		Operator: Bash{Cmd: "sleep", Args: []string{"2"}},
+		Operator: Command{Cmd: "sleep", Args: []string{"2"}},
 	})
 	j.Add(&Task{
 		Name:     "addTwoFour",
-		Operator: Bash{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
 	})
 	j.Add(&Task{
 		Name:     "addThreeFour",
@@ -27,24 +27,24 @@ func TestJob(t *testing.T) {
 	})
 	j.Add(&Task{
 		Name:       "whoopsWithConstantDelay",
-		Operator:   Bash{Cmd: "whoops", Args: []string{}},
+		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    5,
 		RetryDelay: ConstantDelay{1},
 	})
 	j.Add(&Task{
 		Name:       "whoopsWithExponentialBackoff",
-		Operator:   Bash{Cmd: "whoops", Args: []string{}},
+		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    1,
 		RetryDelay: ExponentialBackoff{},
 	})
 	j.Add(&Task{
 		Name:        "totallySkippable",
-		Operator:    Bash{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
+		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
 		TriggerRule: "allSuccessful",
 	})
 	j.Add(&Task{
 		Name:        "cleanUp",
-		Operator:    Bash{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
+		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
 		TriggerRule: "allDone",
 	})
 
