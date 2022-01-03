@@ -126,8 +126,8 @@ func myJob() *goflow.Job {
 		Name:       "AddTwoPlusThree",
 		Operator:   PositiveAddition{a: 2, b: 3},
 	})
-  j.SetDownstream(j.Task("sleepForOneSecond"), j.Task("getGoogle"))
-  j.SetDownstream(j.Task("sleepForOneSecond"), j.Task("AddTwoPlusThree"))
+	j.SetDownstream(j.Task("sleepForOneSecond"), j.Task("getGoogle"))
+	j.SetDownstream(j.Task("sleepForOneSecond"), j.Task("AddTwoPlusThree"))
 	return j
 }
 ```
