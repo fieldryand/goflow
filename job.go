@@ -168,6 +168,7 @@ func (j *Job) run() error {
 
 func (j *Job) getJobState() *jobState {
 	out := j.jobState
+	out.Lock()
 	if !j.allDone() {
 		out.State = running
 	}
@@ -177,6 +178,7 @@ func (j *Job) getJobState() *jobState {
 	if j.allDone() && j.anyFailed() {
 		out.State = failed
 	}
+	out.Unlock()
 	return out
 }
 
