@@ -159,34 +159,29 @@ func (g *Goflow) initializeBoltDB() *Goflow {
 
 func (g *Goflow) getJobRuns(clientDisconnect bool) func(*gin.Context) {
 	return func(c *gin.Context) {
-		name := c.Param("name")
-		_, ok := g.Jobs[name]
+		chanStream := make(chan string)
 
-		if ok {
-			chanStream := make(chan string)
+		go func() {
+			defer close(chanStream)
 
-			go func() {
-				defer close(chanStream)
-
-				// Periodically push the list of job runs into the stream
-				for {
-					jrl, _ := g.db.readJobRuns(name)
+			// Periodically push the list of job runs into the stream
+			for {
+				for job := range g.Jobs {
+					jrl, _ := g.db.readJobRuns(job)
 					marshalled, _ := marshalJobRunList(jrl)
 					chanStream <- string(marshalled)
-					time.Sleep(time.Second * 1)
 				}
-			}()
+				time.Sleep(time.Second * 1)
+			}
+		}()
 
-			c.Stream(func(w io.Writer) bool {
-				if msg, ok := <-chanStream; ok {
-					c.SSEvent("message", msg)
-					return clientDisconnect
-				}
-				return false
-			})
-		} else {
-			c.String(http.StatusNotFound, "Not found")
-		}
+		c.Stream(func(w io.Writer) bool {
+			if msg, ok := <-chanStream; ok {
+				c.SSEvent("message", msg)
+				return clientDisconnect
+			}
+			return false
+		})
 	}
 }
 
@@ -283,7 +278,7 @@ func (g *Goflow) addRoutes() *Goflow {
 		}
 	})
 
-	g.router.GET("/jobs/:name/jobRuns", g.getJobRuns(g.Options.StreamJobRuns))
+	g.router.GET("/stream", g.getJobRuns(g.Options.StreamJobRuns))
 
 	g.router.GET("/jobs/:name/dag", func(c *gin.Context) {
 		name := c.Param("name")

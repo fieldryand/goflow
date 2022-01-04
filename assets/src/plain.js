@@ -36,40 +36,35 @@ function updateJobActive(jobName) {
     .then(response => response.json())
     .then(data => {
       if (data) {
-        document.getElementById("schedule-badge-" + jobName).setAttribute("class", "schedule-badge-active-true");
+        document
+          .getElementById("schedule-badge-" + jobName)
+          .setAttribute("class", "schedule-badge-active-true");
       } else {
-        document.getElementById("schedule-badge-" + jobName).setAttribute("class", "schedule-badge-active-false");
+        document
+          .getElementById("schedule-badge-" + jobName)
+          .setAttribute("class", "schedule-badge-active-false");
       }
     })
 }
 
-async function updateAllJobStateCircles() {
-  await fetch(`/jobs`)
-    .then(response => response.json())
-    .then(data => {
-      for (i in data) {
-        job = data[i]
-        updateJobStateCircles(job)
-      }
-    })
-}
-
-function updateJobStateCircles(jobName) {
-  var stream = new EventSource(`/jobs/${jobName}/jobRuns`);
+function updateJobStateCircles() {
+  var stream = new EventSource(`/stream`);
   stream.addEventListener("message", function(e) {
     data = JSON.parse(e.data);
     jobRunStates = data.jobRuns.map(getJobRunState).join("");
-    document.getElementById(jobName).innerHTML = jobRunStates;
+    document.getElementById(data.jobName).innerHTML = jobRunStates;
   });
 }
 
 function readTaskStream(jobName) {
-  var stream = new EventSource(`/jobs/${jobName}/jobRuns`);
+  var stream = new EventSource(`/stream`);
   stream.addEventListener("message", function(e) {
-    jobRuns = JSON.parse(e.data).jobRuns;
-    updateTaskStateCircles(jobRuns);
-    updateGraphViz(jobRuns);
-    updateLastRunTs(jobRuns);
+    data = JSON.parse(e.data);
+    if (jobName == data.jobName) {
+      updateTaskStateCircles(data.jobRuns);
+      updateGraphViz(data.jobRuns);
+      updateLastRunTs(data.jobRuns);
+    }
   });
 }
 
