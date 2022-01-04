@@ -170,9 +170,9 @@ func TestJobDagRoute(t *testing.T) {
 	}
 }
 
-func TestJobRunRoute(t *testing.T) {
+func TestStreamRoute(t *testing.T) {
 	var w = CreateTestResponseRecorder()
-	req, _ := http.NewRequest("GET", "/jobs/example/jobRuns", nil)
+	req, _ := http.NewRequest("GET", "/stream", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -183,14 +183,6 @@ func TestJobRunRoute(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-	}
-
-	w = CreateTestResponseRecorder()
-	req, _ = http.NewRequest("GET", "/jobs/bla/jobRuns", nil)
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusNotFound {
-		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
 	}
 }
 
