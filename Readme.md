@@ -25,7 +25,7 @@ A workflow/DAG orchestrator written in Go for rapid prototyping of ETL/ML/AI pip
 ### With Docker
 
 ```shell
-docker run -p 8181:8181 ghcr.io/fieldryand/goflow-example
+docker run -p 8181:8181 ghcr.io/fieldryand/goflow-example:master
 ```
 
 Browse to `localhost:8181` to explore the UI.
@@ -185,6 +185,7 @@ func main() {
 ```
 
 You can pass different options to the engine. Options currently supported:
+- `AssetBasePath`: The path containing the UI assets, usually `assets/`.
 - `DBType`: `boltdb` (default) or `memory`
 - `BoltDBPath`: This will be the filepath of the Bolt database on disk.
 - `StreamJobRuns`: Whether to stream updates to the UI.
