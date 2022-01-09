@@ -50,5 +50,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          tags: latest
           labels: org.opencontainers.image.source=https://github.com/fieldryand/goflow
