@@ -10,7 +10,7 @@ A workflow/DAG orchestrator written in Go for rapid prototyping of ETL/ML/AI pip
 
 ## Contents
 
-1. [Demo](#demo)
+1. [Quick start](#quick-start)
 2. [Use case](#use-case)
 3. [Concepts and features](#concepts-and-features)
    1. [Jobs and tasks](#jobs-and-tasks)
@@ -19,13 +19,26 @@ A workflow/DAG orchestrator written in Go for rapid prototyping of ETL/ML/AI pip
    4. [Task dependencies](#task-dependencies)
    5. [Trigger rules](#trigger-rules)
    6. [The Goflow engine](#the-goflow-engine)
-4. [Installation and development](#installation-and-development)
-   1. [Running the example](#running-the-example)
-   2. [TODO: Docker image](#todo-docker-image)
 
-## Demo
+## Quick start
+
+### With Docker
+
+```shell
+docker run -p 8181:8181 ghcr.io/fieldryand/goflow
+```
+
+Browse to `localhost:8181` to explore the UI.
 
 ![goflow-demo](https://user-images.githubusercontent.com/3333324/147818084-ade84547-4404-4d58-a697-c18ecb06fd30.gif)
+
+### Without Docker
+
+```shell
+go get github.com/fieldryand/goflow
+```
+
+TODO: UI dependencies
 
 ## Use case
 
@@ -66,7 +79,8 @@ func myJob() *goflow.Job {
 }
 ```
 
-By setting `Active: true`, we are telling Goflow to apply the provided cron schedule for this when the application starts. Job scheduling can be activated and deactivated from the UI.
+By setting `Active: true`, we are telling Goflow to apply the provided cron schedule for this job when the application starts.
+Job scheduling can be activated and deactivated from the UI.
 
 ### Custom operators
 
@@ -174,36 +188,6 @@ You can pass different options to the engine. Options currently supported:
 - `DBType`: `boltdb` (default) or `memory`
 - `BoltDBPath`: This will be the filepath of the Bolt database on disk.
 - `StreamJobRuns`: Whether to stream updates to the UI.
+- `ShowExamples`: Whether to show the example jobs.
 
 Goflow is built on the [Gin framework](https://github.com/gin-gonic/gin), so you can pass any Gin handler to `Use`.
-
-## Installation and development
-
-In order to use Goflow you need Go and NPM installed on your system.
-
-### Running the example
-
-Here's how to run the example application included in this repo. First, clone this repo into your `GOPATH`.
-
-```shell
-mkdir -p $GOPATH/src/github.com/fieldryand
-cd $GOPATH/src/github.com/fieldryand
-git clone https://github.com/fieldryand/goflow.git
-```
-
-Next, run `compile_assets.sh` to build the frontend.
-
-```shell
-./compile_assets.sh
-```
-
-Install the Go dependencies and run the application.
-
-```shell
-go get
-go run examples/simple/goflow-simple-example.go
-```
-
-Finally, browse to `localhost:8181` to explore the UI, where you can submit jobs and view their current state.
-
-### TODO: Docker image

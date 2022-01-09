@@ -57,16 +57,30 @@ func TestJobsRoute(t *testing.T) {
 	}
 }
 
-func TestJobSubmitRoute(t *testing.T) {
+func TestJobSubmitToRouterWithMemoryDB(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/jobs/example/submit", nil)
+	req, _ := http.NewRequest("POST", "/jobs/exampleComplexAnalytics/submit", nil)
+
+	routerWithMemoryDB.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
+func TestJobSubmitToRouter(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/jobs/exampleComplexAnalytics/submit", nil)
+
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 
-	routerWithMemoryDB.ServeHTTP(w, req)
+	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/jobs/exampleCustomOperator/submit", nil)
+	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
@@ -83,7 +97,7 @@ func TestJobSubmitRoute(t *testing.T) {
 
 func TestJobToggleActiveRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/jobs/example/toggleActive", nil)
+	req, _ := http.NewRequest("POST", "/jobs/exampleComplexAnalytics/toggleActive", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -108,7 +122,7 @@ func TestJobToggleActiveRoute(t *testing.T) {
 
 func TestJobIsActiveRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/jobs/example/isActive", nil)
+	req, _ := http.NewRequest("GET", "/jobs/exampleComplexAnalytics/isActive", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -136,7 +150,7 @@ func TestRouteNotFound(t *testing.T) {
 
 func TestJobOverviewRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/jobs/example", nil)
+	req, _ := http.NewRequest("GET", "/jobs/exampleComplexAnalytics", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -154,7 +168,7 @@ func TestJobOverviewRoute(t *testing.T) {
 
 func TestJobDagRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/jobs/example/dag", nil)
+	req, _ := http.NewRequest("GET", "/jobs/exampleComplexAnalytics/dag", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -178,7 +192,11 @@ func TestStreamRoute(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
+}
 
+func TestStreamRouteMemoryDB(t *testing.T) {
+	var w = CreateTestResponseRecorder()
+	req, _ := http.NewRequest("GET", "/stream", nil)
 	routerWithMemoryDB.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -186,34 +204,15 @@ func TestStreamRoute(t *testing.T) {
 	}
 }
 
-func exampleJob() *Job {
-	j := &Job{Name: "example", Schedule: "* * * * *"}
-	j.Add(&Task{Name: "sleepOne", Operator: Command{Cmd: "sleep", Args: []string{"1"}}})
-	return j
-}
-
-func exampleActiveJob() *Job {
-	j := &Job{
-		Name:     "exampleActiveSchedule",
-		Schedule: "* * * * *",
-		Active:   true,
-	}
-	j.Add(&Task{Name: "sleepOne", Operator: Command{Cmd: "sleep", Args: []string{"1"}}})
-	return j
-}
-
 func exampleRouter() *gin.Engine {
-	g := New(Options{})
-	g.AddJob(exampleJob)
-	g.AddJob(exampleActiveJob)
+	g := New(Options{ShowExamples: true})
 	g.Use(DefaultLogger())
 	g.addRoutes()
 	return g.router
 }
 
 func exampleRouterWithMemoryDB() *gin.Engine {
-	g := New(Options{DBType: "memory"})
-	g.AddJob(exampleJob)
+	g := New(Options{ShowExamples: true, DBType: "memory"})
 	g.Use(DefaultLogger())
 	g.addRoutes()
 	return g.router

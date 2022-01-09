@@ -42,13 +42,13 @@ func newJobRunList(name string, jobRuns []*jobRun) *jobRunList {
 
 func marshalJobRunList(jrl *jobRunList) ([]byte, error) {
 	for _, jobRun := range jrl.JobRuns {
-		jobRun.JobState.TaskState.RLock()
+		jobRun.JobState.RLock()
 	}
 
 	result, ok := json.Marshal(jrl)
 
 	for _, jobRun := range jrl.JobRuns {
-		jobRun.JobState.TaskState.RUnlock()
+		jobRun.JobState.RUnlock()
 	}
 
 	return result, ok

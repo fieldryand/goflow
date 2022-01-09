@@ -30,6 +30,7 @@ type Options struct {
 	DBType        string
 	BoltDBPath    string
 	StreamJobRuns bool
+	ShowExamples  bool
 }
 
 // New returns a Goflow engine.
@@ -53,6 +54,11 @@ func New(opts Options) *Goflow {
 		g.initializeBoltDB()
 	} else {
 		g.initializeMemoryDB()
+	}
+
+	if opts.ShowExamples {
+		g.AddJob(complexAnalyticsJob)
+		g.AddJob(customOperatorJob)
 	}
 
 	return g
