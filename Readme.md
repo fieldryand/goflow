@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.com/fieldryand/goflow.svg?branch=master)](https://travis-ci.com/fieldryand/goflow)
+[![Build Status](https://github.com/fieldryand/goflow/actions/workflows/go.yml/badge.svg)
 [![codecov](https://codecov.io/gh/fieldryand/goflow/branch/master/graph/badge.svg)](https://codecov.io/gh/fieldryand/goflow)
 [![Go Report Card](https://goreportcard.com/badge/github.com/fieldryand/goflow)](https://goreportcard.com/report/github.com/fieldryand/goflow)
 [![GoDoc](https://pkg.go.dev/badge/github.com/fieldryand/goflow?status.svg)](https://pkg.go.dev/github.com/fieldryand/goflow?tab=doc)
