@@ -1,8 +1,8 @@
 # Output of the go test coverage tool
 *.out
 
-# The goflow binary
-goflow
+# The goflow-example binary
+goflow-example
 
 # Front-end dependencies
 assets/node_modules

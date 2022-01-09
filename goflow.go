@@ -7,7 +7,6 @@ import (
 	"io"
 	"log"
 	"net/http"
-	"os"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -29,6 +28,7 @@ type Goflow struct {
 type Options struct {
 	DBType        string
 	BoltDBPath    string
+	AssetBasePath string
 	StreamJobRuns bool
 	ShowExamples  bool
 }
@@ -192,12 +192,10 @@ func (g *Goflow) getJobRuns(clientDisconnect bool) func(*gin.Context) {
 }
 
 func (g *Goflow) addStaticRoutes() *Goflow {
-	goPath := os.Getenv("GOPATH")
-	assetPath := goPath + "/src/github.com/fieldryand/goflow/assets/"
-	g.router.Static("/css", assetPath+"css")
-	g.router.Static("/dist", assetPath+"dist")
-	g.router.Static("/src", assetPath+"src")
-	g.router.LoadHTMLGlob(assetPath + "html/*.html.tmpl")
+	g.router.Static("/css", g.Options.AssetBasePath+"css")
+	g.router.Static("/dist", g.Options.AssetBasePath+"dist")
+	g.router.Static("/src", g.Options.AssetBasePath+"src")
+	g.router.LoadHTMLGlob(g.Options.AssetBasePath + "html/*.html.tmpl")
 	return g
 }
 
