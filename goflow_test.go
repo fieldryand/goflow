@@ -205,14 +205,14 @@ func TestStreamRouteMemoryDB(t *testing.T) {
 }
 
 func exampleRouter() *gin.Engine {
-	g := New(Options{ShowExamples: true})
+	g := New(Options{AssetBasePath: "assets/", ShowExamples: true})
 	g.Use(DefaultLogger())
 	g.addRoutes()
 	return g.router
 }
 
 func exampleRouterWithMemoryDB() *gin.Engine {
-	g := New(Options{ShowExamples: true, DBType: "memory"})
+	g := New(Options{AssetBasePath: "assets/", ShowExamples: true, DBType: "memory"})
 	g.Use(DefaultLogger())
 	g.addRoutes()
 	return g.router
