@@ -33,7 +33,7 @@ jobs:
         uses: actions/setup-node@v2
 
       - name: Compile UI assets
-      - run: cd assets && npm install && npm run build
+        run: cd assets && npm install && npm run build
 
       - name: Build goflow-example
         run: go build example/goflow-example.go
