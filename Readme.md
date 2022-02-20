@@ -34,11 +34,32 @@ Browse to `localhost:8181` to explore the UI.
 
 ### Without Docker
 
+In a fresh project directory:
+
 ```shell
-go get github.com/fieldryand/goflow
+go mod init # create a new module
+go get github.com/fieldryand/goflow # install dependencies
 ```
 
-TODO: UI dependencies
+Create a file `main.go` with contents:
+```go
+package main
+
+import "github.com/fieldryand/goflow"
+
+func main() {
+        options := goflow.Options{
+                AssetBasePath: "assets/",
+                StreamJobRuns: true,
+                ShowExamples:  true,
+        }
+        gf := goflow.New(options)
+        gf.Use(goflow.DefaultLogger())
+        gf.Run(":8181")
+}
+```
+
+[Download the front-end from the release page](https://github.com/fieldryand/goflow/releases/download/v1.0.0/goflow-assets.tar.gz), untar it, and move it to the location specified in `goflow.Options.AssetBasePath`. Now run the application with `go run main.go` and see it in the browser at localhost:8181.
 
 ## Use case
 
