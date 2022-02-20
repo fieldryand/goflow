@@ -8,6 +8,8 @@ name: Create and publish a Docker image
 on:
   push:
     branches: ['master']
+    tags:
+      - "v*.*.*"
 
 env:
   REGISTRY: ghcr.io
@@ -61,6 +63,5 @@ jobs:
 
       - name: Release
         uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
         with:
           files: assets/dist/dist.js
