@@ -58,3 +58,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: org.opencontainers.image.source=https://github.com/fieldryand/goflow
+
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: assets/dist/dist.js
