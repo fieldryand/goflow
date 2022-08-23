@@ -25,7 +25,7 @@ A workflow/DAG orchestrator written in Go for rapid prototyping of ETL/ML/AI pip
 ### With Docker
 
 ```shell
-docker run -p 8181:8181 ghcr.io/fieldryand/goflow-example:master
+docker run -p 8181:8181 ghcr.io/fieldryand/goflow-example:latest
 ```
 
 Browse to `localhost:8181` to explore the UI.
