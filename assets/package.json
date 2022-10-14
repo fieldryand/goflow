@@ -11,6 +11,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "d3-color": "^3.1.0",
     "dagre-d3": "^0.6.4",
     "webpack": "^5.33.2",
     "webpack-cli": "^4.6.0"
