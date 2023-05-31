@@ -1,9 +1,20 @@
 function updateTaskStateCircles(jobRuns) {
   for (i in jobRuns) {
-    taskState = jobRuns[i].jobState.taskState.internal;
+    var taskState = jobRuns[i].jobState.taskState.internal;
     for (taskName in taskState) {
-      taskRunStates = jobRuns.map(gettingJobRunTaskState(taskName)).join("");
-      document.getElementById(taskName).innerHTML = taskRunStates;
+      var taskRunStates = jobRuns.map(gettingJobRunTaskState(taskName));
+      var old_wrapper = document.getElementById(taskName);
+      var new_wrapper = document.createElement("div");
+      new_wrapper.setAttribute("class", "status-wrapper");
+      new_wrapper.setAttribute("id", taskName);
+      for (k in taskRunStates) {
+        var color = taskRunStates[k];
+        div = document.createElement("div");
+        div.setAttribute("class", "status-indicator");
+        div.setAttribute("style", `background-color:${color}`);
+        new_wrapper.appendChild(div);
+      }
+      document.getElementById("task-table").replaceChild(new_wrapper, old_wrapper);
     }
   }
 }
@@ -15,8 +26,13 @@ function updateGraphViz(jobRuns) {
     for (taskName in taskState) {
       if (document.getElementsByClassName("output")) {
         taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
-        rect = document.getElementById("node-" + taskName).querySelector("rect");
-        rect.setAttribute("style", "stroke-width: 2; stroke: " + taskRunColor);
+	try {
+          rect = document.getElementById("node-" + taskName).querySelector("rect");
+          rect.setAttribute("style", "stroke-width: 2; stroke: " + taskRunColor);
+	}
+	catch(err) {
+          console.log(`${err}. This might be a temporary error when the graph is still loading.`)
+	}
       }
     }
   }
@@ -93,17 +109,10 @@ function stateColor(taskState) {
   return color
 }
 
-function stateCircle(taskState) {
-  color = stateColor(taskState);
-  return `
-  <div class="status-indicator" style="background-color:${color};"></div>
-  `
-}
-
 function gettingJobRunTaskState(task) {
   function getJobRunTaskState(jobRun) {
     taskState = jobRun.jobState.taskState.internal[task];
-    return stateCircle(taskState)
+    return stateColor(taskState)
   }
   return getJobRunTaskState
 }
@@ -114,7 +123,7 @@ function getJobRunTaskColor(jobRun, task) {
 }
 
 function getJobRunState(jobRun) {
-  return stateCircle(jobRun.jobState.state)
+  return stateColor(jobRun.jobState.state)
 }
 
 function submit(jobName) {
