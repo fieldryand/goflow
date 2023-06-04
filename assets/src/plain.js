@@ -1,20 +1,24 @@
+function updateStateCircles(tableName, wrapperId, colorArray) {
+  const oldWrapper = document.getElementById(wrapperId);
+  const newWrapper = document.createElement("div");
+  newWrapper.setAttribute("class", "status-wrapper");
+  newWrapper.setAttribute("id", wrapperId);
+  for (k in colorArray) {
+    const color = colorArray[k];
+    div = document.createElement("div");
+    div.setAttribute("class", "status-indicator");
+    div.setAttribute("style", `background-color:${color}`);
+    newWrapper.appendChild(div);
+  }
+  document.getElementById(tableName).replaceChild(newWrapper, oldWrapper);
+}
+
 function updateTaskStateCircles(jobRuns) {
   for (i in jobRuns) {
     const taskState = jobRuns[i].jobState.taskState.internal;
     for (taskName in taskState) {
       const taskRunStates = jobRuns.map(gettingJobRunTaskState(taskName));
-      const old_wrapper = document.getElementById(taskName);
-      const new_wrapper = document.createElement("div");
-      new_wrapper.setAttribute("class", "status-wrapper");
-      new_wrapper.setAttribute("id", taskName);
-      for (k in taskRunStates) {
-        const color = taskRunStates[k];
-        div = document.createElement("div");
-        div.setAttribute("class", "status-indicator");
-        div.setAttribute("style", `background-color:${color}`);
-        new_wrapper.appendChild(div);
-      }
-      document.getElementById("task-table").replaceChild(new_wrapper, old_wrapper);
+      updateStateCircles("task-table", taskName, taskRunStates);
     }
   }
 }
@@ -24,18 +28,7 @@ function updateJobStateCircles() {
   stream.addEventListener("message", function(e) {
     const data = JSON.parse(e.data);
     const jobRunStates = data.jobRuns.map(getJobRunState);
-    const old_wrapper = document.getElementById(data.jobName);
-    const new_wrapper = document.createElement("div");
-    new_wrapper.setAttribute("class", "status-wrapper");
-    new_wrapper.setAttribute("id", data.jobName);
-    for (k in jobRunStates) {
-      const color = jobRunStates[k];
-      div = document.createElement("div");
-      div.setAttribute("class", "status-indicator");
-      div.setAttribute("style", `background-color:${color}`);
-      new_wrapper.appendChild(div);
-    }
-    document.getElementById("job-table").replaceChild(new_wrapper, old_wrapper);
+    updateStateCircles("job-table", data.jobName, jobRunStates);
   });
 }
 
