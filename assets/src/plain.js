@@ -14,12 +14,21 @@ function updateStateCircles(tableName, wrapperId, colorArray) {
 }
 
 function updateTaskStateCircles(jobRuns) {
+  var tasks = {};
   for (i in jobRuns) {
     const taskState = jobRuns[i].jobState.taskState.internal;
     for (taskName in taskState) {
-      const taskRunStates = jobRuns.map(gettingJobRunTaskState(taskName));
-      updateStateCircles("task-table", taskName, taskRunStates);
+      const state = taskState[taskName];
+      const color = stateColor(state);
+      if (taskName in tasks) {
+        tasks[taskName].push(color);
+      } else {
+        tasks[taskName] = [];
+      }
     }
+  }
+  for (task in tasks) {
+    updateStateCircles("task-table", task, tasks[task]);
   }
 }
 
@@ -111,14 +120,6 @@ function stateColor(taskState) {
   }
 
   return color
-}
-
-function gettingJobRunTaskState(task) {
-  function getJobRunTaskState(jobRun) {
-    const taskState = jobRun.jobState.taskState.internal[task];
-    return stateColor(taskState)
-  }
-  return getJobRunTaskState
 }
 
 function getJobRunTaskColor(jobRun, task) {
