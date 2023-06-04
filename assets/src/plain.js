@@ -19,6 +19,26 @@ function updateTaskStateCircles(jobRuns) {
   }
 }
 
+function updateJobStateCircles() {
+  var stream = new EventSource(`/stream`);
+  stream.addEventListener("message", function(e) {
+    const data = JSON.parse(e.data);
+    const jobRunStates = data.jobRuns.map(getJobRunState);
+    const old_wrapper = document.getElementById(data.jobName);
+    const new_wrapper = document.createElement("div");
+    new_wrapper.setAttribute("class", "status-wrapper");
+    new_wrapper.setAttribute("id", data.jobName);
+    for (k in jobRunStates) {
+      const color = jobRunStates[k];
+      div = document.createElement("div");
+      div.setAttribute("class", "status-indicator");
+      div.setAttribute("style", `background-color:${color}`);
+      new_wrapper.appendChild(div);
+    }
+    document.getElementById("job-table").replaceChild(new_wrapper, old_wrapper);
+  });
+}
+
 function updateGraphViz(jobRuns) {
   if (jobRuns.length) {
     const lastJobRun = jobRuns.reverse()[0]
@@ -61,15 +81,6 @@ function updateJobActive(jobName) {
           .setAttribute("class", "schedule-badge-active-false");
       }
     })
-}
-
-function updateJobStateCircles() {
-  var stream = new EventSource(`/stream`);
-  stream.addEventListener("message", function(e) {
-    const data = JSON.parse(e.data);
-    const jobRunStates = data.jobRuns.map(getJobRunState).join("");
-    document.getElementById(data.jobName).innerHTML = jobRunStates;
-  });
 }
 
 function readTaskStream(jobName) {
