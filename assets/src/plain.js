@@ -1,22 +1,60 @@
+function updateStateCircles(tableName, wrapperId, colorArray) {
+  const oldWrapper = document.getElementById(wrapperId);
+  const newWrapper = document.createElement("div");
+  newWrapper.setAttribute("class", "status-wrapper");
+  newWrapper.setAttribute("id", wrapperId);
+  for (k in colorArray) {
+    const color = colorArray[k];
+    div = document.createElement("div");
+    div.setAttribute("class", "status-indicator");
+    div.setAttribute("style", `background-color:${color}`);
+    newWrapper.appendChild(div);
+  }
+  document.getElementById(tableName).replaceChild(newWrapper, oldWrapper);
+}
+
 function updateTaskStateCircles(jobRuns) {
+  var tasks = {};
   for (i in jobRuns) {
-    taskState = jobRuns[i].jobState.taskState.internal;
+    const taskState = jobRuns[i].jobState.taskState.internal;
     for (taskName in taskState) {
-      taskRunStates = jobRuns.map(gettingJobRunTaskState(taskName)).join("");
-      document.getElementById(taskName).innerHTML = taskRunStates;
+      const state = taskState[taskName];
+      const color = stateColor(state);
+      if (taskName in tasks) {
+        tasks[taskName].push(color);
+      } else {
+        tasks[taskName] = [];
+      }
     }
   }
+  for (task in tasks) {
+    updateStateCircles("task-table", task, tasks[task]);
+  }
+}
+
+function updateJobStateCircles() {
+  var stream = new EventSource(`/stream`);
+  stream.addEventListener("message", function(e) {
+    const data = JSON.parse(e.data);
+    const jobRunStates = data.jobRuns.map(getJobRunState);
+    updateStateCircles("job-table", data.jobName, jobRunStates);
+  });
 }
 
 function updateGraphViz(jobRuns) {
   if (jobRuns.length) {
-    lastJobRun = jobRuns.reverse()[0]
-    taskState = lastJobRun.jobState.taskState.internal;
+    const lastJobRun = jobRuns.reverse()[0]
+    const taskState = lastJobRun.jobState.taskState.internal;
     for (taskName in taskState) {
       if (document.getElementsByClassName("output")) {
-        taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
-        rect = document.getElementById("node-" + taskName).querySelector("rect");
-        rect.setAttribute("style", "stroke-width: 2; stroke: " + taskRunColor);
+        const taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
+	try {
+          const rect = document.getElementById("node-" + taskName).querySelector("rect");
+          rect.setAttribute("style", "stroke-width: 2; stroke: " + taskRunColor);
+	}
+	catch(err) {
+          console.log(`${err}. This might be a temporary error when the graph is still loading.`)
+	}
       }
     }
   }
@@ -24,9 +62,9 @@ function updateGraphViz(jobRuns) {
 
 function updateLastRunTs(jobRuns) {
   if (jobRuns.reverse()[0]) {
-    lastJobRunTs = jobRuns.reverse()[0].startedAt;
-    lastJobRunTsHTML = document.getElementById("last-job-run-ts-wrapper").innerHTML;
-    newHTML = lastJobRunTsHTML.replace(/.*/, `Last run: ${lastJobRunTs}`);
+    const lastJobRunTs = jobRuns.reverse()[0].startedAt;
+    const lastJobRunTsHTML = document.getElementById("last-job-run-ts-wrapper").innerHTML;
+    const newHTML = lastJobRunTsHTML.replace(/.*/, `Last run: ${lastJobRunTs}`);
     document.getElementById("last-job-run-ts-wrapper").innerHTML = newHTML;
   }
 }
@@ -47,19 +85,10 @@ function updateJobActive(jobName) {
     })
 }
 
-function updateJobStateCircles() {
-  var stream = new EventSource(`/stream`);
-  stream.addEventListener("message", function(e) {
-    data = JSON.parse(e.data);
-    jobRunStates = data.jobRuns.map(getJobRunState).join("");
-    document.getElementById(data.jobName).innerHTML = jobRunStates;
-  });
-}
-
 function readTaskStream(jobName) {
   var stream = new EventSource(`/stream`);
   stream.addEventListener("message", function(e) {
-    data = JSON.parse(e.data);
+    const data = JSON.parse(e.data);
     if (jobName == data.jobName) {
       updateTaskStateCircles(data.jobRuns);
       updateGraphViz(data.jobRuns);
@@ -71,54 +100,39 @@ function readTaskStream(jobName) {
 function stateColor(taskState) {
   switch (taskState) {
     case "Running":
-      color = "#dffbe3";
+      var color = "#dffbe3";
       break;
     case "UpForRetry":
-      color = "#ffc620";
+      var color = "#ffc620";
       break;
     case "Successful":
-      color = "#39c84e";
+      var color = "#39c84e";
       break;
     case "Skipped":
-      color = "#abbefb";
+      var color = "#abbefb";
       break;
     case "Failed":
-      color = "#ff4020";
+      var color = "#ff4020";
       break;
     case "None":
-      color = "white";
+      var color = "white";
       break;
   }
 
   return color
 }
 
-function stateCircle(taskState) {
-  color = stateColor(taskState);
-  return `
-  <div class="status-indicator" style="background-color:${color};"></div>
-  `
-}
-
-function gettingJobRunTaskState(task) {
-  function getJobRunTaskState(jobRun) {
-    taskState = jobRun.jobState.taskState.internal[task];
-    return stateCircle(taskState)
-  }
-  return getJobRunTaskState
-}
-
 function getJobRunTaskColor(jobRun, task) {
-  taskState = jobRun.jobState.taskState.internal[task];
+  const taskState = jobRun.jobState.taskState.internal[task];
   return stateColor(taskState)
 }
 
 function getJobRunState(jobRun) {
-  return stateCircle(jobRun.jobState.state)
+  return stateColor(jobRun.jobState.state)
 }
 
 function submit(jobName) {
-  var xhttp = new XMLHttpRequest();
+  const xhttp = new XMLHttpRequest();
   xhttp.open("POST", `/jobs/${jobName}/submit`, true);
   xhttp.send();
 }
