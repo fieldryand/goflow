@@ -3,7 +3,6 @@ package goflow
 import (
 	"fmt"
 	"io"
-	"io/ioutil"
 	"net/http"
 	"os/exec"
 )
@@ -42,7 +41,7 @@ func (o Get) Run() (interface{}, error) {
 	} else if res.StatusCode < 200 || res.StatusCode > 299 {
 		return nil, fmt.Errorf("Received status code %v", res.StatusCode)
 	} else {
-		content, err := ioutil.ReadAll(res.Body)
+		content, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		return string(content), err
 	}
@@ -64,7 +63,7 @@ func (o Post) Run() (interface{}, error) {
 	} else if res.StatusCode < 200 || res.StatusCode > 299 {
 		return nil, fmt.Errorf("Received status code %v", res.StatusCode)
 	} else {
-		content, err := ioutil.ReadAll(res.Body)
+		content, err := io.ReadAll(res.Body)
 		res.Body.Close()
 		return string(content), err
 	}
