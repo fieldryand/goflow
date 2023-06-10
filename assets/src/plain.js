@@ -23,7 +23,7 @@ function updateTaskStateCircles(jobRuns) {
       if (taskName in tasks) {
         tasks[taskName].push(color);
       } else {
-        tasks[taskName] = [];
+        tasks[taskName] = [color];
       }
     }
   }
