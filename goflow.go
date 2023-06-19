@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -134,8 +133,13 @@ func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
 
 // Run runs the webserver.
 func (g *Goflow) Run(port string) {
+	log.SetFlags(0)
+	log.SetOutput(new(logWriter))
 	g.router.Use(gin.Recovery())
-	g.addRoutes()
+	g.addStaticRoutes()
+	g.addStreamRoute()
+	g.addUIRoutes()
+	g.addAPIRoutes()
 	g.cron.Start()
 	g.router.Run(port)
 }
@@ -189,111 +193,4 @@ func (g *Goflow) getJobRuns(clientDisconnect bool) func(*gin.Context) {
 			return false
 		})
 	}
-}
-
-func (g *Goflow) addStaticRoutes() *Goflow {
-	g.router.Static("/css", g.Options.AssetBasePath+"css")
-	g.router.Static("/dist", g.Options.AssetBasePath+"dist")
-	g.router.Static("/src", g.Options.AssetBasePath+"src")
-	g.router.LoadHTMLGlob(g.Options.AssetBasePath + "html/*.html.tmpl")
-	return g
-}
-
-func (g *Goflow) addRoutes() *Goflow {
-	g.addStaticRoutes()
-
-	log.SetFlags(0)
-	log.SetOutput(new(logWriter))
-
-	g.router.GET("/", func(c *gin.Context) {
-		jobs := make([]*Job, 0)
-		for _, job := range g.Jobs {
-			jobs = append(jobs, job())
-		}
-		c.HTML(http.StatusOK, "index.html.tmpl", gin.H{"jobs": jobs})
-	})
-
-	g.router.GET("/health", func(c *gin.Context) {
-		c.String(http.StatusOK, "OK")
-	})
-
-	g.router.GET("/jobs", func(c *gin.Context) {
-		jobNames := make([]string, 0)
-		for _, job := range g.Jobs {
-			jobNames = append(jobNames, job().Name)
-		}
-		c.JSON(http.StatusOK, jobNames)
-	})
-
-	g.router.GET("/jobs/:name", func(c *gin.Context) {
-		name := c.Param("name")
-		jobFn, ok := g.Jobs[name]
-
-		if ok {
-			tasks := jobFn().Tasks
-			taskNames := make([]string, 0)
-			for _, task := range tasks {
-				taskNames = append(taskNames, task.Name)
-			}
-
-			c.HTML(http.StatusOK, "job.html.tmpl", gin.H{
-				"jobName":   name,
-				"taskNames": taskNames,
-				"schedule":  g.Jobs[name]().Schedule,
-			})
-		} else {
-			c.String(http.StatusNotFound, "Not found")
-		}
-
-	})
-
-	g.router.POST("/jobs/:name/submit", func(c *gin.Context) {
-		name := c.Param("name")
-		_, ok := g.Jobs[name]
-
-		if ok {
-			jobRun := g.runJob(name)
-			c.String(http.StatusOK, fmt.Sprintf("submitted job run %s", jobRun.name()))
-		} else {
-			c.String(http.StatusNotFound, "Not found")
-		}
-	})
-
-	g.router.POST("/jobs/:name/toggleActive", func(c *gin.Context) {
-		name := c.Param("name")
-		_, ok := g.Jobs[name]
-
-		if ok {
-			isActive, _ := g.toggleActive(name)
-			c.String(http.StatusOK, fmt.Sprintf("job %s set to active=%v", name, isActive))
-		} else {
-			c.String(http.StatusNotFound, "Not found")
-		}
-	})
-
-	g.router.GET("/jobs/:name/isActive", func(c *gin.Context) {
-		name := c.Param("name")
-		jobFn, ok := g.Jobs[name]
-
-		if ok {
-			c.JSON(http.StatusOK, jobFn().Active)
-		} else {
-			c.String(http.StatusNotFound, "Not found")
-		}
-	})
-
-	g.router.GET("/stream", g.getJobRuns(g.Options.StreamJobRuns))
-
-	g.router.GET("/jobs/:name/dag", func(c *gin.Context) {
-		name := c.Param("name")
-		jobFn, ok := g.Jobs[name]
-
-		if ok {
-			c.JSON(http.StatusOK, jobFn().Dag)
-		} else {
-			c.String(http.StatusNotFound, "Not found")
-		}
-	})
-
-	return g
 }

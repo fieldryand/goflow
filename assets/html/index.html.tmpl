@@ -19,7 +19,7 @@
         <div>State</div>
         <div></div>
         {{ range .jobs }}
-        <div><a href="/jobs/{{ .Name }}">{{ .Name }}</a></div>
+        <div><a href="/ui/jobs/{{ .Name }}">{{ .Name }}</a></div>
         <div>
           <div id="schedule-badge-{{ .Name }}" class="schedule-badge-active-{{ .Active }}">{{ .Schedule }}</div>
         </div>

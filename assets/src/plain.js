@@ -70,7 +70,7 @@ function updateLastRunTs(jobRuns) {
 }
 
 function updateJobActive(jobName) {
-  fetch(`/jobs/${jobName}/isActive`)
+  fetch(`/api/jobs/${jobName}/isActive`)
     .then(response => response.json())
     .then(data => {
       if (data) {
@@ -133,7 +133,7 @@ function getJobRunState(jobRun) {
 
 function submit(jobName) {
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", `/jobs/${jobName}/submit`, true);
+  xhttp.open("POST", `/api/jobs/${jobName}/submit`, true);
   xhttp.send();
 }
 
@@ -141,6 +141,6 @@ async function toggleActive(jobName) {
   const options = {
     method: 'POST'
   }
-  await fetch(`/jobs/${jobName}/toggleActive`, options)
+  await fetch(`/api/jobs/${jobName}/toggleActive`, options)
     .then(updateJobActive(jobName))
 }

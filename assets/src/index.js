@@ -2,7 +2,7 @@ var dagreD3 = require("dagre-d3");
 var d3 = require("d3");
 
 async function getDag(jobName) {
-  const response = await fetch(`/jobs/${jobName}/dag`);
+  const response = await fetch(`/api/jobs/${jobName}/dag`);
   const json = await response.json();
   return json
 }
