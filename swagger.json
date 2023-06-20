@@ -1,0 +1,56 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Goflow API",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "check health of the service",
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "OK": {
+                    "value": {
+                      "health": "OK"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs": {
+      "get": {
+        "operationId": "listJobs",
+        "summary": "list jobs",
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "examples": {
+                    "value": {
+                      "jobs": [
+                        "exampleComplexAnalytics",
+                        "exampleCustomOperator"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
