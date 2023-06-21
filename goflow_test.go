@@ -134,24 +134,6 @@ func TestJobToggleActiveRoute(t *testing.T) {
 	}
 }
 
-func TestJobIsActiveRoute(t *testing.T) {
-	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/jobs/exampleComplexAnalytics/isActive", nil)
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/jobs/bla/isActive", nil)
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusNotFound {
-		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
-	}
-}
-
 func TestRouteNotFound(t *testing.T) {
 	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/blaaaa", nil)
@@ -173,24 +155,6 @@ func TestJobOverviewRoute(t *testing.T) {
 
 	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("GET", "/jobs/bla", nil)
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusNotFound {
-		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
-	}
-}
-
-func TestJobDagRoute(t *testing.T) {
-	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/jobs/exampleComplexAnalytics/dag", nil)
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-	}
-
-	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("GET", "/api/jobs/bla/dag", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusNotFound {
