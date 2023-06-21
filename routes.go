@@ -46,6 +46,14 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			name := c.Param("name")
 			jobFn, ok := g.Jobs[name]
 
+			var msg struct {
+				JobName   string   `json:"job"`
+				TaskNames []string `json:"tasks"`
+				Dag       dag      `json:"dag"`
+				Schedule  string   `json:"schedule"`
+				Active    bool     `json:"active"`
+			}
+
 			if ok {
 				tasks := jobFn().Tasks
 				taskNames := make([]string, 0)
@@ -53,40 +61,15 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 					taskNames = append(taskNames, task.Name)
 				}
 
-				var msg struct {
-					JobName   string   `json:"job"`
-					TaskNames []string `json:"tasks"`
-					Schedule  string   `json:"schedule"`
-				}
 				msg.JobName = name
 				msg.TaskNames = taskNames
+				msg.Dag = jobFn().Dag
 				msg.Schedule = g.Jobs[name]().Schedule
+				msg.Active = jobFn().Active
 
 				c.JSON(http.StatusOK, msg)
 			} else {
-				c.JSON(http.StatusNotFound, "Not found")
-			}
-		})
-
-		api.GET("/jobs/:name/dag", func(c *gin.Context) {
-			name := c.Param("name")
-			jobFn, ok := g.Jobs[name]
-
-			if ok {
-				c.JSON(http.StatusOK, jobFn().Dag)
-			} else {
-				c.JSON(http.StatusNotFound, "Not found")
-			}
-		})
-
-		api.GET("/jobs/:name/isActive", func(c *gin.Context) {
-			name := c.Param("name")
-			jobFn, ok := g.Jobs[name]
-
-			if ok {
-				c.JSON(http.StatusOK, jobFn().Active)
-			} else {
-				c.JSON(http.StatusNotFound, "Not found")
+				c.JSON(http.StatusNotFound, msg)
 			}
 		})
 
