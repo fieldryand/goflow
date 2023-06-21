@@ -37,12 +37,42 @@
             "content": {
               "application/json": {
                 "examples": {
-                  "examples": {
+                  "exampleJobs": {
                     "value": {
                       "jobs": [
                         "exampleComplexAnalytics",
                         "exampleCustomOperator"
                       ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{jobName}/submit": {
+      "post": {
+        "operationId": "submitJob",
+        "summary": "submit a job for execution",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobName"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "customOperator": {
+                    "value": {
+                      "job": "exampleCustomOperator",
+                      "success": true,
+                      "id": "exampleCustomOperator_2023-06-21T15:02:39.943428403Z"
                     }
                   }
                 }
