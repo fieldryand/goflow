@@ -62,6 +62,13 @@ func TestJobsRoute(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
+
+	req, _ = http.NewRequest("GET", "/api/jobs/exampleComplexAnalytics", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
 }
 
 func TestJobSubmitToRouterWithMemoryDB(t *testing.T) {
@@ -111,7 +118,7 @@ func TestJobToggleActiveRoute(t *testing.T) {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 
-	req, _ = http.NewRequest("POST", "/api/jobs/exampleActiveSchedule/toggleActive", nil)
+	req, _ = http.NewRequest("POST", "/api/jobs/exampleCustomOperator/toggleActive", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
