@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -117,11 +116,21 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			name := c.Param("name")
 			_, ok := g.Jobs[name]
 
+			var msg struct {
+				Job     string `json:"job"`
+				Success bool   `json:"success"`
+				Active  bool   `json:"active"`
+			}
+			msg.Job = name
+
 			if ok {
 				isActive, _ := g.toggleActive(name)
-				c.JSON(http.StatusOK, fmt.Sprintf("job %s set to active=%v", name, isActive))
+				msg.Success = true
+				msg.Active = isActive
+				c.JSON(http.StatusOK, msg)
 			} else {
-				c.JSON(http.StatusNotFound, "Not found")
+				msg.Success = false
+				c.JSON(http.StatusNotFound, msg)
 			}
 		})
 	}
