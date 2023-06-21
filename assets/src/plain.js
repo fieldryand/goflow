@@ -70,10 +70,10 @@ function updateLastRunTs(jobRuns) {
 }
 
 function updateJobActive(jobName) {
-  fetch(`/api/jobs/${jobName}/isActive`)
+  fetch(`/api/jobs/${jobName}`)
     .then(response => response.json())
     .then(data => {
-      if (data) {
+      if (data.active) {
         document
           .getElementById("schedule-badge-" + jobName)
           .setAttribute("class", "schedule-badge-active-true");
