@@ -86,10 +86,10 @@ func setUnsetActive(fn func() *Job, active bool) func() *Job {
 	}
 }
 
-// toggleActive flips a job's cron schedule status from active to inactive
+// toggle flips a job's cron schedule status from active to inactive
 // and vice versa. It returns true if the new status is active and false
 // if it is inactive.
-func (g *Goflow) toggleActive(jobName string) (bool, error) {
+func (g *Goflow) toggle(jobName string) (bool, error) {
 	if g.Jobs[jobName]().Active {
 		g.Jobs[jobName] = setUnsetActive(g.Jobs[jobName], false)
 		g.cron.Remove(g.activeJobCronIDs[jobName])

@@ -149,7 +149,7 @@
         }
       }
     },
-    "/api/jobs/{jobName}/toggleActive": {
+    "/api/jobs/{jobName}/toggle": {
       "post": {
         "operationId": "toggleJobSchedule",
         "summary": "toggle a job schedule on or off",

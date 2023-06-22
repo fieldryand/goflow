@@ -111,14 +111,14 @@ func TestJobSubmitToRouter(t *testing.T) {
 
 func TestJobToggleActiveRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/jobs/exampleComplexAnalytics/toggleActive", nil)
+	req, _ := http.NewRequest("POST", "/api/jobs/exampleComplexAnalytics/toggle", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 
-	req, _ = http.NewRequest("POST", "/api/jobs/exampleCustomOperator/toggleActive", nil)
+	req, _ = http.NewRequest("POST", "/api/jobs/exampleCustomOperator/toggle", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -126,7 +126,7 @@ func TestJobToggleActiveRoute(t *testing.T) {
 	}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/jobs/bla/toggleActive", nil)
+	req, _ = http.NewRequest("POST", "/api/jobs/bla/toggle", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusNotFound {

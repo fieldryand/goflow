@@ -137,10 +137,10 @@ function submit(jobName) {
   xhttp.send();
 }
 
-async function toggleActive(jobName) {
+async function toggle(jobName) {
   const options = {
     method: 'POST'
   }
-  await fetch(`/api/jobs/${jobName}/toggleActive`, options)
+  await fetch(`/api/jobs/${jobName}/toggle`, options)
     .then(updateJobActive(jobName))
 }

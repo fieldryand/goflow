@@ -95,7 +95,7 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			}
 		})
 
-		api.POST("/jobs/:name/toggleActive", func(c *gin.Context) {
+		api.POST("/jobs/:name/toggle", func(c *gin.Context) {
 			name := c.Param("name")
 			_, ok := g.Jobs[name]
 
@@ -107,7 +107,7 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			msg.Job = name
 
 			if ok {
-				isActive, _ := g.toggleActive(name)
+				isActive, _ := g.toggle(name)
 				msg.Success = true
 				msg.Active = isActive
 				c.JSON(http.StatusOK, msg)
