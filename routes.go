@@ -42,6 +42,31 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			c.JSON(http.StatusOK, msg)
 		})
 
+		api.GET("/jobruns", func(c *gin.Context) {
+			jobName := c.Query("jobname")
+			stateQuery := c.Query("state")
+
+			jobruns := make([]*jobRun, 0)
+
+			for job := range g.Jobs {
+				jobRunList, _ := g.db.readJobRuns(job)
+				for _, jobrun := range jobRunList.JobRuns {
+					if stateQuery != "" && stateQuery != string(jobrun.JobState.State) {
+					} else if jobName != "" && jobName != jobrun.JobName {
+					} else {
+						jobruns = append(jobruns, jobrun)
+					}
+				}
+			}
+
+			var msg struct {
+				JobRuns []*jobRun `json:"jobruns"`
+			}
+			msg.JobRuns = jobruns
+
+			c.JSON(http.StatusOK, msg)
+		})
+
 		api.GET("/jobs/:name", func(c *gin.Context) {
 			name := c.Param("name")
 			jobFn, ok := g.Jobs[name]
