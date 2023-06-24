@@ -4,7 +4,7 @@ ENV GIN_MODE=release
 
 WORKDIR /opt
 COPY goflow-example goflow-example
-COPY assets assets
+COPY ui ui
 
 EXPOSE 8181
 

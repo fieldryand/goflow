@@ -4,7 +4,7 @@ import "github.com/fieldryand/goflow"
 
 func main() {
 	options := goflow.Options{
-		AssetBasePath: "assets/",
+		AssetBasePath: "ui/",
 		StreamJobRuns: true,
 		ShowExamples:  true,
 	}

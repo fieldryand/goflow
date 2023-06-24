@@ -183,7 +183,7 @@ func TestStreamRouteMemoryDB(t *testing.T) {
 }
 
 func exampleRouter() *gin.Engine {
-	g := New(Options{AssetBasePath: "assets/", ShowExamples: true})
+	g := New(Options{AssetBasePath: "ui/", ShowExamples: true})
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute()
@@ -193,7 +193,7 @@ func exampleRouter() *gin.Engine {
 }
 
 func exampleRouterWithMemoryDB() *gin.Engine {
-	g := New(Options{AssetBasePath: "assets/", ShowExamples: true, DBType: "memory"})
+	g := New(Options{AssetBasePath: "ui/", ShowExamples: true, DBType: "memory"})
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute()
