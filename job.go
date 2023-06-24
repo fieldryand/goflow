@@ -21,18 +21,18 @@ type Job struct {
 type state string
 
 const (
-	none       state = "None"
-	running    state = "Running"
-	upForRetry state = "UpForRetry"
-	skipped    state = "Skipped"
-	failed     state = "Failed"
-	successful state = "Successful"
+	none       state = "none"
+	running    state = "running"
+	upForRetry state = "upforretry"
+	skipped    state = "skipped"
+	failed     state = "failed"
+	successful state = "successful"
 )
 
 type jobState struct {
 	sync.RWMutex
-	State     state           `json:"state"`
-	TaskState *stringStateMap `json:"taskState"`
+	State     state           `json:"job"`
+	TaskState *stringStateMap `json:"tasks"`
 }
 
 func newJobState() *jobState {
