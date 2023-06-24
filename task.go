@@ -25,9 +25,9 @@ const (
 )
 
 func (t *Task) run(writes chan writeOp) error {
-	log.Printf("starting task %v", t.Name)
+	log.Printf("starting task <%v>", t.Name)
 	res, err := t.Operator.Run()
-	logMsg := "task %v reached state %v - %v attempt(s) remaining - result %v"
+	logMsg := "task <%v> reached state <%v> - %v attempt(s) remaining - result: %v"
 
 	if err != nil && t.attemptsRemaining > 0 {
 		log.Printf(logMsg, t.Name, upForRetry, t.attemptsRemaining, err)
@@ -53,7 +53,7 @@ func (t *Task) run(writes chan writeOp) error {
 }
 
 func (t *Task) skip(writes chan writeOp) error {
-	logMsg := "task %v reached state %v"
+	logMsg := "task <%v> reached state <%v>"
 	log.Printf(logMsg, t.Name, skipped)
 	write := writeOp{t.Name, skipped, make(chan bool)}
 	writes <- write
@@ -71,7 +71,7 @@ type RetryDelay interface {
 type ConstantDelay struct{ Period int }
 
 func (d ConstantDelay) wait(taskName string, attempt int) {
-	log.Printf("waiting %v second(s) to retry task %v", d.Period, taskName)
+	log.Printf("waiting %v second(s) to retry task <%v>", d.Period, taskName)
 	time.Sleep(time.Duration(d.Period) * time.Second)
 }
 
@@ -80,6 +80,6 @@ type ExponentialBackoff struct{}
 
 func (d ExponentialBackoff) wait(taskName string, attempt int) {
 	delay := math.Pow(2, float64(attempt))
-	log.Printf("waiting %v seconds to retry task %v", delay, taskName)
+	log.Printf("waiting %v seconds to retry task <%v>", delay, taskName)
 	time.Sleep(time.Duration(delay) * time.Second)
 }

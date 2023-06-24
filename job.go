@@ -21,7 +21,7 @@ type Job struct {
 type state string
 
 const (
-	none       state = "none"
+	none       state = "notstarted"
 	running    state = "running"
 	upForRetry state = "upforretry"
 	skipped    state = "skipped"
@@ -97,7 +97,7 @@ func (j *Job) run() error {
 		return fmt.Errorf("Invalid Dag for job %s", j.Name)
 	}
 
-	log.Printf("starting job %v", j.Name)
+	log.Printf("starting job <%v>", j.Name)
 
 	writes := make(chan writeOp)
 	taskState := j.jobState.TaskState

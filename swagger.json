@@ -52,14 +52,14 @@
         }
       }
     },
-    "/api/jobs/{jobName}": {
+    "/api/jobs/{jobname}": {
       "get": {
         "operationId": "jobDetails",
         "summary": "get the details for a given job",
         "parameters": [
           {
             "in": "path",
-            "name": "jobName"
+            "name": "jobname"
           }
         ],
         "responses": {
@@ -123,6 +123,24 @@
       "get": {
         "operationId": "listJobRuns",
         "summary": "query and list job runs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "jobname",
+	    "schema": {
+		    "type": "string"
+	    },
+	    "description": "(optional) the job name"
+          },
+          {
+            "in": "query",
+            "name": "state",
+	    "schema": {
+		    "type": "string"
+	    },
+	    "description": "(optional) the job state, valid values are [running, failed, successful]"
+          }
+        ],
         "responses": {
           "200": {
             "description": "200 response",
@@ -140,12 +158,12 @@
                             "tasks": {
                               "state": {
                                 "addOneOne": "running",
-                                "addThreeFour": "none",
-                                "addTwoFour": "none",
-                                "cleanUp": "none",
+                                "addThreeFour": "notstarted",
+                                "addTwoFour": "notstarted",
+                                "cleanUp": "notstarted",
                                 "sleepOne": "successful",
-                                "sleepTwo": "none",
-                                "totallySkippable": "none",
+                                "sleepTwo": "notstarted",
+                                "totallySkippable": "notstarted",
                                 "whoopsWithConstantDelay": "running",
                                 "whoopsWithExponentialBackoff": "upforretry"
                               }
@@ -162,14 +180,14 @@
         }
       }
     },
-    "/api/jobs/{jobName}/submit": {
+    "/api/jobs/{jobname}/submit": {
       "post": {
         "operationId": "submitJob",
         "summary": "submit a job for execution",
         "parameters": [
           {
             "in": "path",
-            "name": "jobName"
+            "name": "jobname"
           }
         ],
         "responses": {
@@ -192,14 +210,14 @@
         }
       }
     },
-    "/api/jobs/{jobName}/toggle": {
+    "/api/jobs/{jobname}/toggle": {
       "post": {
         "operationId": "toggleJobSchedule",
         "summary": "toggle a job schedule on or off",
         "parameters": [
           {
             "in": "path",
-            "name": "jobName"
+            "name": "jobname"
           }
         ],
         "responses": {

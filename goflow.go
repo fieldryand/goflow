@@ -116,7 +116,7 @@ func (g *Goflow) runJob(jobName string) *jobRun {
 			jobState := job.getJobState()
 			g.db.updateJobState(jr, jobState)
 			if jobState.State != running && jobState.State != none {
-				log.Printf("job %v reached state %v", job.Name, job.jobState.State)
+				log.Printf("job <%v> reached state <%v>", job.Name, job.jobState.State)
 				break
 			}
 		}
