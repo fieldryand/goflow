@@ -6,11 +6,13 @@
 
 # Goflow
 
-A simple DAG scheduler and dashboard, written in Go.
+A simple but powerful DAG scheduler and dashboard, written in Go. Straightforward to integrate with other applications.
 
 ## Contents
 
 - [Quick start](#quick-start)
+   - [With Docker](#with-docker)
+   - [Without Docker](#without-docker)
 - [Use case](#use-case)
 - [Development overview](#development-overview)
    - [Jobs and tasks](#jobs-and-tasks)
@@ -20,7 +22,7 @@ A simple DAG scheduler and dashboard, written in Go.
    - [Trigger rules](#trigger-rules)
    - [The Goflow engine](#the-goflow-engine)
    - [Available operators](#available-operators)
-- [API](#api)
+- [API and integration](#api-and-integration)
 
 ## Quick start
 
@@ -61,13 +63,13 @@ func main() {
 }
 ```
 
-[Download the front-end from the release page](https://github.com/fieldryand/goflow/releases/download/v1.0.0/goflow-assets.tar.gz), untar it, and move it to the location specified in `goflow.Options.AssetBasePath`. Now run the application with `go run main.go` and see it in the browser at localhost:8181.
+[Download the front-end from the release page](https://github.com/fieldryand/goflow/releases/latest/download/goflow-assets.tar.gz), untar it, and move it to the location specified in `goflow.Options.AssetBasePath`. Now run the application with `go run main.go` and see it in the browser at localhost:8181.
 
 ## Use case
 
 Goflow was built as a simple replacement for Apache Airflow to manage some small data pipeline projects. Airflow started to feel too heavyweight for these projects where all the computation was offloaded to independent services, but there was still a need for basic orchestration, concurrency, retries, visibility etc.
 
-Goflow prioritizes ease of deployment over scalability and does not attempt to be an enterprise solution. For example, there is currently no support for job queueing and distributed workers, so if you need those features, you should prefer something like Airflow or Temporal. On the other hand, Goflow runs comfortably on a single tiny VM, so it can be a great fit for hobby projects.
+Goflow prioritizes ease of deployment over scalability and does not attempt to be an enterprise solution. For example, there is currently no support for job queueing and distributed workers, so if you need those features, you should prefer something like Airflow or Temporal. On the other hand, Goflow runs comfortably on a single tiny VM and is easy to maintain, so it can be a great fit if you want to keep costs down.
 
 ## Development overview
 
@@ -222,9 +224,18 @@ Goflow is built on the [Gin framework](https://github.com/gin-gonic/gin), so you
 
 todo
 
-## API
+## API and integration
 
-You can use the API to integrate Goflow with other applications. Goflow comes with an OpenAPI spec, so after cloning the repository, the documentation is available with Swagger UI. For example, you can run:
+You can use the API to integrate Goflow with other applications. Here is an overview of available endpoints:
+- `GET /api/health`: Check health of the service
+- `GET /api/jobs`: List registered jobs
+- `GET /api/jobs/{jobname}`: Get the details for a given job
+- `GET /api/jobruns`: Query and list jobruns
+- `POST /api/jobs/{jobname}/submit`: Submit a job for execution
+- `POST /api/jobs/{jobname}/toggle`: Toggle a job schedule on or off
+- `/stream`: This endpoint returns Server-Sent Events with a `data` payload matching the one returned by `/api/jobruns`. The dashboard that ships with Goflow uses this endpoint.
+
+Check out the OpenAPI spec for more details. Easiest way is to clone the repo, then within the repo use Swagger as in the following:
 
 ```shell
 docker run -p 8080:8080 -e SWAGGER_JSON=/app/swagger.json -v $(pwd):/app swaggerapi/swagger-ui
