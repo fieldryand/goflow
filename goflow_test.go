@@ -71,6 +71,16 @@ func TestJobsRoute(t *testing.T) {
 	}
 }
 
+func TestJobRunsRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/jobruns", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
 func TestJobSubmitToRouterWithMemoryDB(t *testing.T) {
 	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/jobs/exampleComplexAnalytics/submit", nil)
@@ -137,6 +147,20 @@ func TestJobToggleActiveRoute(t *testing.T) {
 func TestRouteNotFound(t *testing.T) {
 	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/blaaaa", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
+	}
+
+	req, _ = http.NewRequest("GET", "/api/jobs/blaaaa", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusNotFound {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusNotFound)
+	}
+
+	req, _ = http.NewRequest("GET", "/ui/jobs/blaaaa", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusNotFound {

@@ -1,4 +1,4 @@
-// Package goflow implements a simple but powerful DAG scheduler and dashboard that is easy to set up and integrate with other applications.
+// Package goflow implements a simple but powerful DAG scheduler and dashboard.
 package goflow
 
 import (
