@@ -1,6 +1,6 @@
 package main
 
-import "github.com/fieldryand/goflow"
+import "github.com/fieldryand/goflow/v2"
 
 func main() {
 	options := goflow.Options{
