@@ -1,4 +1,4 @@
-module github.com/fieldryand/goflow
+module github.com/fieldryand/goflow/v2
 
 go 1.20
 
