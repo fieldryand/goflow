@@ -53,7 +53,7 @@ import "github.com/fieldryand/goflow"
 
 func main() {
         options := goflow.Options{
-                AssetBasePath: "assets/",
+                UIPath: "ui/",
                 StreamJobRuns: true,
                 ShowExamples:  true,
         }
@@ -63,7 +63,7 @@ func main() {
 }
 ```
 
-[Download the front-end from the release page](https://github.com/fieldryand/goflow/releases/latest/download/goflow-assets.tar.gz), untar it, and move it to the location specified in `goflow.Options.AssetBasePath`. Now run the application with `go run main.go` and see it in the browser at localhost:8181.
+[Download the front-end from the release page](https://github.com/fieldryand/goflow/releases/latest/download/goflow-ui.tar.gz), untar it, and move it to the location specified in `goflow.Options.UIPath`. Now run the application with `go run main.go` and see it in the browser at localhost:8181.
 
 ## Use case
 
@@ -212,10 +212,10 @@ func main() {
 ```
 
 You can pass different options to the engine. Options currently supported:
-- `AssetBasePath`: The path containing the UI assets, usually `assets/`.
-- `DBType`: `boltdb` (default) or `memory`
-- `BoltDBPath`: This will be the filepath of the Bolt database on disk.
-- `StreamJobRuns`: Whether to stream updates to the UI.
+- `UIPath`: The path containing the UI assets. Recommended value: `ui/`
+- `DBType`: `boltdb` (default) or `memory`.
+- `BoltDBPath`: This will be the filepath of the Bolt database on disk. Default value: `goflow.db`
+- `StreamJobRuns`: Whether to stream updates to the UI. Recommended value: `true`
 - `ShowExamples`: Whether to show the example jobs.
 
 Goflow is built on the [Gin framework](https://github.com/gin-gonic/gin), so you can pass any Gin handler to `Use`.

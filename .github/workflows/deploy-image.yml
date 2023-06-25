@@ -33,8 +33,8 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v2
 
-      - name: Compile UI assets
-        run: cd assets && npm install && npm run build
+      - name: Compile UI
+        run: cd ui && npm install && npm run build
 
       - name: Build goflow-example
         run: go build example/goflow-example.go
@@ -60,10 +60,10 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: org.opencontainers.image.source=https://github.com/fieldryand/goflow
 
-      - name: Tarball assets
-        run: tar -czvf goflow-assets.tar.gz assets
+      - name: Tarball ui
+        run: tar -czvf goflow-ui.tar.gz ui
 
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: goflow-assets.tar.gz
+          files: goflow-ui.tar.gz

@@ -1,5 +1,4 @@
-// Package goflow implements a web UI-based workflow orchestrator
-// inspired by Apache Airflow.
+// Package goflow implements a simple but powerful DAG scheduler and dashboard that is easy to set up and integrate with other applications.
 package goflow
 
 import (
@@ -27,7 +26,7 @@ type Goflow struct {
 type Options struct {
 	DBType        string
 	BoltDBPath    string
-	AssetBasePath string
+	UIPath        string
 	StreamJobRuns bool
 	ShowExamples  bool
 }

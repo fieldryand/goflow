@@ -7,10 +7,10 @@ import (
 )
 
 func (g *Goflow) addStaticRoutes() *Goflow {
-	g.router.Static("/css", g.Options.AssetBasePath+"css")
-	g.router.Static("/dist", g.Options.AssetBasePath+"dist")
-	g.router.Static("/src", g.Options.AssetBasePath+"src")
-	g.router.LoadHTMLGlob(g.Options.AssetBasePath + "html/*.html.tmpl")
+	g.router.Static("/css", g.Options.UIPath+"css")
+	g.router.Static("/dist", g.Options.UIPath+"dist")
+	g.router.Static("/src", g.Options.UIPath+"src")
+	g.router.LoadHTMLGlob(g.Options.UIPath + "html/*.html.tmpl")
 	return g
 }
 
