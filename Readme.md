@@ -6,19 +6,23 @@
 
 # Goflow
 
-A workflow/DAG orchestrator written in Go for rapid prototyping of ETL/ML/AI pipelines. Goflow comes complete with a web UI for inspecting and triggering jobs.
+A simple but powerful DAG scheduler and dashboard, written in Go.
 
 ## Contents
 
-1. [Quick start](#quick-start)
-2. [Use case](#use-case)
-3. [Concepts and features](#concepts-and-features)
-   1. [Jobs and tasks](#jobs-and-tasks)
-   2. [Custom Operators](#custom-operators)
-   3. [Retries](#retries)
-   4. [Task dependencies](#task-dependencies)
-   5. [Trigger rules](#trigger-rules)
-   6. [The Goflow engine](#the-goflow-engine)
+- [Quick start](#quick-start)
+   - [With Docker](#with-docker)
+   - [Without Docker](#without-docker)
+- [Why Goflow?](#why-goflow)
+- [Development overview](#development-overview)
+   - [Jobs and tasks](#jobs-and-tasks)
+   - [Custom Operators](#custom-operators)
+   - [Retries](#retries)
+   - [Task dependencies](#task-dependencies)
+   - [Trigger rules](#trigger-rules)
+   - [The Goflow engine](#the-goflow-engine)
+   - [Available operators](#available-operators)
+- [API and integration](#api-and-integration)
 
 ## Quick start
 
@@ -28,7 +32,7 @@ A workflow/DAG orchestrator written in Go for rapid prototyping of ETL/ML/AI pip
 docker run -p 8181:8181 ghcr.io/fieldryand/goflow-example:latest
 ```
 
-Browse to `localhost:8181` to explore the UI.
+Check out the dashboard at `localhost:8181`.
 
 ![goflow-demo](https://user-images.githubusercontent.com/3333324/147818084-ade84547-4404-4d58-a697-c18ecb06fd30.gif)
 
@@ -49,7 +53,7 @@ import "github.com/fieldryand/goflow"
 
 func main() {
         options := goflow.Options{
-                AssetBasePath: "assets/",
+                UIPath: "ui/",
                 StreamJobRuns: true,
                 ShowExamples:  true,
         }
@@ -59,15 +63,25 @@ func main() {
 }
 ```
 
-[Download the front-end from the release page](https://github.com/fieldryand/goflow/releases/download/v1.0.0/goflow-assets.tar.gz), untar it, and move it to the location specified in `goflow.Options.AssetBasePath`. Now run the application with `go run main.go` and see it in the browser at localhost:8181.
+Download and untar the dashboard:
 
-## Use case
+```shell
+wget https://github.com/fieldryand/goflow/releases/latest/download/goflow-ui.tar.gz
+tar -xvzf goflow-ui.tar.gz
+rm goflow-ui.tar.gz
+```
 
-Goflow was built as a simple replacement for Apache Airflow to manage some small data pipeline projects. Airflow started to feel too heavyweight for these projects where all the computation was offloaded to independent services, but there was still a need for basic orchestration, concurrency, retries, visibility etc.
+Now run the application with `go run main.go` and see it in the browser at localhost:8181.
 
-Goflow prioritizes ease of deployment over features and scalability. If you need distributed workers, backfilling over time slices, a durable database of job runs, etc, then Goflow is not for you. On the other hand, if you want to rapidly prototype some pipelines, then Goflow might be a good fit.
+## Why Goflow?
 
-## Concepts and features
+Goflow was built as a simple replacement for Apache Airflow, which started to feel too heavy for projects where all the computation was offloaded to independent services. Still there was a need for scheduling, orchestration, concurrency, retries, a dashboard, etc. Compared to other DAG schedulers, Goflow lets you deliver all this in a single binary, which is easily deployed and runs comfortably on a single tiny VM. That's why Goflow is also great for minimizing cloud costs. However, this does mean fewer capabilities in terms of scalability and throughput. There is currently no support for job queueing and distributed workers, so if you need those features, you should prefer one of the many other solutions like Airflow or Temporal.
+
+Also, in comparison to other DAG schedulers, Goflow assumes you prefer to define your DAGs with code rather than configuration files. This approach can have various advantages, including easier testing.
+
+## Development overview
+
+First a few definitions.
 
 - `Job`: A Goflow workflow is called a `Job`. Jobs can be scheduled using cron syntax.
 - `Task`: Each job consists of one or more tasks organized into a dependency graph. A task can be run under certain conditions; by default, a task runs when all of its dependencies finish successfully.
@@ -75,7 +89,7 @@ Goflow prioritizes ease of deployment over features and scalability. If you need
 - `Operator`: An `Operator` defines the work done by a `Task`. Goflow comes with a handful of basic operators, and implementing your own `Operator` is straightforward.
 - Retries: You can allow a `Task` a given number of retry attempts. Goflow comes with two retry strategies, `ConstantDelay` and `ExponentialBackoff`.
 - Database: Goflow supports two database types, in-memory and BoltDB. BoltDB will persist your history of job runs, whereas in-memory means the history will be lost each time the Goflow server is stopped. The default is BoltDB.
-- Streaming: Goflow uses server-sent events to stream the status of jobs and tasks to the UI in real time.
+- Streaming: Goflow uses server-sent events to stream the status of jobs and tasks to the dashboard in real time.
 
 ### Jobs and tasks
 
@@ -101,7 +115,7 @@ func myJob() *goflow.Job {
 ```
 
 By setting `Active: true`, we are telling Goflow to apply the provided cron schedule for this job when the application starts.
-Job scheduling can be activated and deactivated from the UI.
+Job scheduling can be activated and deactivated from the dashboard.
 
 ### Custom operators
 
@@ -206,10 +220,35 @@ func main() {
 ```
 
 You can pass different options to the engine. Options currently supported:
-- `AssetBasePath`: The path containing the UI assets, usually `assets/`.
-- `DBType`: `boltdb` (default) or `memory`
-- `BoltDBPath`: This will be the filepath of the Bolt database on disk.
-- `StreamJobRuns`: Whether to stream updates to the UI.
+- `UIPath`: The path containing the dashboard assets. Recommended value: `ui/`
+- `DBType`: `boltdb` (default) or `memory`.
+- `BoltDBPath`: This will be the filepath of the Bolt database on disk. Default value: `goflow.db`
+- `StreamJobRuns`: Whether to stream updates to the dashboard. Recommended value: `true`
 - `ShowExamples`: Whether to show the example jobs.
 
 Goflow is built on the [Gin framework](https://github.com/gin-gonic/gin), so you can pass any Gin handler to `Use`.
+
+### Available operators
+
+Goflow provides several operators for common tasks. [See the package documentation](https://pkg.go.dev/github.com/fieldryand/goflow) for details on each.
+
+- `Command` executes a shell command.
+- `Get` makes a GET request.
+- `Post` makes a POST request.
+
+## API and integration
+
+You can use the API to integrate Goflow with other applications, such as an existing dashboard. Here is an overview of available endpoints:
+- `GET /api/health`: Check health of the service
+- `GET /api/jobs`: List registered jobs
+- `GET /api/jobs/{jobname}`: Get the details for a given job
+- `GET /api/jobruns`: Query and list jobruns
+- `POST /api/jobs/{jobname}/submit`: Submit a job for execution
+- `POST /api/jobs/{jobname}/toggle`: Toggle a job schedule on or off
+- `/stream`: This endpoint returns Server-Sent Events with a `data` payload matching the one returned by `/api/jobruns`. The dashboard that ships with Goflow uses this endpoint.
+
+Check out the OpenAPI spec for more details. Easiest way is to clone the repo, then within the repo use Swagger as in the following:
+
+```shell
+docker run -p 8080:8080 -e SWAGGER_JSON=/app/swagger.json -v $(pwd):/app swaggerapi/swagger-ui
+```

@@ -7,9 +7,9 @@ import (
 )
 
 type jobRun struct {
-	JobName   string    `json:"jobName"`
-	StartedAt string    `json:"startedAt"`
-	JobState  *jobState `json:"jobState"`
+	JobName   string    `json:"job"`
+	StartedAt string    `json:"submitted"`
+	JobState  *jobState `json:"state"`
 }
 
 func (j *Job) newJobRun() *jobRun {

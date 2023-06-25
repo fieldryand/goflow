@@ -2,7 +2,7 @@
 <html>
   <head>
     <link rel="stylesheet" href="/css/styles.css">
-    <script src="src/plain.js"></script>
+    <script src="/src/plain.js"></script>
     <title>Goflow</title>
   </head>
   <body>
@@ -19,13 +19,13 @@
         <div>State</div>
         <div></div>
         {{ range .jobs }}
-        <div><a href="/jobs/{{ .Name }}">{{ .Name }}</a></div>
+        <div><a href="/ui/jobs/{{ .Name }}">{{ .Name }}</a></div>
         <div>
           <div id="schedule-badge-{{ .Name }}" class="schedule-badge-active-{{ .Active }}">{{ .Schedule }}</div>
         </div>
         <div class="status-wrapper" id="{{ .Name }}"></div>
         <div class="button-container">
-          <button class="button primary" onclick="toggleActive({{ .Name }})">Toggle scheduling</button>
+          <button class="button primary" onclick="toggle({{ .Name }})">Toggle scheduling</button>
           <button class="button primary" onclick="submit({{ .Name }})">Submit</button>
         </div>
         {{ end }}

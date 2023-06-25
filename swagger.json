@@ -1,0 +1,244 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Goflow API",
+    "version": "2.0.0"
+  },
+  "paths": {
+    "/api/health": {
+      "get": {
+        "operationId": "health",
+        "summary": "check health of the service",
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "OK": {
+                    "value": {
+                      "health": "OK"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs": {
+      "get": {
+        "operationId": "listJobs",
+        "summary": "list jobs",
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "exampleJobs": {
+                    "value": {
+                      "jobs": [
+                        "exampleComplexAnalytics",
+                        "exampleCustomOperator"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{jobname}": {
+      "get": {
+        "operationId": "jobDetails",
+        "summary": "get the details for a given job",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobname"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "complexAnalyticsJob": {
+                    "value": {
+                      "job": "exampleComplexAnalytics",
+                      "tasks": [
+                        "sleepOne",
+                        "addTwoFour",
+                        "addThreeFour",
+                        "whoopsWithConstantDelay",
+                        "whoopsWithExponentialBackoff",
+                        "totallySkippable",
+                        "cleanUp",
+                        "addOneOne",
+                        "sleepTwo"
+                      ],
+                      "dag": {
+                        "addOneOne": [
+                          "sleepTwo",
+                          "addThreeFour"
+                        ],
+                        "addThreeFour": [],
+                        "addTwoFour": [],
+                        "cleanUp": [],
+                        "sleepOne": [
+                          "addOneOne",
+                          "whoopsWithConstantDelay",
+                          "whoopsWithExponentialBackoff"
+                        ],
+                        "sleepTwo": [
+                          "addTwoFour"
+                        ],
+                        "totallySkippable": [
+                          "cleanUp"
+                        ],
+                        "whoopsWithConstantDelay": [
+                          "totallySkippable"
+                        ],
+                        "whoopsWithExponentialBackoff": [
+                          "totallySkippable"
+                        ]
+                      },
+                      "schedule": "* * * * *",
+                      "active": false
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobruns": {
+      "get": {
+        "operationId": "listJobRuns",
+        "summary": "query and list job runs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "jobname",
+	    "schema": {
+		    "type": "string"
+	    },
+	    "description": "(optional) the job name"
+          },
+          {
+            "in": "query",
+            "name": "state",
+	    "schema": {
+		    "type": "string"
+	    },
+	    "description": "(optional) the job state, valid values are [running, failed, successful]"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "exampleJobRuns": {
+                    "value": {
+                      "jobruns": [
+                        {
+                          "job": "exampleComplexAnalytics",
+                          "submitted": "2023-06-24T07:23:11.208506156Z",
+                          "state": {
+                            "job": "running",
+                            "tasks": {
+                              "state": {
+                                "addOneOne": "running",
+                                "addThreeFour": "notstarted",
+                                "addTwoFour": "notstarted",
+                                "cleanUp": "notstarted",
+                                "sleepOne": "successful",
+                                "sleepTwo": "notstarted",
+                                "totallySkippable": "notstarted",
+                                "whoopsWithConstantDelay": "running",
+                                "whoopsWithExponentialBackoff": "upforretry"
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{jobname}/submit": {
+      "post": {
+        "operationId": "submitJob",
+        "summary": "submit a job for execution",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobname"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "customOperator": {
+                    "value": {
+                      "job": "exampleCustomOperator",
+                      "success": true,
+                      "submitted": "2023-06-21T15:02:39.943428403Z"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/jobs/{jobname}/toggle": {
+      "post": {
+        "operationId": "toggleJobSchedule",
+        "summary": "toggle a job schedule on or off",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "jobname"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "customOperator": {
+                    "value": {
+                      "job": "exampleCustomOperator",
+                      "success": true,
+                      "active": true
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

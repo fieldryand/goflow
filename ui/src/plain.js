@@ -16,7 +16,7 @@ function updateStateCircles(tableName, wrapperId, colorArray) {
 function updateTaskStateCircles(jobRuns) {
   var tasks = {};
   for (i in jobRuns) {
-    const taskState = jobRuns[i].jobState.taskState.internal;
+    const taskState = jobRuns[i].state.tasks.state;
     for (taskName in taskState) {
       const state = taskState[taskName];
       const color = stateColor(state);
@@ -44,7 +44,7 @@ function updateJobStateCircles() {
 function updateGraphViz(jobRuns) {
   if (jobRuns.length) {
     const lastJobRun = jobRuns.reverse()[0]
-    const taskState = lastJobRun.jobState.taskState.internal;
+    const taskState = lastJobRun.state.tasks.state;
     for (taskName in taskState) {
       if (document.getElementsByClassName("output")) {
         const taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
@@ -62,7 +62,7 @@ function updateGraphViz(jobRuns) {
 
 function updateLastRunTs(jobRuns) {
   if (jobRuns.reverse()[0]) {
-    const lastJobRunTs = jobRuns.reverse()[0].startedAt;
+    const lastJobRunTs = jobRuns.reverse()[0].submitted;
     const lastJobRunTsHTML = document.getElementById("last-job-run-ts-wrapper").innerHTML;
     const newHTML = lastJobRunTsHTML.replace(/.*/, `Last run: ${lastJobRunTs}`);
     document.getElementById("last-job-run-ts-wrapper").innerHTML = newHTML;
@@ -70,10 +70,10 @@ function updateLastRunTs(jobRuns) {
 }
 
 function updateJobActive(jobName) {
-  fetch(`/jobs/${jobName}/isActive`)
+  fetch(`/api/jobs/${jobName}`)
     .then(response => response.json())
     .then(data => {
-      if (data) {
+      if (data.active) {
         document
           .getElementById("schedule-badge-" + jobName)
           .setAttribute("class", "schedule-badge-active-true");
@@ -99,22 +99,22 @@ function readTaskStream(jobName) {
 
 function stateColor(taskState) {
   switch (taskState) {
-    case "Running":
+    case "running":
       var color = "#dffbe3";
       break;
-    case "UpForRetry":
+    case "upforretry":
       var color = "#ffc620";
       break;
-    case "Successful":
+    case "successful":
       var color = "#39c84e";
       break;
-    case "Skipped":
+    case "skipped":
       var color = "#abbefb";
       break;
-    case "Failed":
+    case "failed":
       var color = "#ff4020";
       break;
-    case "None":
+    case "notstarted":
       var color = "white";
       break;
   }
@@ -123,24 +123,24 @@ function stateColor(taskState) {
 }
 
 function getJobRunTaskColor(jobRun, task) {
-  const taskState = jobRun.jobState.taskState.internal[task];
+  const taskState = jobRun.state.tasks.state[task];
   return stateColor(taskState)
 }
 
 function getJobRunState(jobRun) {
-  return stateColor(jobRun.jobState.state)
+  return stateColor(jobRun.state.job)
 }
 
 function submit(jobName) {
   const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", `/jobs/${jobName}/submit`, true);
+  xhttp.open("POST", `/api/jobs/${jobName}/submit`, true);
   xhttp.send();
 }
 
-async function toggleActive(jobName) {
+async function toggle(jobName) {
   const options = {
     method: 'POST'
   }
-  await fetch(`/jobs/${jobName}/toggleActive`, options)
+  await fetch(`/api/jobs/${jobName}/toggle`, options)
     .then(updateJobActive(jobName))
 }

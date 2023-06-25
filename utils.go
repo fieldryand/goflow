@@ -18,7 +18,7 @@ func equal(a, b []string) bool {
 
 type stringStateMap struct {
 	sync.RWMutex
-	Internal map[string]state `json:"internal"`
+	Internal map[string]state `json:"state"`
 }
 
 func newStringStateMap() *stringStateMap {
