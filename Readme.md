@@ -42,14 +42,14 @@ In a fresh project directory:
 
 ```shell
 go mod init # create a new module
-go get github.com/fieldryand/goflow # install dependencies
+go get github.com/fieldryand/goflow/v2 # install dependencies
 ```
 
 Create a file `main.go` with contents:
 ```go
 package main
 
-import "github.com/fieldryand/goflow"
+import "github.com/fieldryand/goflow/v2"
 
 func main() {
         options := goflow.Options{
@@ -75,7 +75,7 @@ Now run the application with `go run main.go` and see it in the browser at local
 
 ## Why Goflow?
 
-Goflow was built as a simple replacement for Apache Airflow, which started to feel too heavy for projects where all the computation was offloaded to independent services. Still there was a need for scheduling, orchestration, concurrency, retries, a dashboard, etc. Compared to other DAG schedulers, Goflow lets you deliver all this in a single binary, which is easily deployed and runs comfortably on a single tiny VM. That's why Goflow is also great for minimizing cloud costs. However, this does mean fewer capabilities in terms of scalability and throughput. There is currently no support for job queueing and distributed workers, so if you need those features, you should prefer one of the many other solutions like Airflow or Temporal.
+Goflow was built as a simple replacement for Apache Airflow, which started to feel too heavy for projects where all the computation was offloaded to independent services. Still there was a need for scheduling, orchestration, concurrency, retries, a dashboard, etc. Compared to other DAG schedulers, Goflow lets you deliver all this in a single binary, which is easily deployed and runs comfortably on a single tiny VM. That's why Goflow is great for minimizing cloud costs. However, this does mean fewer capabilities in terms of scalability and throughput. There is currently no support for job queueing and distributed workers, so if you need those features, you should prefer one of the many other solutions like Airflow or Temporal.
 
 Also, in comparison to other DAG schedulers, Goflow assumes you prefer to define your DAGs with code rather than configuration files. This approach can have various advantages, including easier testing.
 
