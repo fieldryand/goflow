@@ -222,11 +222,11 @@ func main() {
 ```
 
 You can pass different options to the engine. Options currently supported:
-- `UIPath`: The path containing the dashboard assets. Recommended value: `ui/`
+- `UIPath`: The path containing the dashboard assets. This is required to run the dashboard. Recommended value: `ui/`
 - `DBType`: `boltdb` (default) or `memory`.
 - `BoltDBPath`: This will be the filepath of the Bolt database on disk. Default value: `goflow.db`
 - `StreamJobRuns`: Whether to stream updates to the dashboard. Recommended value: `true`
-- `ShowExamples`: Whether to show the example jobs.
+- `ShowExamples`: Whether to show the example jobs. Default value: `false`
 
 Goflow is built on the [Gin framework](https://github.com/gin-gonic/gin), so you can pass any Gin handler to `Use`.
 
