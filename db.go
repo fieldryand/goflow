@@ -1,11 +1,10 @@
 package goflow
 
 import (
-	"encoding/binary"
-	"encoding/json"
 	"log"
+	"strconv"
 
-	bolt "go.etcd.io/bbolt"
+	"github.com/philippgille/gokv"
 )
 
 type database interface {
@@ -14,95 +13,56 @@ type database interface {
 	updateJobState(*jobRun, *jobState) error
 }
 
-type boltDB struct{ *bolt.DB }
+type genericStore struct{ gokv.Store }
 
-var jobRunBucket string = "jobRuns"
-
-func (db *boltDB) writeJobRun(jobrun *jobRun) error {
-	value, _ := json.Marshal(jobrun)
-
-	err := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(jobRunBucket))
-		key := make([]byte, 4)
-		binary.BigEndian.PutUint32(key, uint32(jobrun.ID))
-		err := b.Put(key, value)
-		return err
-	})
-
-	return err
+func newStore(store gokv.Store) genericStore {
+	return genericStore{store}
 }
 
-func (db *boltDB) readJobRuns(jobName string) (*jobRunList, error) {
+func (store genericStore) writeJobRun(jobrun *jobRun) error {
+	key := strconv.Itoa(jobrun.ID)
+	return store.Set(key, jobrun)
+}
+
+func (store genericStore) readJobRuns(jobName string) (*jobRunList, error) {
 	jobRuns := make([]*jobRun, 0)
-
-	err := db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(jobRunBucket))
-		index := 1
-		for {
-			key := make([]byte, 4)
-			binary.BigEndian.PutUint32(key, uint32(index))
-			v := b.Get(key)
-			if v == nil {
-				break
-			}
-			value := jobRun{}
-			_ = json.Unmarshal(v, &value)
+	index := 1
+	for {
+		value := jobRun{}
+		key := strconv.Itoa(index)
+		found, err := store.Get(key, &value)
+		if err != nil {
+			panic(err)
+		}
+		if !found {
+			break
+		} else {
 			jobRuns = append(jobRuns, &value)
-			index++
 		}
-		return nil
-	})
-
+		index++
+	}
 	jobRunList := newJobRunList(jobName, jobRuns)
-
-	return jobRunList, err
-}
-
-func (db *boltDB) updateJobState(jr *jobRun, js *jobState) error {
-	err := db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte(jobRunBucket))
-		index := 1
-		for {
-			key := make([]byte, 4)
-			binary.BigEndian.PutUint32(key, uint32(index))
-			value := b.Get(key)
-			if value == nil {
-				break
-			}
-			if index == jr.ID {
-				jobrun := &jobRun{}
-				_ = json.Unmarshal(value, jobrun)
-				updatedJobRun, _ := marshalJobRun(jobrun, js)
-				err := b.Put(key, updatedJobRun)
-				if err != nil {
-					log.Panicf("error: %v", err)
-				}
-			}
-			index++
-		}
-		return nil
-	})
-
-	return err
-}
-
-type memoryDB struct{ jobRuns []*jobRun }
-
-func (db *memoryDB) writeJobRun(jr *jobRun) error {
-	db.jobRuns = append(db.jobRuns, jr)
-	return nil
-}
-
-func (db *memoryDB) readJobRuns(jobName string) (*jobRunList, error) {
-	jobRunList := newJobRunList(jobName, db.jobRuns)
 	return jobRunList, nil
 }
 
-func (db *memoryDB) updateJobState(jr *jobRun, js *jobState) error {
-	for _, jobRun := range db.jobRuns {
-		if jobRun.name() == jr.name() {
-			jobRun.JobState.Update(js)
+func (store genericStore) updateJobState(jr *jobRun, js *jobState) error {
+	index := 1
+	for {
+		value := jobRun{}
+		key := strconv.Itoa(index)
+		found, err := store.Get(key, &value)
+		if err != nil {
+			panic(err)
 		}
+		if !found {
+			break
+		} else if index == jr.ID {
+			err := store.Set(key, js)
+			if err != nil {
+				log.Panicf("error: %v", err)
+			}
+		}
+		index++
 	}
 	return nil
 }

@@ -2,14 +2,13 @@
 package goflow
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/philippgille/gokv/gomap"
 	"github.com/robfig/cron/v3"
-	bolt "go.etcd.io/bbolt"
 )
 
 // Goflow contains job data and a router.
@@ -24,8 +23,6 @@ type Goflow struct {
 
 // Options to control various Goflow behavior.
 type Options struct {
-	DBType        string
-	BoltDBPath    string
 	UIPath        string
 	StreamJobRuns bool
 	ShowExamples  bool
@@ -33,25 +30,14 @@ type Options struct {
 
 // New returns a Goflow engine.
 func New(opts Options) *Goflow {
-	if opts.DBType == "" {
-		opts.DBType = "boltdb"
-	}
-	if opts.BoltDBPath == "" {
-		opts.BoltDBPath = "goflow.db"
-	}
-
+	dbOptions := gomap.DefaultOptions
 	g := &Goflow{
 		Options:          opts,
 		Jobs:             make(map[string](func() *Job)),
 		router:           gin.New(),
 		cron:             cron.New(),
 		activeJobCronIDs: make(map[string]cron.EntryID),
-	}
-
-	if opts.DBType == "boltdb" {
-		g.initializeBoltDB()
-	} else {
-		g.initializeMemoryDB()
+		db:               newStore(gomap.NewStore(dbOptions)),
 	}
 
 	if opts.ShowExamples {
@@ -143,29 +129,6 @@ func (g *Goflow) Run(port string) {
 	}
 	g.cron.Start()
 	g.router.Run(port)
-}
-
-func (g *Goflow) initializeMemoryDB() *Goflow {
-	g.db = &memoryDB{make([]*jobRun, 0)}
-	return g
-}
-
-func (g *Goflow) initializeBoltDB() *Goflow {
-	db, err := bolt.Open(g.Options.BoltDBPath, 0600, nil)
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	db.Update(func(tx *bolt.Tx) error {
-		_, err := tx.CreateBucket([]byte(jobRunBucket))
-		if err != nil {
-			return fmt.Errorf("create bucket: %s", err)
-		}
-		return nil
-	})
-
-	g.db = &boltDB{db}
-	return g
 }
 
 func (g *Goflow) getJobRuns(clientDisconnect bool) func(*gin.Context) {

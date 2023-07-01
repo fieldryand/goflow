@@ -9,7 +9,6 @@ import (
 )
 
 var router = exampleRouter()
-var routerWithMemoryDB = exampleRouterWithMemoryDB()
 
 type TestResponseRecorder struct {
 	*httptest.ResponseRecorder
@@ -75,17 +74,6 @@ func TestJobRunsRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/jobruns", nil)
 	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-	}
-}
-
-func TestJobSubmitToRouterWithMemoryDB(t *testing.T) {
-	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/jobs/exampleComplexAnalytics/submit", nil)
-
-	routerWithMemoryDB.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
@@ -196,28 +184,8 @@ func TestStreamRoute(t *testing.T) {
 	}
 }
 
-func TestStreamRouteMemoryDB(t *testing.T) {
-	var w = CreateTestResponseRecorder()
-	req, _ := http.NewRequest("GET", "/stream", nil)
-	routerWithMemoryDB.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-	}
-}
-
 func exampleRouter() *gin.Engine {
 	g := New(Options{UIPath: "ui/", ShowExamples: true})
-	g.Use(DefaultLogger())
-	g.addStaticRoutes()
-	g.addStreamRoute()
-	g.addUIRoutes()
-	g.addAPIRoutes()
-	return g.router
-}
-
-func exampleRouterWithMemoryDB() *gin.Engine {
-	g := New(Options{UIPath: "ui/", ShowExamples: true, DBType: "memory"})
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute()
