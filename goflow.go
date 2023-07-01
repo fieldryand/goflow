@@ -135,10 +135,12 @@ func (g *Goflow) Run(port string) {
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
 	g.router.Use(gin.Recovery())
-	g.addStaticRoutes()
 	g.addStreamRoute()
-	g.addUIRoutes()
 	g.addAPIRoutes()
+	if g.Options.UIPath != "" {
+		g.addUIRoutes()
+		g.addStaticRoutes()
+	}
 	g.cron.Start()
 	g.router.Run(port)
 }
