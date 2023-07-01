@@ -57,10 +57,14 @@ func (store genericStore) updateJobState(jr *jobRun, js *jobState) error {
 		if !found {
 			break
 		} else if index == jr.ID {
+			// when we find the jobrun's key, set it to its current value
+			// first need to obtain the lock
+			js.TaskState.RLock()
 			err := store.Set(key, js)
 			if err != nil {
 				log.Panicf("error: %v", err)
 			}
+			js.TaskState.RUnlock()
 		}
 		index++
 	}
