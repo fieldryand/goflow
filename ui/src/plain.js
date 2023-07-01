@@ -1,13 +1,15 @@
-function updateStateCircles(tableName, wrapperId, colorArray) {
+function updateStateCircles(tableName, wrapperId, colorArray, submissions) {
   const oldWrapper = document.getElementById(wrapperId);
   const newWrapper = document.createElement("div");
   newWrapper.setAttribute("class", "status-wrapper");
   newWrapper.setAttribute("id", wrapperId);
   for (k in colorArray) {
     const color = colorArray[k];
+    const submitted = submissions[k];
     div = document.createElement("div");
     div.setAttribute("class", "status-indicator");
     div.setAttribute("style", `background-color:${color}`);
+    div.setAttribute("title", submitted);
     newWrapper.appendChild(div);
   }
   document.getElementById(tableName).replaceChild(newWrapper, oldWrapper);
@@ -15,20 +17,24 @@ function updateStateCircles(tableName, wrapperId, colorArray) {
 
 function updateTaskStateCircles(jobRuns) {
   var tasks = {};
+  var submissions = {};
   for (i in jobRuns) {
     const taskState = jobRuns[i].state.tasks.state;
+    var submitted = jobRuns[i].submitted;
     for (taskName in taskState) {
       const state = taskState[taskName];
       const color = stateColor(state);
       if (taskName in tasks) {
         tasks[taskName].push(color);
+        submissions[taskName].push(submitted);
       } else {
         tasks[taskName] = [color];
+        submissions[taskName] = [submitted];
       }
     }
   }
   for (task in tasks) {
-    updateStateCircles("task-table", task, tasks[task]);
+    updateStateCircles("task-table", task, tasks[task], submissions[task]);
   }
 }
 
@@ -37,7 +43,8 @@ function updateJobStateCircles() {
   stream.addEventListener("message", function(e) {
     const data = JSON.parse(e.data);
     const jobRunStates = data.jobRuns.map(getJobRunState);
-    updateStateCircles("job-table", data.jobName, jobRunStates);
+    const jobSubmissions = data.jobRuns.map(getJobRunSubmitted);
+    updateStateCircles("job-table", data.jobName, jobRunStates, jobSubmissions);
   });
 }
 
@@ -129,6 +136,10 @@ function getJobRunTaskColor(jobRun, task) {
 
 function getJobRunState(jobRun) {
   return stateColor(jobRun.state.job)
+}
+
+function getJobRunSubmitted(jobRun) {
+  return jobRun.submitted
 }
 
 function submit(jobName) {
