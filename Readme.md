@@ -8,6 +8,8 @@
 
 A simple but powerful DAG scheduler and dashboard, written in Go.
 
+> Note: this document describes the [v2 release](https://github.com/fieldryand/goflow/releases), which is still in beta.
+
 ## Contents
 
 - [Quick start](#quick-start)
@@ -101,7 +103,7 @@ package main
 import (
 	"errors"
 
-	"github.com/fieldryand/goflow"
+	"github.com/fieldryand/goflow/v2"
 )
 
 func myJob() *goflow.Job {
