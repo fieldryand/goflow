@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/gomap"
 	"github.com/robfig/cron/v3"
 )
@@ -14,11 +15,11 @@ import (
 // Goflow contains job data and a router.
 type Goflow struct {
 	Options          Options
+	Database         gokv.Store
 	Jobs             map[string](func() *Job)
 	router           *gin.Engine
 	cron             *cron.Cron
 	activeJobCronIDs map[string]cron.EntryID
-	db               database
 }
 
 // Options to control various Goflow behavior.
@@ -33,11 +34,11 @@ func New(opts Options) *Goflow {
 	dbOptions := gomap.DefaultOptions
 	g := &Goflow{
 		Options:          opts,
+		Database:         gomap.NewStore(dbOptions),
 		Jobs:             make(map[string](func() *Job)),
 		router:           gin.New(),
 		cron:             cron.New(),
 		activeJobCronIDs: make(map[string]cron.EntryID),
-		db:               newStore(gomap.NewStore(dbOptions)),
 	}
 
 	if opts.ShowExamples {
@@ -93,13 +94,13 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 func (g *Goflow) runJob(jobName string) *jobRun {
 	job := g.Jobs[jobName]()
 	jr := job.newJobRun()
-	g.db.writeJobRun(jr)
+	writeJobRun(g.Database, jr)
 
 	go job.run()
 	go func() {
 		for {
 			jobState := job.getJobState()
-			g.db.updateJobState(jr, jobState)
+			updateJobState(g.Database, jr, jobState)
 			if jobState.State != running && jobState.State != none {
 				log.Printf("job <%v> reached state <%v>", job.Name, job.jobState.State)
 				break
@@ -141,7 +142,7 @@ func (g *Goflow) getJobRuns(clientDisconnect bool) func(*gin.Context) {
 			// Periodically push the list of job runs into the stream
 			for {
 				for job := range g.Jobs {
-					jrl, _ := g.db.readJobRuns(job)
+					jrl, _ := readJobRuns(g.Database, job)
 					marshalled, _ := marshalJobRunList(jrl)
 					chanStream <- string(marshalled)
 				}

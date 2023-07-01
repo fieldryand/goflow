@@ -49,7 +49,7 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			jobruns := make([]*jobRun, 0)
 
 			for job := range g.Jobs {
-				jobRunList, _ := g.db.readJobRuns(job)
+				jobRunList, _ := readJobRuns(g.Database, job)
 				for _, jobrun := range jobRunList.JobRuns {
 					if stateQuery != "" && stateQuery != string(jobrun.JobState.State) {
 					} else if jobName != "" && jobName != jobrun.JobName {

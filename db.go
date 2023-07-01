@@ -7,24 +7,12 @@ import (
 	"github.com/philippgille/gokv"
 )
 
-type database interface {
-	writeJobRun(*jobRun) error
-	readJobRuns(string) (*jobRunList, error)
-	updateJobState(*jobRun, *jobState) error
-}
-
-type genericStore struct{ gokv.Store }
-
-func newStore(store gokv.Store) genericStore {
-	return genericStore{store}
-}
-
-func (store genericStore) writeJobRun(jobrun *jobRun) error {
+func writeJobRun(store gokv.Store, jobrun *jobRun) error {
 	key := strconv.Itoa(jobrun.ID)
 	return store.Set(key, jobrun)
 }
 
-func (store genericStore) readJobRuns(jobName string) (*jobRunList, error) {
+func readJobRuns(store gokv.Store, jobName string) (*jobRunList, error) {
 	jobRuns := make([]*jobRun, 0)
 	index := 1
 	for {
@@ -45,7 +33,7 @@ func (store genericStore) readJobRuns(jobName string) (*jobRunList, error) {
 	return jobRunList, nil
 }
 
-func (store genericStore) updateJobState(jr *jobRun, js *jobState) error {
+func updateJobState(store gokv.Store, jr *jobRun, js *jobState) error {
 	index := 1
 	for {
 		value := jobRun{}
