@@ -7,6 +7,7 @@ import (
 )
 
 type jobRun struct {
+	ID        int       `json:"id"`
 	JobName   string    `json:"job"`
 	StartedAt string    `json:"submitted"`
 	JobState  *jobState `json:"state"`
@@ -14,6 +15,7 @@ type jobRun struct {
 
 func (j *Job) newJobRun() *jobRun {
 	return &jobRun{
+		ID:        1,
 		JobName:   j.Name,
 		StartedAt: time.Now().UTC().Format(time.RFC3339Nano),
 		JobState:  j.jobState}
