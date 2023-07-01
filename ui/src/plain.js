@@ -56,7 +56,7 @@ function updateGraphViz(jobRuns) {
       if (document.getElementsByClassName("output")) {
         const taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
 	try {
-          const rect = document.getElementById("node-" + taskName).querySelector("rect");
+          const rect = document.getElementById("flowchart-" + taskName).querySelector("rect");
           rect.setAttribute("style", "stroke-width: 2; stroke: " + taskRunColor);
 	}
 	catch(err) {

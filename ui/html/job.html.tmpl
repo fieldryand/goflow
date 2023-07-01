@@ -28,14 +28,43 @@
         <div class="status-wrapper" id="{{ $taskName }}"></div>
         {{ end }}
       </div>
-      <div class="graph-container">
-        <div id="last-job-run-ts-wrapper">Last run:</div>
-        <svg class="graph" width="100%"><g/></svg>
+      <div id="last-job-run-ts-wrapper">Last run:</div>
+      <div class="graph-container" style="width:8000px;">
       </div>
     </div>
   </body>
 </html>
-<script src="/dist/dist.js"></script>
-<script>goflowUI.graphViz({{ .jobName }})</script>
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+  let config = { startOnLoad: true, flowchart: { useMaxWidth: false, htmlLabels: true } };
+  mermaid.initialize(config);
+
+  async function getDag(jobName) {
+    const response = await fetch(`/api/jobs/${jobName}`);
+    const json = await response.json();
+    return json.dag;
+  }
+  
+  const drawGraph = async function(jobName)  {
+    const dag = await getDag(jobName);
+  
+    var graphDefinition = "graph LR;\n";
+  
+    for (var key in dag) {
+      graphDefinition += `  ${key}["${key}"];\n`;
+      for (var val in dag[key]) {
+        graphDefinition += `  ${key} --> ${dag[key][val]};\n`;
+      }
+    }
+  
+    var element = document.querySelector("div.graph-container");
+    console.log("woahh");
+    console.log(element);
+    const { svg } = await mermaid.render("graph", graphDefinition);
+    element.innerHTML = svg;
+  };
+
+  drawGraph({{ .jobName }});
+</script>
 <script>updateJobActive({{ .jobName }})</script>
 <script>readTaskStream({{ .jobName }})</script>
