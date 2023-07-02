@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"log"
 	"strconv"
 	"time"
 
@@ -24,6 +23,7 @@ func (j *Job) newJobRun() *jobRun {
 
 // Persist a new jobrun.
 func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
+
 	// find the next available key
 	index := 1
 	for {
@@ -38,9 +38,11 @@ func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 		}
 		index++
 	}
+
 	// assign that key to the jobrun as its ID
 	jobrun.ID = index
 	key := strconv.Itoa(index)
+
 	// persist it
 	return store.Set(key, jobrun)
 }
@@ -58,7 +60,7 @@ func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
 		}
 		if !found {
 			break
-		} else {
+		} else if value.JobName == jobName {
 			jobRuns = append(jobRuns, &value)
 		}
 		index++
@@ -68,28 +70,21 @@ func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
 
 // Sync the current jobstate to the persisted jobrun.
 func updateJobState(store gokv.Store, jobrun *jobRun, jobstate *jobState) error {
-	index := 1
-	for {
-		value := jobRun{}
-		key := strconv.Itoa(index)
-		found, err := store.Get(key, &value)
-		if err != nil {
-			panic(err)
-		}
-		if !found {
-			break
-		} else if index == jobrun.ID {
-			// when we find the jobrun's key, set it to its current value
-			// first need to obtain the lock
-			jobstate.TaskState.RLock()
-			jobrun.JobState = jobstate
-			err := store.Set(key, jobrun)
-			if err != nil {
-				log.Panicf("error: %v", err)
-			}
-			jobstate.TaskState.RUnlock()
-		}
-		index++
-	}
-	return nil
+
+	// Get the key
+	key := strconv.Itoa(jobrun.ID)
+
+	// Get the lock
+	jobstate.TaskState.RLock()
+
+	// Update the jobrun state
+	jobrun.JobState = jobstate
+
+	// Persist it
+	err := store.Set(key, jobrun)
+
+	// Release lock
+	jobstate.TaskState.RUnlock()
+
+	return err
 }

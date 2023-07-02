@@ -95,15 +95,26 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 // runJob tells the engine to run a given job and returns
 // the corresponding jobRun.
 func (g *Goflow) runJob(jobName string) *jobRun {
+	// generate the job
 	job := g.Jobs[jobName]()
+
+	// create and persist a new jobrun record
 	jobrun := job.newJobRun()
 	persistNewJobRun(g.Store, jobrun)
 
+	// start running the job
 	go job.run()
+
+	// in parallel, keep syncing the job state to the store
 	go func() {
 		for {
+			// get the current state
 			jobState := job.getJobState()
+
+			// sync to the store
 			updateJobState(g.Store, jobrun, jobState)
+
+			// stop syncing when the job is done
 			if jobState.State != running && jobState.State != none {
 				log.Printf("job <%v> reached state <%v>", job.Name, job.jobState.State)
 				break
