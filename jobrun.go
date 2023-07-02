@@ -1,12 +1,14 @@
 package goflow
 
 import (
-	"encoding/json"
-	"fmt"
+	"strconv"
 	"time"
+
+	"github.com/philippgille/gokv"
 )
 
 type jobRun struct {
+	ID        int       `json:"id"`
 	JobName   string    `json:"job"`
 	StartedAt string    `json:"submitted"`
 	JobState  *jobState `json:"state"`
@@ -19,45 +21,70 @@ func (j *Job) newJobRun() *jobRun {
 		JobState:  j.jobState}
 }
 
-func (j *jobRun) name() string {
-	return fmt.Sprintf("%s_%s", j.JobName, j.StartedAt)
-}
+// Persist a new jobrun.
+func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 
-type jobRunList struct {
-	JobName string    `json:"jobName"`
-	JobRuns []*jobRun `json:"jobRuns"`
-}
-
-func newJobRunList(name string, jobRuns []*jobRun) *jobRunList {
-	list := make([]*jobRun, 0)
-
-	for _, jr := range jobRuns {
-		if jr.JobName == name {
-			list = append(list, jr)
+	// find the next available key
+	index := 1
+	for {
+		value := jobRun{}
+		key := strconv.Itoa(index)
+		found, err := store.Get(key, &value)
+		if err != nil {
+			panic(err)
 		}
+		if !found {
+			break
+		}
+		index++
 	}
 
-	return &jobRunList{JobName: name, JobRuns: list}
+	// assign that key to the jobrun as its ID
+	jobrun.ID = index
+	key := strconv.Itoa(index)
+
+	// persist it
+	return store.Set(key, jobrun)
 }
 
-func marshalJobRunList(jrl *jobRunList) ([]byte, error) {
-	for _, jobRun := range jrl.JobRuns {
-		jobRun.JobState.RLock()
+// Read all the persisted jobruns for a given job.
+func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
+	jobRuns := make([]*jobRun, 0)
+	index := 1
+	for {
+		value := jobRun{}
+		key := strconv.Itoa(index)
+		found, err := store.Get(key, &value)
+		if err != nil {
+			panic(err)
+		}
+		if !found {
+			break
+		} else if value.JobName == jobName {
+			jobRuns = append(jobRuns, &value)
+		}
+		index++
 	}
-
-	result, ok := json.Marshal(jrl)
-
-	for _, jobRun := range jrl.JobRuns {
-		jobRun.JobState.RUnlock()
-	}
-
-	return result, ok
+	return jobRuns, nil
 }
 
-func marshalJobRun(jr *jobRun, js *jobState) ([]byte, error) {
-	js.TaskState.RLock()
-	jr.JobState = js
-	result, ok := json.Marshal(jr)
-	js.TaskState.RUnlock()
-	return result, ok
+// Sync the current jobstate to the persisted jobrun.
+func updateJobState(store gokv.Store, jobrun *jobRun, jobstate *jobState) error {
+
+	// Get the key
+	key := strconv.Itoa(jobrun.ID)
+
+	// Get the lock
+	jobstate.TaskState.RLock()
+
+	// Update the jobrun state
+	jobrun.JobState = jobstate
+
+	// Persist it
+	err := store.Set(key, jobrun)
+
+	// Release lock
+	jobstate.TaskState.RUnlock()
+
+	return err
 }

@@ -24,6 +24,7 @@ A simple but powerful DAG scheduler and dashboard, written in Go.
    - [Trigger rules](#trigger-rules)
    - [The Goflow engine](#the-goflow-engine)
    - [Available operators](#available-operators)
+- [Storage](#storage)
 - [API and integration](#api-and-integration)
 
 ## Quick start
@@ -56,7 +57,7 @@ import "github.com/fieldryand/goflow/v2"
 func main() {
         options := goflow.Options{
                 UIPath: "ui/",
-                StreamJobRuns: true,
+                Streaming: true,
                 ShowExamples:  true,
         }
         gf := goflow.New(options)
@@ -214,7 +215,7 @@ Finally, let's create a Goflow engine, register our job, attach a logger, and ru
 
 ```go
 func main() {
-	gf := goflow.New(goflow.Options{StreamJobRuns: true})
+	gf := goflow.New(goflow.Options{Streaming: true})
 	gf.AddJob(myJob)
 	gf.Use(goflow.DefaultLogger())
 	gf.Run(":8181")
@@ -222,10 +223,9 @@ func main() {
 ```
 
 You can pass different options to the engine. Options currently supported:
-- `UIPath`: The path containing the dashboard assets. This is required to run the dashboard. Recommended value: `ui/`
-- `DBType`: `boltdb` (default) or `memory`.
-- `BoltDBPath`: This will be the filepath of the Bolt database on disk. Default value: `goflow.db`
-- `StreamJobRuns`: Whether to stream updates to the dashboard. Recommended value: `true`
+- `Store`: This is [described in more detail below.](#storage)
+- `UIPath`: The path to the dashboard code. The default value is an empty string, meaning Goflow serves only the API and not the dashboard. Suggested value if you want the dashboard: `ui/`
+- `Streaming`: Whether to stream updates to the dashboard. The default value is `false`, but if you use the dashboard then it's recommended to change this.
 - `ShowExamples`: Whether to show the example jobs. Default value: `false`
 
 Goflow is built on the [Gin framework](https://github.com/gin-gonic/gin), so you can pass any Gin handler to `Use`.
@@ -237,6 +237,41 @@ Goflow provides several operators for common tasks. [See the package documentati
 - `Command` executes a shell command.
 - `Get` makes a GET request.
 - `Post` makes a POST request.
+
+## Storage
+
+For persisting your job execution history, Goflow allows you to plug in many different key-value stores thanks to the [excellent gokv package](https://github.com/philippgille/gokv/). This way you can recover from a crash or deploy a new version of your app without losing your data.
+
+> Note: the gokv API is not yet stable. Goflow has been tested against v0.6.0.
+
+By default, Goflow uses an in-memory database, but you can easily replace it with Postgres, Redis, S3 or any other `gokv.Store`. Here is an example:
+
+```go
+package main
+
+import "github.com/fieldryand/goflow/v2"
+import "github.com/philippgille/gokv/redis"
+
+func main() {
+        redisOptions := redis.DefaultOptions
+        client, err := redis.NewClient(options)
+        if err != nil {
+                panic(err)
+        }
+        defer client.Close()
+
+        options := goflow.Options{
+                Store: client,
+                UIPath: "ui/",
+                Streaming: true,
+                ShowExamples:  true,
+        }
+        gf := goflow.New(options)
+        gf.Use(goflow.DefaultLogger())
+        gf.Run(":8181")
+}
+```
+
 
 ## API and integration
 
