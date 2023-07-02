@@ -2,7 +2,6 @@ package goflow
 
 import (
 	"encoding/json"
-	"fmt"
 	"time"
 )
 
@@ -21,10 +20,6 @@ func (j *Job) newJobRun() *jobRun {
 		JobState:  j.jobState}
 }
 
-func (j *jobRun) name() string {
-	return fmt.Sprintf("%s_%s", j.JobName, j.StartedAt)
-}
-
 type jobRunList struct {
 	JobName string    `json:"jobName"`
 	JobRuns []*jobRun `json:"jobRuns"`
@@ -32,13 +27,11 @@ type jobRunList struct {
 
 func newJobRunList(name string, jobRuns []*jobRun) *jobRunList {
 	list := make([]*jobRun, 0)
-
 	for _, jr := range jobRuns {
 		if jr.JobName == name {
 			list = append(list, jr)
 		}
 	}
-
 	return &jobRunList{JobName: name, JobRuns: list}
 }
 
@@ -46,13 +39,10 @@ func marshalJobRunList(jrl *jobRunList) ([]byte, error) {
 	for _, jobRun := range jrl.JobRuns {
 		jobRun.JobState.RLock()
 	}
-
 	result, ok := json.Marshal(jrl)
-
 	for _, jobRun := range jrl.JobRuns {
 		jobRun.JobState.RUnlock()
 	}
-
 	return result, ok
 }
 
