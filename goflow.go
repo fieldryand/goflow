@@ -22,10 +22,10 @@ type Goflow struct {
 
 // Options to control various Goflow behavior.
 type Options struct {
-	Store         gokv.Store
-	UIPath        string
-	StreamJobRuns bool
-	ShowExamples  bool
+	Store        gokv.Store
+	UIPath       string
+	Streaming    bool
+	ShowExamples bool
 }
 
 // New returns a Goflow engine.

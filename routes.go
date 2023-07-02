@@ -15,7 +15,7 @@ func (g *Goflow) addStaticRoutes() *Goflow {
 }
 
 func (g *Goflow) addStreamRoute() *Goflow {
-	g.router.GET("/stream", g.stream(g.Options.StreamJobRuns))
+	g.router.GET("/stream", g.stream(g.Options.Streaming))
 	return g
 }
 
