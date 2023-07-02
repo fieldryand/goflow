@@ -2,9 +2,7 @@
 package goflow
 
 import (
-	"io"
 	"log"
-	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/philippgille/gokv"
@@ -98,14 +96,14 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 // the corresponding jobRun.
 func (g *Goflow) runJob(jobName string) *jobRun {
 	job := g.Jobs[jobName]()
-	jr := job.newJobRun()
-	writeJobRun(g.Store, jr)
+	jobrun := job.newJobRun()
+	persistNewJobRun(g.Store, jobrun)
 
 	go job.run()
 	go func() {
 		for {
 			jobState := job.getJobState()
-			updateJobState(g.Store, jr, jobState)
+			updateJobState(g.Store, jobrun, jobState)
 			if jobState.State != running && jobState.State != none {
 				log.Printf("job <%v> reached state <%v>", job.Name, job.jobState.State)
 				break
@@ -113,7 +111,7 @@ func (g *Goflow) runJob(jobName string) *jobRun {
 		}
 	}()
 
-	return jr
+	return jobrun
 }
 
 // Use middleware in the Gin router.
@@ -135,32 +133,4 @@ func (g *Goflow) Run(port string) {
 	}
 	g.cron.Start()
 	g.router.Run(port)
-}
-
-func (g *Goflow) getJobRuns(clientDisconnect bool) func(*gin.Context) {
-	return func(c *gin.Context) {
-		chanStream := make(chan string)
-
-		go func() {
-			defer close(chanStream)
-
-			// Periodically push the list of job runs into the stream
-			for {
-				for job := range g.Jobs {
-					jrl, _ := readJobRuns(g.Store, job)
-					marshalled, _ := marshalJobRunList(jrl)
-					chanStream <- string(marshalled)
-				}
-				time.Sleep(time.Second * 1)
-			}
-		}()
-
-		c.Stream(func(w io.Writer) bool {
-			if msg, ok := <-chanStream; ok {
-				c.SSEvent("message", msg)
-				return clientDisconnect
-			}
-			return false
-		})
-	}
 }
