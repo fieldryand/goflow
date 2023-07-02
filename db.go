@@ -33,7 +33,7 @@ func readJobRuns(store gokv.Store, jobName string) (*jobRunList, error) {
 	return jobRunList, nil
 }
 
-func updateJobState(store gokv.Store, jr *jobRun, js *jobState) error {
+func updateJobState(store gokv.Store, jobrun *jobRun, jobstate *jobState) error {
 	index := 1
 	for {
 		value := jobRun{}
@@ -44,15 +44,16 @@ func updateJobState(store gokv.Store, jr *jobRun, js *jobState) error {
 		}
 		if !found {
 			break
-		} else if index == jr.ID {
+		} else if index == jobrun.ID {
 			// when we find the jobrun's key, set it to its current value
 			// first need to obtain the lock
-			js.TaskState.RLock()
-			err := store.Set(key, js)
+			jobstate.TaskState.RLock()
+			jobrun.JobState = jobstate
+			err := store.Set(key, jobrun)
 			if err != nil {
 				log.Panicf("error: %v", err)
 			}
-			js.TaskState.RUnlock()
+			jobstate.TaskState.RUnlock()
 		}
 		index++
 	}
