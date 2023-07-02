@@ -14,8 +14,8 @@ import (
 
 // Goflow contains job data and a router.
 type Goflow struct {
+	Store            gokv.Store
 	Options          Options
-	Database         gokv.Store
 	Jobs             map[string](func() *Job)
 	router           *gin.Engine
 	cron             *cron.Cron
@@ -24,6 +24,7 @@ type Goflow struct {
 
 // Options to control various Goflow behavior.
 type Options struct {
+	Store         gokv.Store
 	UIPath        string
 	StreamJobRuns bool
 	ShowExamples  bool
@@ -31,10 +32,14 @@ type Options struct {
 
 // New returns a Goflow engine.
 func New(opts Options) *Goflow {
-	dbOptions := gomap.DefaultOptions
+	if opts.Store == nil {
+		storeOptions := gomap.DefaultOptions
+		opts.Store = gomap.NewStore(storeOptions)
+	}
+
 	g := &Goflow{
+		Store:            opts.Store,
 		Options:          opts,
-		Database:         gomap.NewStore(dbOptions),
 		Jobs:             make(map[string](func() *Job)),
 		router:           gin.New(),
 		cron:             cron.New(),
@@ -94,13 +99,13 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 func (g *Goflow) runJob(jobName string) *jobRun {
 	job := g.Jobs[jobName]()
 	jr := job.newJobRun()
-	writeJobRun(g.Database, jr)
+	writeJobRun(g.Store, jr)
 
 	go job.run()
 	go func() {
 		for {
 			jobState := job.getJobState()
-			updateJobState(g.Database, jr, jobState)
+			updateJobState(g.Store, jr, jobState)
 			if jobState.State != running && jobState.State != none {
 				log.Printf("job <%v> reached state <%v>", job.Name, job.jobState.State)
 				break
@@ -142,7 +147,7 @@ func (g *Goflow) getJobRuns(clientDisconnect bool) func(*gin.Context) {
 			// Periodically push the list of job runs into the stream
 			for {
 				for job := range g.Jobs {
-					jrl, _ := readJobRuns(g.Database, job)
+					jrl, _ := readJobRuns(g.Store, job)
 					marshalled, _ := marshalJobRunList(jrl)
 					chanStream <- string(marshalled)
 				}
