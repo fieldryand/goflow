@@ -8,8 +8,6 @@
 
 A simple but powerful DAG scheduler and dashboard, written in Go.
 
-> Note: this document describes the [v2 release](https://github.com/fieldryand/goflow/releases), which is still in beta.
-
 ## Contents
 
 - [Quick start](#quick-start)
@@ -253,13 +251,14 @@ import "github.com/fieldryand/goflow/v2"
 import "github.com/philippgille/gokv/redis"
 
 func main() {
-        redisOptions := redis.DefaultOptions
-        client, err := redis.NewClient(options)
+        // create a storage client
+        client, err := redis.NewClient(redis.DefaultOptions)
         if err != nil {
                 panic(err)
         }
         defer client.Close()
 
+        // pass the client as a Goflow option
         options := goflow.Options{
                 Store: client,
                 UIPath: "ui/",
