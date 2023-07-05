@@ -8,12 +8,27 @@
 
 A simple but powerful DAG scheduler and dashboard, written in Go.
 
+![goflow-demo](https://user-images.githubusercontent.com/3333324/147818084-ade84547-4404-4d58-a697-c18ecb06fd30.gif)
+
+------
+
+**Use it if:**
+- you need a directed acylic graph (DAG) scheduler like Apache Airflow, but without the complexity.
+- you have a variety of clusters or services performing heavy computations and you want something small and light to orchestrate them.
+- you want a monitoring dashboard.
+- you want the easiest possible deployment with a single binary or container, saving you time. Volume mounts etc are too much headache.
+- you want it to run on a single tiny VM, saving on cloud costs.
+- you want to choose your storage technology--embedded, Postgres, Redis, S3, DynamoDB or something else.
+- you prefer to define your DAGs with code rather than configuration files. This approach can have various advantages, including easier testing.
+
+**Don't use it if:**
+- you need to queue a huge number of tasks. Goflow is not tested at massive scale and does not support horizontal scaling.
+
 ## Contents
 
 - [Quick start](#quick-start)
    - [With Docker](#with-docker)
    - [Without Docker](#without-docker)
-- [Why Goflow?](#why-goflow)
 - [Development overview](#development-overview)
    - [Jobs and tasks](#jobs-and-tasks)
    - [Custom Operators](#custom-operators)
@@ -34,8 +49,6 @@ docker run -p 8181:8181 ghcr.io/fieldryand/goflow-example:latest
 ```
 
 Check out the dashboard at `localhost:8181`.
-
-![goflow-demo](https://user-images.githubusercontent.com/3333324/147818084-ade84547-4404-4d58-a697-c18ecb06fd30.gif)
 
 ### Without Docker
 
@@ -73,12 +86,6 @@ rm goflow-ui.tar.gz
 ```
 
 Now run the application with `go run main.go` and see it in the browser at localhost:8181.
-
-## Why Goflow?
-
-Goflow was built as a simple replacement for Apache Airflow, which started to feel too heavy for projects where all the computation was offloaded to independent services. Still there was a need for scheduling, orchestration, concurrency, retries, a dashboard, etc. Compared to other DAG schedulers, Goflow lets you deliver all this in a single binary, which is easily deployed and runs comfortably on a single tiny VM. That's why Goflow is great for minimizing cloud costs. However, this does mean fewer capabilities in terms of scalability and throughput. There is currently no support for job queueing and distributed workers, so if you need those features, you should prefer one of the many other solutions like Airflow or Temporal.
-
-Also, in comparison to other DAG schedulers, Goflow assumes you prefer to define your DAGs with code rather than configuration files. This approach can have various advantages, including easier testing.
 
 ## Development overview
 
