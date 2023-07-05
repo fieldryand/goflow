@@ -96,7 +96,6 @@ First a few definitions.
 - Concurrency: Jobs and tasks execute concurrently.
 - `Operator`: An `Operator` defines the work done by a `Task`. Goflow comes with a handful of basic operators, and implementing your own `Operator` is straightforward.
 - Retries: You can allow a `Task` a given number of retry attempts. Goflow comes with two retry strategies, `ConstantDelay` and `ExponentialBackoff`.
-- Database: Goflow supports two database types, in-memory and BoltDB. BoltDB will persist your history of job runs, whereas in-memory means the history will be lost each time the Goflow server is stopped. The default is BoltDB.
 - Streaming: Goflow uses server-sent events to stream the status of jobs and tasks to the dashboard in real time.
 
 ### Jobs and tasks
