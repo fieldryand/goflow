@@ -25,8 +25,8 @@
         </div>
         <div class="status-wrapper" id="{{ .Name }}"></div>
         <div class="button-container">
-          <button class="button primary" onclick="toggle({{ .Name }})">Toggle scheduling</button>
-          <button class="button primary" onclick="submit({{ .Name }})">Submit</button>
+          <button id="button-toggle-{{ .Name }}" class="button" onclick="buttonPress('toggle', {{ .Name }})">Toggle scheduling</button>
+          <button id="button-submit-{{ .Name }}" class="button" onclick="buttonPress('submit', {{ .Name }})">Submit</button>
         </div>
         {{ end }}
       </div>
