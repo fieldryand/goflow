@@ -15,8 +15,8 @@
         <div id="schedule-badge-{{ .jobName }}">{{ .schedule }}</div>
       </div>
       <div class="button-container-job-page">
-        <button class="button primary" onclick="toggle({{ .jobName }})">Toggle scheduling</button>
-        <button class="button primary" onclick="submit({{ .jobName }})">Submit</button>
+        <button id="button-toggle-{{ .jobName }}" class="button" onclick="buttonPress('toggle', {{ .jobName }})">Toggle scheduling</button>
+        <button id="button-submit-{{ .jobName }}" class="button" onclick="buttonPress('submit', {{ .jobName }})">Submit</button>
       </div>
     </div>
     <div class="job-container">

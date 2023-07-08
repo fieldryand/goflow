@@ -142,16 +142,18 @@ function getJobRunSubmitted(jobRun) {
   return jobRun.submitted
 }
 
-function submit(jobName) {
-  const xhttp = new XMLHttpRequest();
-  xhttp.open("POST", `/api/jobs/${jobName}/submit`, true);
-  xhttp.send();
-}
+async function buttonPress(buttonName, jobName) {
+  var button = document.getElementById(`button-${buttonName}-${jobName}`);
+  // Add 'clicked' class to apply the style
+  button.classList.add('clicked');
 
-async function toggle(jobName) {
   const options = {
     method: 'POST'
   }
-  await fetch(`/api/jobs/${jobName}/toggle`, options)
+  await fetch(`/api/jobs/${jobName}/${buttonName}`, options)
     .then(updateJobActive(jobName))
+
+  setTimeout(function() {
+    button.classList.remove('clicked');
+  }, 200); // 200 milliseconds delay
 }
