@@ -14,6 +14,12 @@ type jobRun struct {
 	JobState  *jobState `json:"state"`
 }
 
+type nextID struct{ ID int }
+
+type jobRunIndex struct {
+	JobRunIDs []int
+}
+
 func (j *Job) newJobRun() *jobRun {
 	return &jobRun{
 		JobName:   j.Name,
@@ -24,47 +30,58 @@ func (j *Job) newJobRun() *jobRun {
 // Persist a new jobrun.
 func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 
-	// find the next available key
-	index := 1
-	for {
-		value := jobRun{}
-		key := strconv.Itoa(index)
-		found, err := store.Get(key, &value)
-		if err != nil {
-			panic(err)
-		}
-		if !found {
-			break
-		}
-		index++
-	}
+	jobRunID := nextID{}
 
-	// assign that key to the jobrun as its ID
-	jobrun.ID = index
-	key := strconv.Itoa(index)
+	// Get the next available key. No need to check for errors,
+	// because store.Get(k, v) only returns an error if k == ""
+	// or v == nil.
+	store.Get("nextID", &jobRunID)
 
-	// persist it
+	// Assign that key to the jobrun as its ID
+	jobrun.ID = jobRunID.ID
+
+	// Increment the next available key. Skip error check for
+	// same reason as above.
+	increment := jobRunID
+	increment.ID++
+	store.Set("nextID", increment)
+
+	// Persist the jobrun
+	key := strconv.Itoa(jobRunID.ID)
 	return store.Set(key, jobrun)
+}
+
+// Index the job runs
+func indexJobRuns(store gokv.Store, jobrun *jobRun) error {
+
+	index := jobRunIndex{}
+
+	// Skip error check for same reason as above.
+	// TODO: guarantee JobName is not "".
+	store.Get(jobrun.JobName, &index)
+
+	// add the jobrun ID to the index
+	index.JobRunIDs = append(index.JobRunIDs, jobrun.ID)
+	return store.Set(jobrun.JobName, index)
 }
 
 // Read all the persisted jobruns for a given job.
 func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
+
+	index := jobRunIndex{}
+
+	// Skip error check for same reason as above.
+	// TODO: guarantee JobName is not "".
+	store.Get(jobName, &index)
+
 	jobRuns := make([]*jobRun, 0)
-	index := 1
-	for {
+	for _, i := range index.JobRunIDs {
 		value := jobRun{}
-		key := strconv.Itoa(index)
-		found, err := store.Get(key, &value)
-		if err != nil {
-			panic(err)
-		}
-		if !found {
-			break
-		} else if value.JobName == jobName {
-			jobRuns = append(jobRuns, &value)
-		}
-		index++
+		key := strconv.Itoa(i)
+		store.Get(key, &value)
+		jobRuns = append(jobRuns, &value)
 	}
+
 	return jobRuns, nil
 }
 

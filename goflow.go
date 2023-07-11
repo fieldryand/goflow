@@ -31,9 +31,9 @@ type Options struct {
 // New returns a Goflow engine.
 func New(opts Options) *Goflow {
 	if opts.Store == nil {
-		storeOptions := gomap.DefaultOptions
-		opts.Store = gomap.NewStore(storeOptions)
+		opts.Store = gomap.NewStore(gomap.DefaultOptions)
 	}
+	defer opts.Store.Close()
 
 	g := &Goflow{
 		Store:            opts.Store,
@@ -49,17 +49,36 @@ func New(opts Options) *Goflow {
 		g.AddJob(customOperatorJob)
 	}
 
+	// set up storage
+	value := nextID{}
+	found, _ := g.Store.Get("nextID", &value)
+	if !found {
+		key := nextID{1}
+		g.Store.Set("nextID", key)
+	}
+
 	return g
 }
 
 // AddJob takes a job-emitting function and registers it
 // with the engine.
 func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
-	g.Jobs[jobFn().Name] = jobFn
 
+	jobName := jobFn().Name
+
+	// TODO: change the return type here to error
+	// "" is not a valid key in the storage layer
+	//if jobName == "" {
+	//		return errors.New("\"\" is not a valid job name")
+	//	}
+
+	// Register the job
+	g.Jobs[jobName] = jobFn
+
+	// If the job is active by default, add it to the cron schedule
 	if jobFn().Active {
-		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobFn().Name) })
-		g.activeJobCronIDs[jobFn().Name] = entryID
+		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobName) })
+		g.activeJobCronIDs[jobName] = entryID
 	}
 
 	return g
@@ -101,6 +120,7 @@ func (g *Goflow) runJob(jobName string) *jobRun {
 	// create and persist a new jobrun record
 	jobrun := job.newJobRun()
 	persistNewJobRun(g.Store, jobrun)
+	indexJobRuns(g.Store, jobrun)
 
 	// start running the job
 	go job.run()
