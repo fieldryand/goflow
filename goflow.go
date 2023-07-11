@@ -31,9 +31,9 @@ type Options struct {
 // New returns a Goflow engine.
 func New(opts Options) *Goflow {
 	if opts.Store == nil {
-		storeOptions := gomap.DefaultOptions
-		opts.Store = gomap.NewStore(storeOptions)
+		opts.Store = gomap.NewStore(gomap.DefaultOptions)
 	}
+	defer opts.Store.Close()
 
 	g := &Goflow{
 		Store:            opts.Store,
@@ -63,11 +63,22 @@ func New(opts Options) *Goflow {
 // AddJob takes a job-emitting function and registers it
 // with the engine.
 func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
-	g.Jobs[jobFn().Name] = jobFn
 
+	jobName := jobFn().Name
+
+	// TODO: change the return type here to error
+	// "" is not a valid key in the storage layer
+	//if jobName == "" {
+	//		return errors.New("\"\" is not a valid job name")
+	//	}
+
+	// Register the job
+	g.Jobs[jobName] = jobFn
+
+	// If the job is active by default, add it to the cron schedule
 	if jobFn().Active {
-		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobFn().Name) })
-		g.activeJobCronIDs[jobFn().Name] = entryID
+		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobName) })
+		g.activeJobCronIDs[jobName] = entryID
 	}
 
 	return g

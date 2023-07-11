@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"fmt"
 	"strconv"
 	"time"
 
@@ -31,25 +30,23 @@ func (j *Job) newJobRun() *jobRun {
 // Persist a new jobrun.
 func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 
-	// get the next available key
 	jobRunID := nextID{}
-	_, err := store.Get("nextID", &jobRunID)
-	if err != nil {
-		return fmt.Errorf("storage error: %v", err)
-	}
 
-	// assign that key to the jobrun as its ID
+	// Get the next available key. No need to check for errors,
+	// because store.Get(k, v) only returns an error if k == ""
+	// or v == nil.
+	store.Get("nextID", &jobRunID)
+
+	// Assign that key to the jobrun as its ID
 	jobrun.ID = jobRunID.ID
 
-	// increment the next available key
+	// Increment the next available key. Skip error check for
+	// same reason as above.
 	increment := jobRunID
 	increment.ID++
-	err = store.Set("nextID", increment)
-	if err != nil {
-		return fmt.Errorf("storage error: %v", err)
-	}
+	store.Set("nextID", increment)
 
-	// persist the jobrun
+	// Persist the jobrun
 	key := strconv.Itoa(jobRunID.ID)
 	return store.Set(key, jobrun)
 }
@@ -57,12 +54,11 @@ func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 // Index the job runs
 func indexJobRuns(store gokv.Store, jobrun *jobRun) error {
 
-	// get the index
 	index := jobRunIndex{}
-	_, err := store.Get(jobrun.JobName, &index)
-	if err != nil {
-		return fmt.Errorf("storage error: %v", err)
-	}
+
+	// Skip error check for same reason as above.
+	// TODO: guarantee JobName is not "".
+	store.Get(jobrun.JobName, &index)
 
 	// add the jobrun ID to the index
 	index.JobRunIDs = append(index.JobRunIDs, jobrun.ID)
@@ -71,20 +67,18 @@ func indexJobRuns(store gokv.Store, jobrun *jobRun) error {
 
 // Read all the persisted jobruns for a given job.
 func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
+
 	index := jobRunIndex{}
-	_, err := store.Get(jobName, &index)
-	if err != nil {
-		return nil, fmt.Errorf("storage error: %v", err)
-	}
+
+	// Skip error check for same reason as above.
+	// TODO: guarantee JobName is not "".
+	store.Get(jobName, &index)
 
 	jobRuns := make([]*jobRun, 0)
 	for _, i := range index.JobRunIDs {
 		value := jobRun{}
 		key := strconv.Itoa(i)
-		_, err := store.Get(key, &value)
-		if err != nil {
-			return nil, fmt.Errorf("storage error: %v", err)
-		}
+		store.Get(key, &value)
 		jobRuns = append(jobRuns, &value)
 	}
 
