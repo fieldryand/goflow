@@ -109,6 +109,7 @@ func (g *Goflow) runJob(jobName string) *jobRun {
 	// create and persist a new jobrun record
 	jobrun := job.newJobRun()
 	persistNewJobRun(g.Store, jobrun)
+	indexJobRuns(g.Store, jobrun)
 
 	// start running the job
 	go job.run()

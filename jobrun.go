@@ -17,6 +17,10 @@ type jobRun struct {
 
 type nextID struct{ ID int }
 
+type jobRunIndex struct {
+	JobRunIDs []int
+}
+
 func (j *Job) newJobRun() *jobRun {
 	return &jobRun{
 		JobName:   j.Name,
@@ -50,24 +54,40 @@ func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 	return store.Set(key, jobrun)
 }
 
+// Index the job runs
+func indexJobRuns(store gokv.Store, jobrun *jobRun) error {
+
+	// get the index
+	index := jobRunIndex{}
+	_, err := store.Get(jobrun.JobName, &index)
+	if err != nil {
+		return fmt.Errorf("storage error: %v", err)
+	}
+
+	// add the jobrun ID to the index
+	index.JobRunIDs = append(index.JobRunIDs, jobrun.ID)
+	return store.Set(jobrun.JobName, index)
+}
+
 // Read all the persisted jobruns for a given job.
 func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
-	jobRuns := make([]*jobRun, 0)
-	index := 1
-	for {
-		value := jobRun{}
-		key := strconv.Itoa(index)
-		found, err := store.Get(key, &value)
-		if err != nil {
-			panic(err)
-		}
-		if !found {
-			break
-		} else if value.JobName == jobName {
-			jobRuns = append(jobRuns, &value)
-		}
-		index++
+	index := jobRunIndex{}
+	_, err := store.Get(jobName, &index)
+	if err != nil {
+		return nil, fmt.Errorf("storage error: %v", err)
 	}
+
+	jobRuns := make([]*jobRun, 0)
+	for _, i := range index.JobRunIDs {
+		value := jobRun{}
+		key := strconv.Itoa(i)
+		_, err := store.Get(key, &value)
+		if err != nil {
+			return nil, fmt.Errorf("storage error: %v", err)
+		}
+		jobRuns = append(jobRuns, &value)
+	}
+
 	return jobRuns, nil
 }
 
