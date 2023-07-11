@@ -1,6 +1,7 @@
 package goflow
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -14,6 +15,8 @@ type jobRun struct {
 	JobState  *jobState `json:"state"`
 }
 
+type nextID struct{ ID int }
+
 func (j *Job) newJobRun() *jobRun {
 	return &jobRun{
 		JobName:   j.Name,
@@ -24,26 +27,26 @@ func (j *Job) newJobRun() *jobRun {
 // Persist a new jobrun.
 func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 
-	// find the next available key
-	index := 1
-	for {
-		value := jobRun{}
-		key := strconv.Itoa(index)
-		found, err := store.Get(key, &value)
-		if err != nil {
-			panic(err)
-		}
-		if !found {
-			break
-		}
-		index++
+	// get the next available key
+	jobRunID := nextID{}
+	_, err := store.Get("nextID", &jobRunID)
+	if err != nil {
+		return fmt.Errorf("storage error: %v", err)
 	}
 
 	// assign that key to the jobrun as its ID
-	jobrun.ID = index
-	key := strconv.Itoa(index)
+	jobrun.ID = jobRunID.ID
 
-	// persist it
+	// increment the next available key
+	increment := jobRunID
+	increment.ID++
+	err = store.Set("nextID", increment)
+	if err != nil {
+		return fmt.Errorf("storage error: %v", err)
+	}
+
+	// persist the jobrun
+	key := strconv.Itoa(jobRunID.ID)
 	return store.Set(key, jobrun)
 }
 
