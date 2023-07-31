@@ -1,4 +1,4 @@
-FROM golang
+FROM centos
 
 ENV GIN_MODE=release
 
