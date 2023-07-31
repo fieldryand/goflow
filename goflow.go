@@ -56,14 +56,6 @@ func New(opts Options) *Goflow {
 		g.AddJob(customOperatorJob)
 	}
 
-	// set up storage
-	value := nextID{}
-	found, _ := g.Store.Get("nextID", &value)
-	if !found {
-		key := nextID{1}
-		g.Store.Set("nextID", key)
-	}
-
 	return g
 }
 

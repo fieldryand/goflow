@@ -1,23 +1,19 @@
 package goflow
 
 import (
-	"strconv"
 	"time"
 
 	"github.com/philippgille/gokv"
 )
 
 type jobRun struct {
-	ID        int       `json:"id"`
 	JobName   string    `json:"job"`
 	StartedAt string    `json:"submitted"`
 	JobState  *jobState `json:"state"`
 }
 
-type nextID struct{ ID int }
-
 type jobRunIndex struct {
-	JobRunIDs []int
+	JobRunIDs []string
 }
 
 func (j *Job) newJobRun() *jobRun {
@@ -29,25 +25,7 @@ func (j *Job) newJobRun() *jobRun {
 
 // Persist a new jobrun.
 func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
-
-	jobRunID := nextID{}
-
-	// Get the next available key. No need to check for errors,
-	// because store.Get(k, v) only returns an error if k == ""
-	// or v == nil.
-	store.Get(jobrun.JobName+"/nextID", &jobRunID)
-
-	// Assign that key to the jobrun as its ID
-	jobrun.ID = jobRunID.ID
-
-	// Increment the next available key. Skip error check for
-	// same reason as above.
-	increment := jobRunID
-	increment.ID++
-	store.Set(jobrun.JobName+"/nextID", increment)
-
-	// Persist the jobrun
-	key := jobrun.JobName + "/" + strconv.Itoa(jobRunID.ID)
+	key := jobrun.JobName + "/" + jobrun.StartedAt
 	return store.Set(key, jobrun)
 }
 
@@ -61,7 +39,7 @@ func indexJobRuns(store gokv.Store, jobrun *jobRun) error {
 	store.Get(jobrun.JobName+"/index", &index)
 
 	// add the jobrun ID to the index
-	index.JobRunIDs = append(index.JobRunIDs, jobrun.ID)
+	index.JobRunIDs = append(index.JobRunIDs, jobrun.StartedAt)
 	return store.Set(jobrun.JobName+"/index", index)
 }
 
@@ -75,9 +53,8 @@ func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
 	store.Get(jobName+"/index", &index)
 
 	jobRuns := make([]*jobRun, 0)
-	for _, i := range index.JobRunIDs {
+	for _, key := range index.JobRunIDs {
 		value := jobRun{}
-		key := strconv.Itoa(i)
 		store.Get(jobName+"/"+key, &value)
 		jobRuns = append(jobRuns, &value)
 	}
@@ -89,7 +66,7 @@ func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
 func updateJobState(store gokv.Store, jobrun *jobRun, jobstate *jobState) error {
 
 	// Get the key
-	key := jobrun.JobName + "/" + strconv.Itoa(jobrun.ID)
+	key := jobrun.JobName + "/" + jobrun.StartedAt
 
 	// Get the lock
 	jobstate.TaskState.RLock()
