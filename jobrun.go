@@ -35,7 +35,7 @@ func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 	// Get the next available key. No need to check for errors,
 	// because store.Get(k, v) only returns an error if k == ""
 	// or v == nil.
-	store.Get("nextID", &jobRunID)
+	store.Get(jobrun.JobName+"/nextID", &jobRunID)
 
 	// Assign that key to the jobrun as its ID
 	jobrun.ID = jobRunID.ID
@@ -44,10 +44,10 @@ func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 	// same reason as above.
 	increment := jobRunID
 	increment.ID++
-	store.Set("nextID", increment)
+	store.Set(jobrun.JobName+"/nextID", increment)
 
 	// Persist the jobrun
-	key := strconv.Itoa(jobRunID.ID)
+	key := jobrun.JobName + "/" + strconv.Itoa(jobRunID.ID)
 	return store.Set(key, jobrun)
 }
 
@@ -58,11 +58,11 @@ func indexJobRuns(store gokv.Store, jobrun *jobRun) error {
 
 	// Skip error check for same reason as above.
 	// TODO: guarantee JobName is not "".
-	store.Get(jobrun.JobName, &index)
+	store.Get(jobrun.JobName+"/index", &index)
 
 	// add the jobrun ID to the index
 	index.JobRunIDs = append(index.JobRunIDs, jobrun.ID)
-	return store.Set(jobrun.JobName, index)
+	return store.Set(jobrun.JobName+"/index", index)
 }
 
 // Read all the persisted jobruns for a given job.
@@ -72,13 +72,13 @@ func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
 
 	// Skip error check for same reason as above.
 	// TODO: guarantee JobName is not "".
-	store.Get(jobName, &index)
+	store.Get(jobName+"/index", &index)
 
 	jobRuns := make([]*jobRun, 0)
 	for _, i := range index.JobRunIDs {
 		value := jobRun{}
 		key := strconv.Itoa(i)
-		store.Get(key, &value)
+		store.Get(jobName+"/"+key, &value)
 		jobRuns = append(jobRuns, &value)
 	}
 
@@ -89,7 +89,7 @@ func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
 func updateJobState(store gokv.Store, jobrun *jobRun, jobstate *jobState) error {
 
 	// Get the key
-	key := strconv.Itoa(jobrun.ID)
+	key := jobrun.JobName + "/" + strconv.Itoa(jobrun.ID)
 
 	// Get the lock
 	jobstate.TaskState.RLock()
