@@ -1,7 +1,7 @@
 ![Build Status](https://github.com/fieldryand/goflow/actions/workflows/go.yml/badge.svg)
 [![codecov](https://codecov.io/gh/fieldryand/goflow/branch/master/graph/badge.svg)](https://codecov.io/gh/fieldryand/goflow)
 [![Go Report Card](https://goreportcard.com/badge/github.com/fieldryand/goflow)](https://goreportcard.com/report/github.com/fieldryand/goflow)
-[![GoDoc](https://pkg.go.dev/badge/github.com/fieldryand/goflow?status.svg)](https://pkg.go.dev/github.com/fieldryand/goflow?tab=doc)
+[![GoDoc](https://pkg.go.dev/badge/github.com/fieldryand/goflow/v2?status.svg)](https://pkg.go.dev/github.com/fieldryand/goflow/v2?tab=doc)
 [![Release](https://img.shields.io/github/v/release/fieldryand/goflow)](https://github.com/fieldryand/goflow/releases)
 
 # Goflow
@@ -19,7 +19,7 @@ A simple but powerful DAG scheduler and dashboard, written in Go.
 - you want the easiest possible deployment with a single binary or container, saving you time. Volume mounts etc are too much headache.
 - you want it to run on a single tiny VM, saving on cloud costs.
 - you want to choose your storage technology--embedded, Postgres, Redis, S3, DynamoDB or something else.
-- you prefer to define your DAGs with code rather than configuration files. This approach can have various advantages, including easier testing.
+- you prefer to define your DAGs with code rather than configuration files. This approach can make it easier to manage complex DAGs.
 
 **Don't use it if:**
 - you need to queue a huge number of tasks. Goflow is not tested at massive scale and does not support horizontal scaling.
