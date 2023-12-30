@@ -26,21 +26,28 @@ type Options struct {
 	UIPath       string
 	Streaming    bool
 	ShowExamples bool
+	WithSeconds  bool
 }
 
 // New returns a Goflow engine.
 func New(opts Options) *Goflow {
+	var c *cron.Cron
 	if opts.Store == nil {
 		opts.Store = gomap.NewStore(gomap.DefaultOptions)
 	}
 	defer opts.Store.Close()
+	if opts.WithSeconds {
+		c = cron.New(cron.WithSeconds())
+	} else {
+		c = cron.New()
+	}
 
 	g := &Goflow{
 		Store:            opts.Store,
 		Options:          opts,
 		Jobs:             make(map[string](func() *Job)),
 		router:           gin.New(),
-		cron:             cron.New(cron.WithSeconds()),
+		cron:             c,
 		activeJobCronIDs: make(map[string]cron.EntryID),
 	}
 
