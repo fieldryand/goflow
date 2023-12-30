@@ -40,7 +40,7 @@ func New(opts Options) *Goflow {
 		Options:          opts,
 		Jobs:             make(map[string](func() *Job)),
 		router:           gin.New(),
-		cron:             cron.New(),
+		cron:             cron.New(cron.WithSeconds()),
 		activeJobCronIDs: make(map[string]cron.EntryID),
 	}
 
