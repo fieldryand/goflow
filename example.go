@@ -8,7 +8,8 @@ import (
 func complexAnalyticsJob() *Job {
 	j := &Job{
 		Name:     "exampleComplexAnalytics",
-		Schedule: "* * * * *",
+		Schedule: "* * * * * *",
+		Active:   false,
 	}
 
 	j.Add(&Task{
@@ -82,7 +83,7 @@ func (o PositiveAddition) Run() (interface{}, error) {
 
 // Use our custom operation in a job.
 func customOperatorJob() *Job {
-	j := &Job{Name: "exampleCustomOperator", Schedule: "* * * * *", Active: true}
+	j := &Job{Name: "exampleCustomOperator", Schedule: "* * * * * *", Active: true}
 	j.Add(&Task{Name: "posAdd", Operator: PositiveAddition{5, 6}})
 	return j
 }
