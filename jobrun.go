@@ -1,6 +1,7 @@
 package goflow
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/philippgille/gokv"
@@ -26,7 +27,11 @@ func (j *Job) newJobRun() *jobRun {
 // Persist a new jobrun.
 func persistNewJobRun(store gokv.Store, jobrun *jobRun) error {
 	key := jobrun.JobName + "/" + jobrun.StartedAt
-	return store.Set(key, jobrun)
+	err := store.Set(key, jobrun)
+	if err != nil {
+		fmt.Println(err)
+	}
+	return err
 }
 
 // Index the job runs
