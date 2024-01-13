@@ -43,7 +43,7 @@ func New(opts Options) *Goflow {
 	}
 
 	g := &Goflow{
-		Store:            opts.Store,
+		Store:            gomap.NewStore(gomap.DefaultOptions),
 		Options:          opts,
 		Jobs:             make(map[string](func() *Job)),
 		router:           gin.New(),
@@ -57,6 +57,11 @@ func New(opts Options) *Goflow {
 	}
 
 	return g
+}
+
+// AttachStorage attaches a store.
+func (g *Goflow) AttachStorage(store gokv.Store) {
+	g.Store = store
 }
 
 // AddJob takes a job-emitting function and registers it
