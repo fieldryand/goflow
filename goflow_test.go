@@ -9,6 +9,7 @@ import (
 )
 
 var router = exampleRouter()
+var routerWithSeconds = exampleRouterWithSeconds()
 
 type TestResponseRecorder struct {
 	*httptest.ResponseRecorder
@@ -47,6 +48,13 @@ func TestHealthRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("GET", "/api/health", nil)
 	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+
+	req, _ = http.NewRequest("GET", "/api/health", nil)
+	routerWithSeconds.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
@@ -191,5 +199,10 @@ func exampleRouter() *gin.Engine {
 	g.addStreamRoute()
 	g.addUIRoutes()
 	g.addAPIRoutes()
+	return g.router
+}
+
+func exampleRouterWithSeconds() *gin.Engine {
+	g := New(Options{UIPath: "ui/", ShowExamples: true, WithSeconds: true})
 	return g.router
 }
