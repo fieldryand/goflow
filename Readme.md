@@ -231,6 +231,7 @@ You can pass different options to the engine. Options currently supported:
 - `UIPath`: The path to the dashboard code. The default value is an empty string, meaning Goflow serves only the API and not the dashboard. Suggested value if you want the dashboard: `ui/`
 - `Streaming`: Whether to stream updates to the dashboard. The default value is `false`, but if you use the dashboard then it's recommended to change this.
 - `ShowExamples`: Whether to show the example jobs. Default value: `false`
+- `WithSeconds`: Whether to include the seconds field in the cron spec. See the [cron package documentation](https://github.com/robfig/cron) for details. Thanks to [zengzhengrong](https://github.com/zengzhengrong) for this feature. Default value: `false`
 
 Goflow is built on the [Gin framework](https://github.com/gin-gonic/gin), so you can pass any Gin handler to `Use`.
 
