@@ -2,6 +2,7 @@
 package goflow
 
 import (
+	"errors"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -22,7 +23,6 @@ type Goflow struct {
 
 // Options to control various Goflow behavior.
 type Options struct {
-	Store        gokv.Store
 	UIPath       string
 	Streaming    bool
 	ShowExamples bool
@@ -32,10 +32,6 @@ type Options struct {
 // New returns a Goflow engine.
 func New(opts Options) *Goflow {
 	var c *cron.Cron
-	if opts.Store == nil {
-		opts.Store = gomap.NewStore(gomap.DefaultOptions)
-	}
-	defer opts.Store.Close()
 	if opts.WithSeconds {
 		c = cron.New(cron.WithSeconds())
 	} else {
@@ -66,15 +62,13 @@ func (g *Goflow) AttachStorage(store gokv.Store) {
 
 // AddJob takes a job-emitting function and registers it
 // with the engine.
-func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
+func (g *Goflow) AddJob(jobFn func() *Job) error {
 
 	jobName := jobFn().Name
 
-	// TODO: change the return type here to error
-	// "" is not a valid key in the storage layer
-	//if jobName == "" {
-	//		return errors.New("\"\" is not a valid job name")
-	//	}
+	if jobName == "" {
+		return errors.New("\"\" is not a valid job name")
+	}
 
 	// Register the job
 	g.Jobs[jobName] = jobFn
@@ -85,7 +79,7 @@ func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
 		g.activeJobCronIDs[jobName] = entryID
 	}
 
-	return g
+	return nil
 }
 
 // setUnsetActive takes a job-emitting function and modifies it so it emits
