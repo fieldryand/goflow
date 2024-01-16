@@ -16,7 +16,7 @@ type jobRun struct {
 }
 
 type jobRunIndex struct {
-	JobRunIDs []string
+	JobRunIDs []string `json:"jobRuns"`
 }
 
 func (j *Job) newJobRun() *jobRun {
