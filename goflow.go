@@ -127,10 +127,10 @@ func (g *Goflow) runJob(jobName string) *jobRun {
 	go func() {
 		for {
 			// get the current state
-			jobState := job.getJobState()
+			jobState, newstate := job.getJobState()
 
 			// sync to the store
-			updateJobState(g.Store, jobrun, jobState)
+			updateJobState(g.Store, jobrun, jobState, newstate)
 
 			// stop syncing when the job is done
 			if jobState.State != running && jobState.State != none {
