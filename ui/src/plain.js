@@ -19,10 +19,11 @@ function updateTaskStateCircles(jobRuns) {
   var tasks = {};
   var submissions = {};
   for (i in jobRuns) {
-    const taskState = jobRuns[i].state.tasks.state;
-    var submitted = jobRuns[i].submitted;
-    for (taskName in taskState) {
-      const state = taskState[taskName];
+    const taskList = jobRuns[i].tasks;
+    const submitted = jobRuns[i].submitted;
+    for (j in taskList) {
+      const state = taskList[j].state;
+      const taskName = taskList[j].name;
       const color = stateColor(state);
       if (taskName in tasks) {
         tasks[taskName].push(color);
@@ -135,7 +136,7 @@ function getJobRunTaskColor(jobRun, task) {
 }
 
 function getJobRunState(jobRun) {
-  return stateColor(jobRun.state.job)
+  return stateColor(jobRun.state)
 }
 
 function getJobRunSubmitted(jobRun) {
