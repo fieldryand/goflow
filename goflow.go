@@ -3,6 +3,7 @@ package goflow
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -68,6 +69,10 @@ func (g *Goflow) AddJob(jobFn func() *Job) error {
 
 	if jobName == "" {
 		return errors.New("\"\" is not a valid job name")
+	}
+
+	if !jobFn().Dag.validate() {
+		return fmt.Errorf("Invalid Dag for job %s", jobName)
 	}
 
 	// Register the job
@@ -149,13 +154,12 @@ func (g *Goflow) runJob(jobName string) *jobRun {
 }
 
 // Use middleware in the Gin router.
-func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
-	g.router.Use(middleware)
-	return g
+func (g *Goflow) Use(middleware gin.HandlerFunc) gin.IRoutes {
+	return g.router.Use(middleware)
 }
 
 // Run runs the webserver.
-func (g *Goflow) Run(port string) {
+func (g *Goflow) Run(port string) error {
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
 	g.router.Use(gin.Recovery())
@@ -166,5 +170,5 @@ func (g *Goflow) Run(port string) {
 		g.addStaticRoutes()
 	}
 	g.cron.Start()
-	g.router.Run(port)
+	return g.router.Run(port)
 }
