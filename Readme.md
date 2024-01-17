@@ -13,7 +13,7 @@ A simple but powerful DAG scheduler and dashboard, written in Go.
 ------
 
 **Use it if:**
-- you need a directed acylic graph (DAG) scheduler like Apache Airflow, but without the complexity.
+- you need a directed acyclic graph (DAG) scheduler like Apache Airflow, but without the complexity.
 - you have a variety of clusters or services performing heavy computations and you want something small and light to orchestrate them.
 - you want a monitoring dashboard.
 - you want the easiest possible deployment with a single binary or container, saving you time. Volume mounts etc are too much headache.
