@@ -9,22 +9,34 @@ import (
 )
 
 type jobRun struct {
-	ID        string `json:"id"`
-	JobName   string `json:"job"`
-	StartedAt string `json:"submitted"`
-	State     state  `json:"state"`
+	ID        string    `json:"id"`
+	JobName   string    `json:"job"`
+	StartedAt string    `json:"submitted"`
+	State     state     `json:"state"`
+	TaskRuns  []taskRun `json:"tasks"`
 }
 
 type jobRunIndex struct {
 	JobRunIDs []string `json:"jobRuns"`
 }
 
+type taskRun struct {
+	Name  string `json:"name"`
+	State state  `json:"state"`
+}
+
 func (j *Job) newJobRun() *jobRun {
+	taskRuns := make([]taskRun, 0)
+	for taskName := range j.Tasks {
+		taskrun := taskRun{taskName, none}
+		taskRuns = append(taskRuns, taskrun)
+	}
 	return &jobRun{
 		ID:        uuid.New().String(),
 		JobName:   j.Name,
 		StartedAt: time.Now().UTC().Format(time.RFC3339Nano),
-		State:     none}
+		State:     none,
+		TaskRuns:  taskRuns}
 }
 
 // Persist a new jobrun.
@@ -66,5 +78,16 @@ func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
 func updateJobState(store gokv.Store, jobrun *jobRun, jobState state) error {
 	key := jobrun.ID
 	jobrun.State = jobState
+	return store.Set(key, jobrun)
+}
+
+// Sync the current taskstate to the persisted jobrun.
+func updateTaskState(store gokv.Store, jobrun *jobRun, taskName string, taskState state) error {
+	key := jobrun.ID
+	for ix, task := range jobrun.TaskRuns {
+		if task.Name == taskName {
+			jobrun.TaskRuns[ix].State = taskState
+		}
+	}
 	return store.Set(key, jobrun)
 }

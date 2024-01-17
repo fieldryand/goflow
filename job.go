@@ -31,10 +31,16 @@ const (
 )
 
 func (j *Job) loadState() state {
-	j.RLock()
-	result := j.state
-	j.RUnlock()
-	return result
+	if !j.allDone() {
+		j.storeState(running)
+	}
+	if j.allSuccessful() {
+		j.storeState(successful)
+	}
+	if j.allDone() && j.anyFailed() {
+		j.storeState(failed)
+	}
+	return j.state
 }
 
 func (j *Job) loadTaskState(task string) state {
