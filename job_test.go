@@ -60,7 +60,7 @@ func TestJob(t *testing.T) {
 	go j.run()
 	func() {
 		for {
-			jobState := j.getJobState()
+			jobState, _ := j.getJobState()
 			if jobState.State != running && jobState.State != none {
 				break
 			}

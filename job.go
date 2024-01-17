@@ -14,6 +14,7 @@ type Job struct {
 	Schedule string
 	Dag      dag
 	Active   bool
+	state    state
 	jobState *jobState
 }
 
@@ -57,6 +58,7 @@ func (j *Job) initialize() *Job {
 	j.Dag = make(dag)
 	j.Tasks = make(map[string]*Task)
 	j.jobState = newJobState()
+	j.state = none
 	return j
 }
 
@@ -166,20 +168,24 @@ func (j *Job) run() error {
 	return nil
 }
 
-func (j *Job) getJobState() *jobState {
+func (j *Job) getJobState() (*jobState, state) {
 	out := j.jobState
+	output := j.state
 	out.Lock()
 	if !j.allDone() {
 		out.State = running
+		output = running
 	}
 	if j.allSuccessful() {
 		out.State = successful
+		output = successful
 	}
 	if j.allDone() && j.anyFailed() {
 		out.State = failed
+		output = failed
 	}
 	out.Unlock()
-	return out
+	return out, output
 }
 
 func (j *Job) allDone() bool {
