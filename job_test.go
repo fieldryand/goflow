@@ -84,11 +84,11 @@ func TestJob(t *testing.T) {
 	if j.loadTaskState("whoopsWithExponentialBackoff") != failed {
 		t.Errorf("Got status %v, expected %v", j.loadTaskState("whoopsWithExponentialBackoff"), failed)
 	}
-	if j.loadTaskState("totallySkippable") != failed {
+	if j.loadTaskState("totallySkippable") != skipped {
 		t.Errorf("Got status %v, expected %v", j.loadTaskState("totallySkippable"), skipped)
 	}
-	if j.loadTaskState("cleanUp") != failed {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("cleanUp"), skipped)
+	if j.loadTaskState("cleanUp") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("cleanUp"), successful)
 	}
 }
 

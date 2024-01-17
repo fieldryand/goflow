@@ -126,6 +126,14 @@ func (g *Goflow) runJob(jobName string) *jobRun {
 	// in parallel, keep syncing the job state to the store
 	go func() {
 		for {
+			for task := range job.Tasks {
+				// get the current state
+				taskState := job.loadTaskState(task)
+
+				// sync to the store
+				updateTaskState(g.Store, jobrun, task, taskState)
+			}
+
 			// get the current state
 			jobState := job.loadState()
 
