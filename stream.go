@@ -39,9 +39,6 @@ func (g *Goflow) stream(clientDisconnect bool) func(*gin.Context) {
 // Obtain locks and put the response in the structure expected
 // by the streaming endpoint.
 func marshalJobRuns(name string, jobruns []*jobRun) ([]byte, error) {
-	for _, jobRun := range jobruns {
-		jobRun.JobState.RLock()
-	}
 	var msg struct {
 		JobName string    `json:"jobName"`
 		JobRuns []*jobRun `json:"jobRuns"`
@@ -49,8 +46,5 @@ func marshalJobRuns(name string, jobruns []*jobRun) ([]byte, error) {
 	msg.JobName = name
 	msg.JobRuns = jobruns
 	result, ok := json.Marshal(msg)
-	for _, jobRun := range jobruns {
-		jobRun.JobState.RUnlock()
-	}
 	return result, ok
 }

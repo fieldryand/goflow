@@ -15,6 +15,7 @@ type Task struct {
 	Retries           int
 	RetryDelay        RetryDelay
 	attemptsRemaining int
+	state             state
 }
 
 type triggerRule string

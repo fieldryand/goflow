@@ -2,7 +2,6 @@ package goflow
 
 import (
 	"errors"
-	"reflect"
 	"testing"
 )
 
@@ -60,25 +59,36 @@ func TestJob(t *testing.T) {
 	go j.run()
 	func() {
 		for {
-			jobState, _ := j.getJobState()
-			if jobState.State != running && jobState.State != none {
+			jobState := j.loadState()
+			if jobState != running && jobState != none {
 				break
 			}
 		}
 	}()
 
-	expectedState := newStringStateMap()
-	expectedState.Store("addOneOne", successful)
-	expectedState.Store("sleepTwo", successful)
-	expectedState.Store("addTwoFour", successful)
-	expectedState.Store("addThreeFour", successful)
-	expectedState.Store("whoopsWithConstantDelay", failed)
-	expectedState.Store("whoopsWithExponentialBackoff", failed)
-	expectedState.Store("totallySkippable", skipped)
-	expectedState.Store("cleanUp", successful)
-
-	if !reflect.DeepEqual(j.jobState.TaskState.Internal, expectedState.Internal) {
-		t.Errorf("Got status %v, expected %v", j.jobState.TaskState.Internal, expectedState.Internal)
+	if j.loadTaskState("addOneOne") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("addOneOne"), successful)
+	}
+	if j.loadTaskState("sleepTwo") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("sleepTwo"), successful)
+	}
+	if j.loadTaskState("addTwoFour") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("addTwoFour"), successful)
+	}
+	if j.loadTaskState("addThreeFour") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("addThreeFour"), successful)
+	}
+	if j.loadTaskState("whoopsWithConstantDelay") != failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("whoopsWithConstantDelay"), failed)
+	}
+	if j.loadTaskState("whoopsWithExponentialBackoff") != failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("whoopsWithExponentialBackoff"), failed)
+	}
+	if j.loadTaskState("totallySkippable") != failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("totallySkippable"), skipped)
+	}
+	if j.loadTaskState("cleanUp") != failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("cleanUp"), skipped)
 	}
 }
 
