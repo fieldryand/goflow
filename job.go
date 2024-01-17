@@ -1,7 +1,7 @@
 package goflow
 
 import (
-	"fmt"
+	"errors"
 	"log"
 	"sync"
 )
@@ -87,7 +87,11 @@ func (j *Job) initialize() *Job {
 }
 
 // Add a task to a job.
-func (j *Job) Add(t *Task) *Job {
+func (j *Job) Add(t *Task) error {
+	if t.Name == "" {
+		return errors.New("\"\" is not a valid job name")
+	}
+
 	if j.Dag == nil {
 		j.initialize()
 	}
@@ -102,7 +106,8 @@ func (j *Job) Add(t *Task) *Job {
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
 	j.storeTaskState(t.Name, none)
-	return j
+
+	return nil
 }
 
 // Task getter
@@ -120,9 +125,6 @@ func (j *Job) SetDownstream(ind, dep *Task) *Job {
 }
 
 func (j *Job) run() error {
-	if !j.Dag.validate() {
-		return fmt.Errorf("Invalid Dag for job %s", j.Name)
-	}
 
 	log.Printf("starting job <%v>", j.Name)
 
