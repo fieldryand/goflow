@@ -51,7 +51,7 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			for job := range g.Jobs {
 				stored, _ := readJobRuns(g.Store, job)
 				for _, jobrun := range stored {
-					if stateQuery != "" && stateQuery != string(jobrun.JobState.State) {
+					if stateQuery != "" && stateQuery != string(jobrun.State) {
 					} else if jobName != "" && jobName != jobrun.JobName {
 					} else {
 						jobruns = append(jobruns, jobrun)

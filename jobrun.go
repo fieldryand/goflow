@@ -9,11 +9,10 @@ import (
 )
 
 type jobRun struct {
-	ID        string    `json:"id"`
-	JobName   string    `json:"job"`
-	StartedAt string    `json:"submitted"`
-	JobState  *jobState `json:"state"`
-	State     state     `json:"newstate"`
+	ID        string `json:"id"`
+	JobName   string `json:"job"`
+	StartedAt string `json:"submitted"`
+	State     state  `json:"state"`
 }
 
 type jobRunIndex struct {
@@ -25,7 +24,6 @@ func (j *Job) newJobRun() *jobRun {
 		ID:        uuid.New().String(),
 		JobName:   j.Name,
 		StartedAt: time.Now().UTC().Format(time.RFC3339Nano),
-		JobState:  j.jobState,
 		State:     none}
 }
 
@@ -65,23 +63,8 @@ func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
 }
 
 // Sync the current jobstate to the persisted jobrun.
-func updateJobState(store gokv.Store, jobrun *jobRun, jobstate *jobState, newstate state) error {
-
-	// Get the key
+func updateJobState(store gokv.Store, jobrun *jobRun, jobState state) error {
 	key := jobrun.ID
-
-	// Get the lock
-	jobstate.TaskState.RLock()
-
-	// Update the jobrun state
-	jobrun.JobState = jobstate
-	jobrun.State = newstate
-
-	// Persist it
-	err := store.Set(key, jobrun)
-
-	// Release lock
-	jobstate.TaskState.RUnlock()
-
-	return err
+	jobrun.State = jobState
+	return store.Set(key, jobrun)
 }

@@ -15,7 +15,7 @@ type Job struct {
 	Dag      dag
 	Active   bool
 	state    state
-	jobState *jobState
+	sync.RWMutex
 }
 
 // Jobs and tasks are stateful.
@@ -30,21 +30,40 @@ const (
 	successful state = "successful"
 )
 
-type jobState struct {
-	sync.RWMutex
-	State     state           `json:"job"`
-	TaskState *stringStateMap `json:"tasks"`
+func (j *Job) loadState() state {
+	j.RLock()
+	result := j.state
+	j.RUnlock()
+	return result
 }
 
-func newJobState() *jobState {
-	js := jobState{State: none, TaskState: newStringStateMap()}
-	return &js
+func (j *Job) loadTaskState(task string) state {
+	j.RLock()
+	result := j.Tasks[task].state
+	j.RUnlock()
+	return result
 }
 
-func (js *jobState) Update(value *jobState) {
-	js.Lock()
-	js = value
-	js.Unlock()
+func (j *Job) storeState(value state) {
+	j.Lock()
+	j.state = value
+	j.Unlock()
+}
+
+func (j *Job) storeTaskState(task string, value state) {
+	j.Lock()
+	j.Tasks[task].state = value
+	j.Unlock()
+}
+
+func (j *Job) rangeOverTasks(f func(key string, value *Task) bool) {
+	j.Lock()
+	for k, v := range j.Tasks {
+		if !f(k, v) {
+			break
+		}
+	}
+	j.Unlock()
 }
 
 type writeOp struct {
@@ -57,8 +76,7 @@ type writeOp struct {
 func (j *Job) initialize() *Job {
 	j.Dag = make(dag)
 	j.Tasks = make(map[string]*Task)
-	j.jobState = newJobState()
-	j.state = none
+	j.storeState(none)
 	return j
 }
 
@@ -73,10 +91,11 @@ func (j *Job) Add(t *Task) *Job {
 	}
 
 	t.attemptsRemaining = t.Retries
+	t.state = none
 
 	j.Tasks[t.Name] = t
 	j.Dag.addNode(t.Name)
-	j.jobState.TaskState.Store(t.Name, none)
+	j.storeTaskState(t.Name, none)
 	return j
 }
 
@@ -102,14 +121,13 @@ func (j *Job) run() error {
 	log.Printf("starting job <%v>", j.Name)
 
 	writes := make(chan writeOp)
-	taskState := j.jobState.TaskState
 
 	for {
 		for t, task := range j.Tasks {
 			// Start the independent tasks
-			v, _ := taskState.Load(t)
+			v := j.loadTaskState(t)
 			if v == none && !j.Dag.isDownstream(t) {
-				taskState.Store(t, running)
+				j.storeTaskState(t, running)
 				go task.run(writes)
 			}
 
@@ -117,7 +135,7 @@ func (j *Job) run() error {
 			if v == upForRetry {
 				task.RetryDelay.wait(task.Name, task.Retries-task.attemptsRemaining)
 				task.attemptsRemaining = task.attemptsRemaining - 1
-				taskState.Store(t, running)
+				j.storeTaskState(t, running)
 				go task.run(writes)
 			}
 
@@ -126,7 +144,7 @@ func (j *Job) run() error {
 				upstreamDone := true
 				upstreamSuccessful := true
 				for _, us := range j.Dag.dependencies(t) {
-					w, _ := taskState.Load(us)
+					w := j.loadTaskState(us)
 					if w == none || w == running || w == upForRetry {
 						upstreamDone = false
 					}
@@ -136,17 +154,17 @@ func (j *Job) run() error {
 				}
 
 				if upstreamDone && task.TriggerRule == allDone {
-					taskState.Store(t, running)
+					j.storeTaskState(t, running)
 					go task.run(writes)
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
-					taskState.Store(t, running)
+					j.storeTaskState(t, running)
 					go task.run(writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
-					taskState.Store(t, skipped)
+					j.storeTaskState(t, skipped)
 					go task.skip(writes)
 				}
 
@@ -155,7 +173,7 @@ func (j *Job) run() error {
 
 		// Receive updates on task state
 		write := <-writes
-		taskState.Store(write.key, write.val)
+		j.storeTaskState(write.key, write.val)
 
 		// Acknowledge the update
 		write.resp <- true
@@ -168,30 +186,10 @@ func (j *Job) run() error {
 	return nil
 }
 
-func (j *Job) getJobState() (*jobState, state) {
-	out := j.jobState
-	output := j.state
-	out.Lock()
-	if !j.allDone() {
-		out.State = running
-		output = running
-	}
-	if j.allSuccessful() {
-		out.State = successful
-		output = successful
-	}
-	if j.allDone() && j.anyFailed() {
-		out.State = failed
-		output = failed
-	}
-	out.Unlock()
-	return out, output
-}
-
 func (j *Job) allDone() bool {
 	out := true
-	j.jobState.TaskState.Range(func(k string, v state) bool {
-		if v == none || v == running || v == upForRetry {
+	j.rangeOverTasks(func(k string, v *Task) bool {
+		if v.state == none || v.state == running || v.state == upForRetry {
 			out = false
 		}
 		return out
@@ -201,8 +199,8 @@ func (j *Job) allDone() bool {
 
 func (j *Job) allSuccessful() bool {
 	out := true
-	j.jobState.TaskState.Range(func(k string, v state) bool {
-		if v != successful {
+	j.rangeOverTasks(func(k string, v *Task) bool {
+		if v.state != successful {
 			out = false
 		}
 		return out
@@ -212,8 +210,8 @@ func (j *Job) allSuccessful() bool {
 
 func (j *Job) anyFailed() bool {
 	out := false
-	j.jobState.TaskState.Range(func(k string, v state) bool {
-		if v == failed {
+	j.rangeOverTasks(func(k string, v *Task) bool {
+		if v.state == failed {
 			out = true
 		}
 		return out
