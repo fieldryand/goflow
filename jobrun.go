@@ -74,16 +74,10 @@ func readJobRuns(store gokv.Store, jobName string) ([]*jobRun, error) {
 	return jobRuns, nil
 }
 
-// Sync the current jobstate to the persisted jobrun.
-func updateJobState(store gokv.Store, jobrun *jobRun, jobState state) error {
+// Sync the current state to the persisted jobrun.
+func syncStateToStore(store gokv.Store, jobrun *jobRun, jobState state, taskName string, taskState state) error {
 	key := jobrun.ID
 	jobrun.State = jobState
-	return store.Set(key, jobrun)
-}
-
-// Sync the current taskstate to the persisted jobrun.
-func updateTaskState(store gokv.Store, jobrun *jobRun, taskName string, taskState state) error {
-	key := jobrun.ID
 	for ix, task := range jobrun.TaskRuns {
 		if task.Name == taskName {
 			jobrun.TaskRuns[ix].State = taskState
