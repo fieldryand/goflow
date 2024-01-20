@@ -42,27 +42,27 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			c.JSON(http.StatusOK, msg)
 		})
 
-		api.GET("/jobruns", func(c *gin.Context) {
+		api.GET("/executions", func(c *gin.Context) {
 			jobName := c.Query("jobname")
 			stateQuery := c.Query("state")
 
-			jobruns := make([]*jobRun, 0)
+			executions := make([]*Execution, 0)
 
 			for job := range g.Jobs {
-				stored, _ := readJobRuns(g.Store, job)
-				for _, jobrun := range stored {
-					if stateQuery != "" && stateQuery != string(jobrun.State) {
-					} else if jobName != "" && jobName != jobrun.JobName {
+				stored, _ := readExecutions(g.Store, job)
+				for _, execution := range stored {
+					if stateQuery != "" && stateQuery != string(execution.State) {
+					} else if jobName != "" && jobName != execution.JobName {
 					} else {
-						jobruns = append(jobruns, jobrun)
+						executions = append(executions, execution)
 					}
 				}
 			}
 
 			var msg struct {
-				JobRuns []*jobRun `json:"jobruns"`
+				Executions []*Execution `json:"executions"`
 			}
-			msg.JobRuns = jobruns
+			msg.Executions = executions
 
 			c.JSON(http.StatusOK, msg)
 		})
@@ -110,9 +110,9 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			msg.Job = name
 
 			if ok {
-				jobRun := g.runJob(name)
+				execution := g.runJob(name)
 				msg.Success = true
-				msg.Submitted = jobRun.StartedAt
+				msg.Submitted = execution.StartedAt
 				c.JSON(http.StatusOK, msg)
 			} else {
 				msg.Success = false

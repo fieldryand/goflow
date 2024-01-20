@@ -18,8 +18,8 @@ func (g *Goflow) stream(clientDisconnect bool) func(*gin.Context) {
 			// Periodically push the list of job runs into the stream
 			for {
 				for jobname := range g.Jobs {
-					jobruns, _ := readJobRuns(g.Store, jobname)
-					marshalled, _ := marshalJobRuns(jobname, jobruns)
+					executions, _ := readExecutions(g.Store, jobname)
+					marshalled, _ := marshalExecutions(jobname, executions)
 					chanStream <- string(marshalled)
 				}
 				time.Sleep(time.Second * 1)
@@ -38,13 +38,13 @@ func (g *Goflow) stream(clientDisconnect bool) func(*gin.Context) {
 
 // Obtain locks and put the response in the structure expected
 // by the streaming endpoint.
-func marshalJobRuns(name string, jobruns []*jobRun) ([]byte, error) {
+func marshalExecutions(name string, executions []*Execution) ([]byte, error) {
 	var msg struct {
-		JobName string    `json:"jobName"`
-		JobRuns []*jobRun `json:"jobRuns"`
+		JobName    string       `json:"jobName"`
+		Executions []*Execution `json:"executions"`
 	}
 	msg.JobName = name
-	msg.JobRuns = jobruns
+	msg.Executions = executions
 	result, ok := json.Marshal(msg)
 	return result, ok
 }

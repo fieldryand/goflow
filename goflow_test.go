@@ -78,9 +78,9 @@ func TestJobsRoute(t *testing.T) {
 	}
 }
 
-func TestJobRunsRoute(t *testing.T) {
+func TestExecutionsRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/jobruns", nil)
+	req, _ := http.NewRequest("GET", "/api/executions", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {

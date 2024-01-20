@@ -285,10 +285,10 @@ You can use the API to integrate Goflow with other applications, such as an exis
 - `GET /api/health`: Check health of the service
 - `GET /api/jobs`: List registered jobs
 - `GET /api/jobs/{jobname}`: Get the details for a given job
-- `GET /api/jobruns`: Query and list jobruns
+- `GET /api/executions`: Query and list executions
 - `POST /api/jobs/{jobname}/submit`: Submit a job for execution
 - `POST /api/jobs/{jobname}/toggle`: Toggle a job schedule on or off
-- `/stream`: This endpoint returns Server-Sent Events with a `data` payload matching the one returned by `/api/jobruns`. The dashboard that ships with Goflow uses this endpoint.
+- `/stream`: This endpoint returns Server-Sent Events with a `data` payload matching the one returned by `/api/executions`. The dashboard that ships with Goflow uses this endpoint.
 
 Check out the OpenAPI spec for more details. Easiest way is to clone the repo, then within the repo use Swagger as in the following:
 
