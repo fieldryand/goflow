@@ -152,7 +152,7 @@
                       "executions": [
                         {
                           "job": "exampleComplexAnalytics",
-                          "submitted": "2023-06-24T07:23:11.208506156Z",
+                          "startTimestamp": "2023-06-24T07:23:11.208506156Z",
                           "state": "running",
                           "tasks": [
                             {
@@ -223,7 +223,7 @@
                     "value": {
                       "job": "exampleCustomOperator",
                       "success": true,
-                      "submitted": "2023-06-21T15:02:39.943428403Z"
+                      "startTimestamp": "2023-06-21T15:02:39.943428403Z"
                     }
                   }
                 }
