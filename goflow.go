@@ -134,12 +134,12 @@ func (g *Goflow) runJob(jobName string) *Execution {
 			// get the current job state
 			jobState := job.loadState()
 
-			for task := range job.Tasks {
+			for _, task := range job.Tasks {
 				// get the current task state
-				taskState := job.loadTaskState(task)
+				taskState := job.loadTaskState(task.Name)
 
 				// sync to the store
-				syncStateToStore(g.Store, execution, jobState, task, taskState)
+				syncStateToStore(g.Store, execution, jobState, task.Name, taskState)
 			}
 
 			// stop syncing when the job is done

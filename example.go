@@ -55,15 +55,15 @@ func complexAnalyticsJob() *Job {
 		TriggerRule: "allDone",
 	})
 
-	j.SetDownstream(j.Task("sleepOne"), j.Task("addOneOne"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
-	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
-	j.SetDownstream(j.Task("sleepOne"), j.Task("whoopsWithConstantDelay"))
-	j.SetDownstream(j.Task("sleepOne"), j.Task("whoopsWithExponentialBackoff"))
-	j.SetDownstream(j.Task("whoopsWithConstantDelay"), j.Task("totallySkippable"))
-	j.SetDownstream(j.Task("whoopsWithExponentialBackoff"), j.Task("totallySkippable"))
-	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
+	j.SetDownstream("sleepOne", "addOneOne")
+	j.SetDownstream("addOneOne", "sleepTwo")
+	j.SetDownstream("sleepTwo", "addTwoFour")
+	j.SetDownstream("addOneOne", "addThreeFour")
+	j.SetDownstream("sleepOne", "whoopsWithConstantDelay")
+	j.SetDownstream("sleepOne", "whoopsWithExponentialBackoff")
+	j.SetDownstream("whoopsWithConstantDelay", "totallySkippable")
+	j.SetDownstream("whoopsWithExponentialBackoff", "totallySkippable")
+	j.SetDownstream("totallySkippable", "cleanUp")
 
 	return j
 }

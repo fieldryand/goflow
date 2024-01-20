@@ -47,14 +47,14 @@ func TestJob(t *testing.T) {
 		TriggerRule: "allDone",
 	})
 
-	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
-	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("whoopsWithConstantDelay"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("whoopsWithExponentialBackoff"))
-	j.SetDownstream(j.Task("whoopsWithConstantDelay"), j.Task("totallySkippable"))
-	j.SetDownstream(j.Task("whoopsWithExponentialBackoff"), j.Task("totallySkippable"))
-	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
+	j.SetDownstream("addOneOne", "sleepTwo")
+	j.SetDownstream("sleepTwo", "addTwoFour")
+	j.SetDownstream("addOneOne", "addThreeFour")
+	j.SetDownstream("addOneOne", "whoopsWithConstantDelay")
+	j.SetDownstream("addOneOne", "whoopsWithExponentialBackoff")
+	j.SetDownstream("whoopsWithConstantDelay", "totallySkippable")
+	j.SetDownstream("whoopsWithExponentialBackoff", "totallySkippable")
+	j.SetDownstream("totallySkippable", "cleanUp")
 
 	go j.run()
 	func() {

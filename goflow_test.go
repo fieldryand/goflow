@@ -211,8 +211,8 @@ func cyclicJob() *Job {
 	j := &Job{Name: "cyclic", Schedule: "* * * * *"}
 	j.Add(&Task{Name: "addTwoTwo", Operator: Addition{2, 2}})
 	j.Add(&Task{Name: "addFourFour", Operator: Addition{4, 4}})
-	j.SetDownstream(j.Task("addTwoTwo"), j.Task("addFourFour"))
-	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
+	j.SetDownstream("addTwoTwo", "addFourFour")
+	j.SetDownstream("addFourFour", "addTwoTwo")
 	return j
 }
 
