@@ -119,10 +119,10 @@
         }
       }
     },
-    "/api/jobruns": {
+    "/api/executions": {
       "get": {
-        "operationId": "listJobRuns",
-        "summary": "query and list job runs",
+        "operationId": "listExecutions",
+        "summary": "query and list job executions",
         "parameters": [
           {
             "in": "query",
@@ -147,28 +147,51 @@
             "content": {
               "application/json": {
                 "examples": {
-                  "exampleJobRuns": {
+                  "exampleExecutions": {
                     "value": {
-                      "jobruns": [
+                      "executions": [
                         {
                           "job": "exampleComplexAnalytics",
                           "submitted": "2023-06-24T07:23:11.208506156Z",
-                          "state": {
-                            "job": "running",
-                            "tasks": {
-                              "state": {
-                                "addOneOne": "running",
-                                "addThreeFour": "notstarted",
-                                "addTwoFour": "notstarted",
-                                "cleanUp": "notstarted",
-                                "sleepOne": "successful",
-                                "sleepTwo": "notstarted",
-                                "totallySkippable": "notstarted",
-                                "whoopsWithConstantDelay": "running",
-                                "whoopsWithExponentialBackoff": "upforretry"
-                              }
-                            }
-                          }
+                          "state": "running",
+                          "tasks": [
+                            {
+                              "name": "addOneOne",
+			      "state": "running"
+			    },
+                            {
+                              "name": "addThreeFour",
+			      "state": "notstarted"
+			    },
+                            {
+                              "name": "addTwoFour",
+			      "state": "notstarted"
+			    },
+                            {
+                              "name": "cleanUp",
+			      "state": "notstarted"
+			    },
+                            {
+                              "name": "sleepOne",
+			      "state": "successful"
+			    },
+                            {
+                              "name": "sleepTwo",
+			      "state": "notstarted"
+			    },
+                            {
+                              "name": "totallySkippable",
+			      "state": "notstarted"
+			    },
+                            {
+                              "name": "whoopsWithConstantDelay",
+			      "state": "running"
+			    },
+                            {
+                              "name": "whoopsWithExponentialBackoff",
+			      "state": "upforretry"
+			    }
+			  ]
                         }
                       ]
                     }
