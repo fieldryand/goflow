@@ -2,6 +2,7 @@ package goflow
 
 import (
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 )
@@ -10,7 +11,7 @@ import (
 // organized into a graph.
 type Job struct {
 	Name     string
-	Tasks    map[string]*Task
+	Tasks    []*Task
 	Schedule string
 	Dag      dag
 	Active   bool
@@ -45,7 +46,13 @@ func (j *Job) loadState() state {
 
 func (j *Job) loadTaskState(task string) state {
 	j.RLock()
-	result := j.Tasks[task].state
+	result := none
+	for _, t := range j.Tasks {
+		if t.Name == task {
+			result = t.state
+			break
+		}
+	}
 	j.RUnlock()
 	return result
 }
@@ -58,15 +65,9 @@ func (j *Job) storeState(value state) {
 
 func (j *Job) storeTaskState(task string, value state) {
 	j.Lock()
-	j.Tasks[task].state = value
-	j.Unlock()
-}
-
-func (j *Job) rangeOverTasks(f func(key string, value *Task) bool) {
-	j.Lock()
-	for k, v := range j.Tasks {
-		if !f(k, v) {
-			break
+	for _, t := range j.Tasks {
+		if t.Name == task {
+			t.state = value
 		}
 	}
 	j.Unlock()
@@ -81,7 +82,7 @@ type writeOp struct {
 // Initialize a job.
 func (j *Job) initialize() *Job {
 	j.Dag = make(dag)
-	j.Tasks = make(map[string]*Task)
+	j.Tasks = make([]*Task, 0)
 	j.storeState(none)
 	return j
 }
@@ -103,25 +104,36 @@ func (j *Job) Add(t *Task) error {
 	t.attemptsRemaining = t.Retries
 	t.state = none
 
-	j.Tasks[t.Name] = t
+	j.Tasks = append(j.Tasks, t)
 	j.Dag.addNode(t.Name)
 	j.storeTaskState(t.Name, none)
 
 	return nil
 }
 
-// Task getter
-func (j *Job) Task(name string) *Task {
-	return j.Tasks[name]
-}
-
 // SetDownstream sets a dependency relationship between two tasks in the job.
 // The dependent task is downstream of the independent task and
 // waits for the independent task to finish before starting
 // execution.
-func (j *Job) SetDownstream(ind, dep *Task) *Job {
-	j.Dag.setDownstream(ind.Name, dep.Name)
-	return j
+func (j *Job) SetDownstream(ind, dep string) error {
+	indExists := false
+	depExists := false
+	for _, t := range j.Tasks {
+		if ind == t.Name {
+			indExists = true
+		}
+		if dep == t.Name {
+			depExists = true
+		}
+	}
+	if !indExists {
+		return fmt.Errorf("Job does not contain task %s", ind)
+	}
+	if !depExists {
+		return fmt.Errorf("Job does not contain task %s", dep)
+	}
+	j.Dag.setDownstream(ind, dep)
+	return nil
 }
 
 func (j *Job) run() error {
@@ -131,11 +143,11 @@ func (j *Job) run() error {
 	writes := make(chan writeOp)
 
 	for {
-		for t, task := range j.Tasks {
+		for _, task := range j.Tasks {
 			// Start the independent tasks
-			v := j.loadTaskState(t)
-			if v == none && !j.Dag.isDownstream(t) {
-				j.storeTaskState(t, running)
+			v := j.loadTaskState(task.Name)
+			if v == none && !j.Dag.isDownstream(task.Name) {
+				j.storeTaskState(task.Name, running)
 				go task.run(writes)
 			}
 
@@ -143,15 +155,15 @@ func (j *Job) run() error {
 			if v == upForRetry {
 				task.RetryDelay.wait(task.Name, task.Retries-task.attemptsRemaining)
 				task.attemptsRemaining = task.attemptsRemaining - 1
-				j.storeTaskState(t, running)
+				j.storeTaskState(task.Name, running)
 				go task.run(writes)
 			}
 
 			// If dependencies are done, start the dependent tasks
-			if v == none && j.Dag.isDownstream(t) {
+			if v == none && j.Dag.isDownstream(task.Name) {
 				upstreamDone := true
 				upstreamSuccessful := true
-				for _, us := range j.Dag.dependencies(t) {
+				for _, us := range j.Dag.dependencies(task.Name) {
 					w := j.loadTaskState(us)
 					if w == none || w == running || w == upForRetry {
 						upstreamDone = false
@@ -162,17 +174,17 @@ func (j *Job) run() error {
 				}
 
 				if upstreamDone && task.TriggerRule == allDone {
-					j.storeTaskState(t, running)
+					j.storeTaskState(task.Name, running)
 					go task.run(writes)
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
-					j.storeTaskState(t, running)
+					j.storeTaskState(task.Name, running)
 					go task.run(writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
-					j.storeTaskState(t, skipped)
+					j.storeTaskState(task.Name, skipped)
 					go task.skip(writes)
 				}
 
@@ -195,34 +207,37 @@ func (j *Job) run() error {
 }
 
 func (j *Job) allDone() bool {
+	j.Lock()
 	out := true
-	j.rangeOverTasks(func(k string, v *Task) bool {
-		if v.state == none || v.state == running || v.state == upForRetry {
+	for _, t := range j.Tasks {
+		if t.state == none || t.state == running || t.state == upForRetry {
 			out = false
 		}
-		return out
-	})
+	}
+	j.Unlock()
 	return out
 }
 
 func (j *Job) allSuccessful() bool {
+	j.Lock()
 	out := true
-	j.rangeOverTasks(func(k string, v *Task) bool {
-		if v.state != successful {
+	for _, t := range j.Tasks {
+		if t.state != successful {
 			out = false
 		}
-		return out
-	})
+	}
+	j.Unlock()
 	return out
 }
 
 func (j *Job) anyFailed() bool {
+	j.Lock()
 	out := false
-	j.rangeOverTasks(func(k string, v *Task) bool {
-		if v.state == failed {
+	for _, t := range j.Tasks {
+		if t.state == failed {
 			out = true
 		}
-		return out
-	})
+	}
+	j.Unlock()
 	return out
 }

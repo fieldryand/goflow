@@ -28,8 +28,8 @@ type taskRun struct {
 
 func (j *Job) newExecution() *Execution {
 	taskRuns := make([]taskRun, 0)
-	for taskName := range j.Tasks {
-		taskrun := taskRun{taskName, none}
+	for _, task := range j.Tasks {
+		taskrun := taskRun{task.Name, none}
 		taskRuns = append(taskRuns, taskrun)
 	}
 	return &Execution{
