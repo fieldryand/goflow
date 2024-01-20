@@ -1,15 +1,15 @@
-function updateStateCircles(tableName, wrapperId, colorArray, submissions) {
+function updateStateCircles(tableName, wrapperId, colorArray, startTimestamps) {
   const oldWrapper = document.getElementById(wrapperId);
   const newWrapper = document.createElement("div");
   newWrapper.setAttribute("class", "status-wrapper");
   newWrapper.setAttribute("id", wrapperId);
   for (k in colorArray) {
     const color = colorArray[k];
-    const submitted = submissions[k];
+    const startTimestamp = startTimestamps[k];
     div = document.createElement("div");
     div.setAttribute("class", "status-indicator");
     div.setAttribute("style", `background-color:${color}`);
-    div.setAttribute("title", submitted);
+    div.setAttribute("title", startTimestamp);
     newWrapper.appendChild(div);
   }
   document.getElementById(tableName).replaceChild(newWrapper, oldWrapper);
@@ -17,25 +17,25 @@ function updateStateCircles(tableName, wrapperId, colorArray, submissions) {
 
 function updateTaskStateCircles(executions) {
   var tasks = {};
-  var submissions = {};
+  var startTimestamps = {};
   for (i in executions) {
     const taskList = executions[i].tasks;
-    const submitted = executions[i].submitted;
+    const startTimestamp = executions[i].startTimestamp;
     for (j in taskList) {
       const state = taskList[j].state;
       const taskName = taskList[j].name;
       const color = stateColor(state);
       if (taskName in tasks) {
         tasks[taskName].push(color);
-        submissions[taskName].push(submitted);
+        startTimestamps[taskName].push(startTimestamp);
       } else {
         tasks[taskName] = [color];
-        submissions[taskName] = [submitted];
+        startTimestamps[taskName] = [startTimestamp];
       }
     }
   }
   for (task in tasks) {
-    updateStateCircles("task-table", task, tasks[task], submissions[task]);
+    updateStateCircles("task-table", task, tasks[task], startTimestamps[task]);
   }
 }
 
@@ -70,7 +70,7 @@ function updateGraphViz(executions) {
 
 function updateLastRunTs(executions) {
   if (executions.reverse()[0]) {
-    const lastJobRunTs = executions.reverse()[0].submitted;
+    const lastJobRunTs = executions.reverse()[0].startTimestamp;
     const lastJobRunTsHTML = document.getElementById("last-job-run-ts-wrapper").innerHTML;
     const newHTML = lastJobRunTsHTML.replace(/.*/, `Last run: ${lastJobRunTs}`);
     document.getElementById("last-job-run-ts-wrapper").innerHTML = newHTML;
@@ -140,7 +140,7 @@ function getJobRunState(execution) {
 }
 
 function getJobRunSubmitted(execution) {
-  return execution.submitted
+  return execution.startTimestamp
 }
 
 async function buttonPress(buttonName, jobName) {

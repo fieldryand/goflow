@@ -103,16 +103,16 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			_, ok := g.Jobs[name]
 
 			var msg struct {
-				Job       string `json:"job"`
-				Success   bool   `json:"success"`
-				Submitted string `json:"submitted"`
+				Job            string `json:"job"`
+				Success        bool   `json:"success"`
+				StartTimestamp string `json:"startTimestamp"`
 			}
 			msg.Job = name
 
 			if ok {
 				execution := g.runJob(name)
 				msg.Success = true
-				msg.Submitted = execution.StartedAt
+				msg.StartTimestamp = execution.StartTimestamp
 				c.JSON(http.StatusOK, msg)
 			} else {
 				msg.Success = false

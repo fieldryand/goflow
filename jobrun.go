@@ -10,34 +10,30 @@ import (
 
 // Execution of a job.
 type Execution struct {
-	ID        string    `json:"id"`
-	JobName   string    `json:"job"`
-	StartedAt string    `json:"submitted"`
-	State     state     `json:"state"`
-	TaskRuns  []taskRun `json:"tasks"`
+	ID             string          `json:"id"`
+	JobName        string          `json:"job"`
+	StartTimestamp string          `json:"startTimestamp"`
+	State          state           `json:"state"`
+	TaskExecutions []taskExecution `json:"tasks"`
 }
 
-type executionIndex struct {
-	ExecutionIDs []string `json:"executions"`
-}
-
-type taskRun struct {
+type taskExecution struct {
 	Name  string `json:"name"`
 	State state  `json:"state"`
 }
 
 func (j *Job) newExecution() *Execution {
-	taskRuns := make([]taskRun, 0)
+	taskExecutions := make([]taskExecution, 0)
 	for _, task := range j.Tasks {
-		taskrun := taskRun{task.Name, none}
-		taskRuns = append(taskRuns, taskrun)
+		taskrun := taskExecution{task.Name, none}
+		taskExecutions = append(taskExecutions, taskrun)
 	}
 	return &Execution{
-		ID:        uuid.New().String(),
-		JobName:   j.Name,
-		StartedAt: time.Now().UTC().Format(time.RFC3339Nano),
-		State:     none,
-		TaskRuns:  taskRuns}
+		ID:             uuid.New().String(),
+		JobName:        j.Name,
+		StartTimestamp: time.Now().UTC().Format(time.RFC3339Nano),
+		State:          none,
+		TaskExecutions: taskExecutions}
 }
 
 // Persist a new execution.
@@ -48,6 +44,10 @@ func persistNewExecution(store gokv.Store, execution *Execution) error {
 		fmt.Println(err)
 	}
 	return err
+}
+
+type executionIndex struct {
+	ExecutionIDs []string `json:"executions"`
 }
 
 // Index the job runs
@@ -79,9 +79,9 @@ func readExecutions(store gokv.Store, jobName string) ([]*Execution, error) {
 func syncStateToStore(store gokv.Store, execution *Execution, jobState state, taskName string, taskState state) error {
 	key := execution.ID
 	execution.State = jobState
-	for ix, task := range execution.TaskRuns {
+	for ix, task := range execution.TaskExecutions {
 		if task.Name == taskName {
-			execution.TaskRuns[ix].State = taskState
+			execution.TaskExecutions[ix].State = taskState
 		}
 	}
 	return store.Set(key, execution)
