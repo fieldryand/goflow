@@ -86,13 +86,13 @@ func readExecutions(s gokv.Store, j string) ([]*Execution, error) {
 }
 
 // Sync the current state to the persisted execution.
-func syncStateToStore(s gokv.Store, execution *Execution, jobState state, taskName string, taskState state) error {
-	key := execution.ID
-	execution.State = jobState
-	for ix, task := range execution.TaskExecutions {
+func syncStateToStore(s gokv.Store, e *Execution, jobState state, taskName string, taskState state) error {
+	key := e.ID
+	e.State = jobState
+	for ix, task := range e.TaskExecutions {
 		if task.Name == taskName {
-			execution.TaskExecutions[ix].State = taskState
+			e.TaskExecutions[ix].State = taskState
 		}
 	}
-	return s.Set(key, execution)
+	return s.Set(key, e)
 }
