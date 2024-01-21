@@ -193,7 +193,7 @@ func TestStreamRoute(t *testing.T) {
 }
 
 func exampleRouter() *gin.Engine {
-	g := New(Options{UIPath: "ui/", ShowExamples: true})
+	g := New(Options{ShowExamples: true})
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute()
@@ -203,7 +203,7 @@ func exampleRouter() *gin.Engine {
 }
 
 func exampleRouterWithSeconds() *gin.Engine {
-	g := New(Options{UIPath: "ui/", ShowExamples: true, WithSeconds: true})
+	g := New(Options{ShowExamples: true, WithSeconds: true})
 	return g.router
 }
 

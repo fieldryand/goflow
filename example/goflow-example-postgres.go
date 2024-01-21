@@ -15,7 +15,6 @@ package main
 //	defer client.Close()
 //
 //	options := goflow.Options{
-//		UIPath:       "ui/",
 //		Streaming:    true,
 //		ShowExamples: true,
 //		WithSeconds:  true,
