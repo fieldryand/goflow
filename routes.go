@@ -2,13 +2,21 @@ package goflow
 
 import (
 	"embed"
+	"html/template"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
-//go:embed ui/*
-var f embed.FS // nolint: unused
+//go:embed ui/css/** ui/dist/** ui/html/** ui/src/**
+var f embed.FS
+
+func (g *Goflow) addStaticRoutes() *Goflow {
+	templ := template.Must(template.New("").ParseFS(f, "ui/html/*.tmpl"))
+	g.router.SetHTMLTemplate(templ)
+	g.router.StaticFS("public/", http.FS(f))
+	return g
+}
 
 func (g *Goflow) addStreamRoute() *Goflow {
 	g.router.GET("/stream", g.stream(g.Options.Streaming))

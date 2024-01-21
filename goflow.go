@@ -132,6 +132,7 @@ func (g *Goflow) Run(port string) error {
 	g.router.Use(gin.Recovery())
 	g.addStreamRoute()
 	g.addAPIRoutes()
+	g.addStaticRoutes()
 	g.addUIRoutes()
 	g.cron.Start()
 	return g.router.Run(port)
