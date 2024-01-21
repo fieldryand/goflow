@@ -115,41 +115,9 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 
 // runJob tells the engine to run a given job and returns
 // the corresponding Execution.
-func (g *Goflow) runJob(jobName string) *Execution {
-	// generate the job
+func (g *Goflow) runJob(jobName string) {
 	job := g.Jobs[jobName]()
-
-	// create and persist a new execution
-	execution := job.newExecution()
-	persistNewExecution(g.Store, execution)
-	indexExecutions(g.Store, execution)
-
-	// start running the job
-	go job.run()
-
-	// in parallel, keep syncing the job state to the store
-	go func() {
-		for {
-			// get the current job state
-			jobState := job.loadState()
-
-			for _, task := range job.Tasks {
-				// get the current task state
-				taskState := job.loadTaskState(task.Name)
-
-				// sync to the store
-				syncStateToStore(g.Store, execution, jobState, task.Name, taskState)
-			}
-
-			// stop syncing when the job is done
-			if jobState != running && jobState != none {
-				log.Printf("job <%v> reached state <%v>", job.Name, jobState)
-				break
-			}
-		}
-	}()
-
-	return execution
+	go job.run(g.Store)
 }
 
 // Use middleware in the Gin router.
@@ -165,7 +133,6 @@ func (g *Goflow) Run(port string) error {
 	g.addStreamRoute()
 	g.addAPIRoutes()
 	g.addUIRoutes()
-	g.addStaticRoutes()
 	g.cron.Start()
 	return g.router.Run(port)
 }

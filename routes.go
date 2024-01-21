@@ -10,11 +10,6 @@ import (
 //go:embed ui/*
 var f embed.FS // nolint: unused
 
-func (g *Goflow) addStaticRoutes() *Goflow {
-	g.router.LoadHTMLGlob("ui/html/*.html.tmpl")
-	return g
-}
-
 func (g *Goflow) addStreamRoute() *Goflow {
 	g.router.GET("/stream", g.stream(g.Options.Streaming))
 	return g
@@ -104,16 +99,14 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			_, ok := g.Jobs[name]
 
 			var msg struct {
-				Job            string `json:"job"`
-				Success        bool   `json:"success"`
-				StartTimestamp string `json:"startTimestamp"`
+				Job     string `json:"job"`
+				Success bool   `json:"success"`
 			}
 			msg.Job = name
 
 			if ok {
-				execution := g.runJob(name)
+				g.runJob(name)
 				msg.Success = true
-				msg.StartTimestamp = execution.StartTimestamp
 				c.JSON(http.StatusOK, msg)
 			} else {
 				msg.Success = false

@@ -3,6 +3,8 @@ package goflow
 import (
 	"errors"
 	"testing"
+
+	"github.com/philippgille/gokv/gomap"
 )
 
 func TestJob(t *testing.T) {
@@ -56,15 +58,15 @@ func TestJob(t *testing.T) {
 	j.SetDownstream("whoopsWithExponentialBackoff", "totallySkippable")
 	j.SetDownstream("totallySkippable", "cleanUp")
 
-	go j.run()
-	func() {
-		for {
-			jobState := j.loadState()
-			if jobState != running && jobState != none {
-				break
-			}
+	store := gomap.NewStore(gomap.DefaultOptions)
+
+	go j.run(store)
+
+	for {
+		if j.allDone() {
+			break
 		}
-	}()
+	}
 
 	if j.loadTaskState("addOneOne") != successful {
 		t.Errorf("Got status %v, expected %v", j.loadTaskState("addOneOne"), successful)

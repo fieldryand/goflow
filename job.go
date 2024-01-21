@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"sync"
+
+	"github.com/philippgille/gokv"
 )
 
 // A Job is a workflow consisting of independent and dependent tasks
@@ -136,14 +138,20 @@ func (j *Job) SetDownstream(ind, dep string) error {
 	return nil
 }
 
-func (j *Job) run() error {
+func (j *Job) run(store gokv.Store) error {
 
 	log.Printf("starting job <%v>", j.Name)
+
+	// create and persist a new execution
+	execution := j.newExecution()
+	persistNewExecution(store, execution)
+	indexExecutions(store, execution)
 
 	writes := make(chan writeOp)
 
 	for {
 		for _, task := range j.Tasks {
+
 			// Start the independent tasks
 			v := j.loadTaskState(task.Name)
 			if v == none && !j.Dag.isDownstream(task.Name) {
@@ -187,13 +195,15 @@ func (j *Job) run() error {
 					j.storeTaskState(task.Name, skipped)
 					go task.skip(writes)
 				}
-
 			}
 		}
 
 		// Receive updates on task state
 		write := <-writes
 		j.storeTaskState(write.key, write.val)
+
+		// Sync to store
+		syncStateToStore(store, execution, j.loadState(), write.key, write.val)
 
 		// Acknowledge the update
 		write.resp <- true
@@ -207,37 +217,37 @@ func (j *Job) run() error {
 }
 
 func (j *Job) allDone() bool {
-	j.Lock()
+	j.RLock()
 	out := true
 	for _, t := range j.Tasks {
 		if t.state == none || t.state == running || t.state == upForRetry {
 			out = false
 		}
 	}
-	j.Unlock()
+	j.RUnlock()
 	return out
 }
 
 func (j *Job) allSuccessful() bool {
-	j.Lock()
+	j.RLock()
 	out := true
 	for _, t := range j.Tasks {
 		if t.state != successful {
 			out = false
 		}
 	}
-	j.Unlock()
+	j.RUnlock()
 	return out
 }
 
 func (j *Job) anyFailed() bool {
-	j.Lock()
+	j.RLock()
 	out := false
 	for _, t := range j.Tasks {
 		if t.state == failed {
 			out = true
 		}
 	}
-	j.Unlock()
+	j.RUnlock()
 	return out
 }
