@@ -39,9 +39,9 @@ func (j *Job) newExecution() *Execution {
 }
 
 // Persist a new execution.
-func persistNewExecution(store gokv.Store, execution *Execution) error {
-	key := execution.ID
-	err := store.Set(key, execution)
+func persistNewExecution(s gokv.Store, e *Execution) error {
+	key := e.ID
+	err := s.Set(key, e)
 	if err != nil {
 		fmt.Println(err)
 	}
@@ -53,32 +53,40 @@ type executionIndex struct {
 }
 
 // Index the job runs
-func indexExecutions(store gokv.Store, execution *Execution) error {
-	index := executionIndex{}
-	store.Get(execution.JobName, &index)
+func indexExecutions(s gokv.Store, e *Execution) error {
 
-	// add the execution ID to the index
-	index.ExecutionIDs = append(index.ExecutionIDs, execution.ID)
-	return store.Set(execution.JobName, index)
+	// get the job from the execution
+	j := e.JobName
+
+	// retrieve the list of executions of that job
+	i := executionIndex{}
+	s.Get(j, &i)
+
+	// append to the list
+	i.ExecutionIDs = append(i.ExecutionIDs, e.ID)
+	return s.Set(e.JobName, i)
 }
 
 // Read all the persisted executions for a given job.
-func readExecutions(store gokv.Store, jobName string) ([]*Execution, error) {
-	index := executionIndex{}
-	store.Get(jobName, &index)
+func readExecutions(s gokv.Store, j string) ([]*Execution, error) {
 
+	// retrieve the list of executions of the job
+	i := executionIndex{}
+	s.Get(j, &i)
+
+	// return the list
 	executions := make([]*Execution, 0)
-	for _, key := range index.ExecutionIDs {
-		value := Execution{}
-		store.Get(key, &value)
-		executions = append(executions, &value)
+	for _, key := range i.ExecutionIDs {
+		val := Execution{}
+		s.Get(key, &val)
+		executions = append(executions, &val)
 	}
 
 	return executions, nil
 }
 
 // Sync the current state to the persisted execution.
-func syncStateToStore(store gokv.Store, execution *Execution, jobState state, taskName string, taskState state) error {
+func syncStateToStore(s gokv.Store, execution *Execution, jobState state, taskName string, taskState state) error {
 	key := execution.ID
 	execution.State = jobState
 	for ix, task := range execution.TaskExecutions {
@@ -86,5 +94,5 @@ func syncStateToStore(store gokv.Store, execution *Execution, jobState state, ta
 			execution.TaskExecutions[ix].State = taskState
 		}
 	}
-	return store.Set(key, execution)
+	return s.Set(key, execution)
 }
