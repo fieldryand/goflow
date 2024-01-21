@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/public/ui/css/styles.css">
     <title>Goflow</title>
-    <script src="/src/plain.js"></script>
+    <script src="/public/ui/src/plain.js"></script>
   </head>
   <body>
     <div class="top-nav">
@@ -35,7 +35,7 @@
     </div>
   </body>
 </html>
-<script src="/dist/dist.js"></script>
+<script src="/public/ui/dist/dist.js"></script>
 <script>goflowUI.graphViz({{ .jobName }})</script>
 <script>updateJobActive({{ .jobName }})</script>
 <script>readTaskStream({{ .jobName }})</script>
