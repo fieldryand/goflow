@@ -24,7 +24,6 @@ type Goflow struct {
 
 // Options to control various Goflow behavior.
 type Options struct {
-	UIPath       string
 	Streaming    bool
 	ShowExamples bool
 	WithSeconds  bool
@@ -165,10 +164,8 @@ func (g *Goflow) Run(port string) error {
 	g.router.Use(gin.Recovery())
 	g.addStreamRoute()
 	g.addAPIRoutes()
-	if g.Options.UIPath != "" {
-		g.addUIRoutes()
-		g.addStaticRoutes()
-	}
+	g.addUIRoutes()
+	g.addStaticRoutes()
 	g.cron.Start()
 	return g.router.Run(port)
 }

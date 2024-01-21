@@ -6,7 +6,6 @@ import (
 
 func main() {
 	options := goflow.Options{
-		UIPath:       "ui/",
 		Streaming:    true,
 		ShowExamples: true,
 		WithSeconds:  true,

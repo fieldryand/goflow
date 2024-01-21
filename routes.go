@@ -1,16 +1,17 @@
 package goflow
 
 import (
+	"embed"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
+//go:embed ui/*
+var f embed.FS // nolint: unused
+
 func (g *Goflow) addStaticRoutes() *Goflow {
-	g.router.Static("/css", g.Options.UIPath+"css")
-	g.router.Static("/dist", g.Options.UIPath+"dist")
-	g.router.Static("/src", g.Options.UIPath+"src")
-	g.router.LoadHTMLGlob(g.Options.UIPath + "html/*.html.tmpl")
+	g.router.LoadHTMLGlob("ui/html/*.html.tmpl")
 	return g
 }
 
