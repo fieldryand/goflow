@@ -13,6 +13,7 @@ type Execution struct {
 	ID             string          `json:"id"`
 	JobName        string          `json:"job"`
 	StartTimestamp string          `json:"startTimestamp"`
+	EndTimestamp   string          `json:"endTimestamp"`
 	State          state           `json:"state"`
 	TaskExecutions []taskExecution `json:"tasks"`
 }
@@ -31,7 +32,8 @@ func (j *Job) newExecution() *Execution {
 	return &Execution{
 		ID:             uuid.New().String(),
 		JobName:        j.Name,
-		StartTimestamp: time.Now().UTC().Format(time.RFC3339Nano),
+		StartTimestamp: time.Now().UTC().Format(time.RFC3339),
+		EndTimestamp:   "",
 		State:          none,
 		TaskExecutions: taskExecutions}
 }
