@@ -143,9 +143,9 @@ func (j *Job) run(store gokv.Store) error {
 	log.Printf("starting job <%v>", j.Name)
 
 	// create and persist a new execution
-	execution := j.newExecution()
-	persistNewExecution(store, execution)
-	indexExecutions(store, execution)
+	e := j.newExecution()
+	persistNewExecution(store, e)
+	indexExecutions(store, e)
 
 	writes := make(chan writeOp)
 
@@ -203,7 +203,7 @@ func (j *Job) run(store gokv.Store) error {
 		j.storeTaskState(write.key, write.val)
 
 		// Sync to store
-		syncStateToStore(store, execution, j.loadState(), write.key, write.val)
+		syncStateToStore(store, e, j.loadState(), write.key, write.val)
 
 		// Acknowledge the update
 		write.resp <- true
