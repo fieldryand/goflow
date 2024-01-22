@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/philippgille/gokv"
 )
@@ -203,7 +204,9 @@ func (j *Job) run(store gokv.Store) error {
 		j.storeTaskState(write.key, write.val)
 
 		// Sync to store
-		syncStateToStore(store, e, j.loadState(), write.key, write.val)
+		e.State = j.loadState()
+		e.ElapsedSeconds = time.Since(e.StartTimestamp).Seconds()
+		syncStateToStore(store, e, write.key, write.val)
 
 		// Acknowledge the update
 		write.resp <- true
