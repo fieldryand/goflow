@@ -12,8 +12,8 @@ import (
 type Execution struct {
 	ID             string          `json:"id"`
 	JobName        string          `json:"job"`
-	StartTimestamp string          `json:"startTimestamp"`
-	EndTimestamp   string          `json:"endTimestamp"`
+	StartTimestamp time.Time       `json:"startTimestamp"`
+	ElapsedSeconds float64         `json:"elapsedSeconds"`
 	State          state           `json:"state"`
 	TaskExecutions []taskExecution `json:"tasks"`
 }
@@ -32,8 +32,8 @@ func (j *Job) newExecution() *Execution {
 	return &Execution{
 		ID:             uuid.New().String(),
 		JobName:        j.Name,
-		StartTimestamp: time.Now().UTC().Format(time.RFC3339),
-		EndTimestamp:   "",
+		StartTimestamp: time.Now().UTC(),
+		ElapsedSeconds: 0,
 		State:          none,
 		TaskExecutions: taskExecutions}
 }
@@ -86,9 +86,8 @@ func readExecutions(s gokv.Store, j string) ([]*Execution, error) {
 }
 
 // Sync the current state to the persisted execution.
-func syncStateToStore(s gokv.Store, e *Execution, jobState state, taskName string, taskState state) error {
+func syncStateToStore(s gokv.Store, e *Execution, taskName string, taskState state) error {
 	key := e.ID
-	e.State = jobState
 	for ix, task := range e.TaskExecutions {
 		if task.Name == taskName {
 			e.TaskExecutions[ix].State = taskState
