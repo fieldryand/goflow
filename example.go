@@ -1,7 +1,8 @@
 package goflow
 
-// Crunch some numbers
-func complexAnalyticsJob() *Job {
+import "net/http"
+
+func exampleAnalytics() *Job {
 	j := &Job{
 		Name:     "example-complex-analytics",
 		Schedule: "* * * * * *",
@@ -60,6 +61,21 @@ func complexAnalyticsJob() *Job {
 	j.SetDownstream("whoops-with-constant-delay", "totally-skippable")
 	j.SetDownstream("whoops-with-exponential-backoff", "totally-skippable")
 	j.SetDownstream("totally-skippable", "clean-up")
+
+	return j
+}
+
+func exampleHTTP() *Job {
+	j := &Job{
+		Name:     "example-http",
+		Schedule: "* * * * * *",
+		Active:   false,
+	}
+
+	j.Add(&Task{
+		Name:     "get-google",
+		Operator: Get{Client: &http.Client{}, URL: "https://www.google.com"},
+	})
 
 	return j
 }
