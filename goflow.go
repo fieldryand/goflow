@@ -80,7 +80,7 @@ func (g *Goflow) Add(jobFn func() *Job) error {
 
 	// If the job is active by default, add it to the cron schedule
 	if jobFn().Active {
-		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.Execute(jobName) })
+		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.scheduledExecute(jobName) })
 		g.activeJobCronIDs[jobName] = entryID
 	}
 
@@ -109,7 +109,7 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 	}
 
 	g.Jobs[jobName] = setUnsetActive(g.Jobs[jobName], true)
-	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.Execute(jobName) })
+	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.scheduledExecute(jobName) })
 	g.activeJobCronIDs[jobName] = entryID
 	return true, nil
 }
@@ -122,7 +122,23 @@ func (g *Goflow) Execute(job string) uuid.UUID {
 	j := g.Jobs[job]()
 
 	// create and persist a new execution
-	e := j.newExecution()
+	e := j.newExecution(false)
+	persistNewExecution(g.Store, e)
+	indexExecutions(g.Store, e)
+
+	// execute
+	go j.run(g.Store, e)
+
+	return e.ID
+}
+
+func (g *Goflow) scheduledExecute(job string) uuid.UUID {
+
+	// create job
+	j := g.Jobs[job]()
+
+	// create and persist a new execution
+	e := j.newExecution(true)
 	persistNewExecution(g.Store, e)
 	indexExecutions(g.Store, e)
 
