@@ -9,7 +9,7 @@ import (
 
 // Execution of a job.
 type Execution struct {
-	ID             string          `json:"id"`
+	ID             uuid.UUID       `json:"id"`
 	JobName        string          `json:"job"`
 	StartTimestamp time.Time       `json:"startTimestamp"`
 	ElapsedSeconds float64         `json:"elapsedSeconds"`
@@ -29,7 +29,7 @@ func (j *Job) newExecution() *Execution {
 		taskExecutions = append(taskExecutions, taskrun)
 	}
 	return &Execution{
-		ID:             uuid.New().String(),
+		ID:             uuid.New(),
 		JobName:        j.Name,
 		StartTimestamp: time.Now().UTC(),
 		ElapsedSeconds: 0,
@@ -40,7 +40,7 @@ func (j *Job) newExecution() *Execution {
 // Persist a new execution.
 func persistNewExecution(s gokv.Store, e *Execution) error {
 	key := e.ID
-	return s.Set(key, e)
+	return s.Set(key.String(), e)
 }
 
 type executionIndex struct {
@@ -58,7 +58,7 @@ func indexExecutions(s gokv.Store, e *Execution) error {
 	s.Get(j, &i)
 
 	// append to the list
-	i.ExecutionIDs = append(i.ExecutionIDs, e.ID)
+	i.ExecutionIDs = append(i.ExecutionIDs, e.ID.String())
 	return s.Set(e.JobName, i)
 }
 
@@ -88,5 +88,5 @@ func syncStateToStore(s gokv.Store, e *Execution, taskName string, taskState sta
 			e.TaskExecutions[ix].State = taskState
 		}
 	}
-	return s.Set(key, e)
+	return s.Set(key.String(), e)
 }
