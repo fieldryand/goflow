@@ -48,7 +48,8 @@ func New(opts Options) *Goflow {
 	}
 
 	if opts.ShowExamples {
-		g.Add(complexAnalyticsJob)
+		g.Add(exampleAnalytics)
+		g.Add(exampleHTTP)
 	}
 
 	return g
