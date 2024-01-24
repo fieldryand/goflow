@@ -93,7 +93,7 @@ func (j *Job) initialize() *Job {
 // Add a task to a job.
 func (j *Job) Add(t *Task) error {
 	if t.Name == "" {
-		return errors.New("\"\" is not a valid job name")
+		return errors.New("\"\" is not a valid task name")
 	}
 
 	if j.Dag == nil {

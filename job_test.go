@@ -7,6 +7,41 @@ import (
 	"github.com/philippgille/gokv/gomap"
 )
 
+func TestInvalidTask(t *testing.T) {
+	j := &Job{Name: "example", Schedule: "* * * * *"}
+
+	err := j.Add(&Task{
+		Name:     "",
+		Operator: Addition{1, 1},
+	})
+
+	if err == nil {
+		t.Errorf("task with invalid name should be rejected")
+	}
+
+	j.Add(&Task{
+		Name:     "independent-task",
+		Operator: Addition{1, 1},
+	})
+
+	j.Add(&Task{
+		Name:     "dependent-task",
+		Operator: Addition{1, 1},
+	})
+
+	err = j.SetDownstream("does-not-exist", "dependent-task")
+
+	if err == nil {
+		t.Errorf("edge should not be set between nonexistent tasks")
+	}
+
+	err = j.SetDownstream("independent-task", "does-not-exist")
+
+	if err == nil {
+		t.Errorf("edge should not be set between nonexistent tasks")
+	}
+}
+
 func TestJob(t *testing.T) {
 	j := &Job{Name: "example", Schedule: "* * * * *"}
 
