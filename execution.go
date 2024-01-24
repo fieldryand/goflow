@@ -11,6 +11,7 @@ import (
 type Execution struct {
 	ID             uuid.UUID       `json:"id"`
 	JobName        string          `json:"job"`
+	Scheduled      bool            `json:"scheduled"`
 	StartTimestamp time.Time       `json:"startTimestamp"`
 	ElapsedSeconds float64         `json:"elapsedSeconds"`
 	State          state           `json:"state"`
@@ -22,7 +23,7 @@ type taskExecution struct {
 	State state  `json:"state"`
 }
 
-func (j *Job) newExecution() *Execution {
+func (j *Job) newExecution(scheduled bool) *Execution {
 	taskExecutions := make([]taskExecution, 0)
 	for _, task := range j.Tasks {
 		taskrun := taskExecution{task.Name, none}
@@ -31,6 +32,7 @@ func (j *Job) newExecution() *Execution {
 	return &Execution{
 		ID:             uuid.New(),
 		JobName:        j.Name,
+		Scheduled:      scheduled,
 		StartTimestamp: time.Now().UTC(),
 		ElapsedSeconds: 0,
 		State:          none,
