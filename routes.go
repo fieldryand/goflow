@@ -102,7 +102,7 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			}
 		})
 
-		api.POST("/jobs/:name/submit", func(c *gin.Context) {
+		api.POST("/jobs/:name/execute", func(c *gin.Context) {
 			name := c.Param("name")
 			_, ok := g.Jobs[name]
 
@@ -113,7 +113,7 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			msg.Job = name
 
 			if ok {
-				g.runJob(name)
+				g.Execute(name)
 				msg.Success = true
 				c.JSON(http.StatusOK, msg)
 			} else {

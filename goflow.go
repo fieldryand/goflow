@@ -49,7 +49,6 @@ func New(opts Options) *Goflow {
 
 	if opts.ShowExamples {
 		g.Add(complexAnalyticsJob)
-		g.Add(customOperatorJob)
 	}
 
 	return g
@@ -79,7 +78,7 @@ func (g *Goflow) Add(jobFn func() *Job) error {
 
 	// If the job is active by default, add it to the cron schedule
 	if jobFn().Active {
-		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobName) })
+		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.Execute(jobName) })
 		g.activeJobCronIDs[jobName] = entryID
 	}
 
@@ -108,16 +107,27 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 	}
 
 	g.Jobs[jobName] = setUnsetActive(g.Jobs[jobName], true)
-	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.runJob(jobName) })
+	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.Execute(jobName) })
 	g.activeJobCronIDs[jobName] = entryID
 	return true, nil
 }
 
-// runJob tells the engine to run a given job and returns
-// the corresponding Execution.
-func (g *Goflow) runJob(jobName string) {
-	job := g.Jobs[jobName]()
-	go job.run(g.Store)
+// Execute tells the engine to run a given job in a goroutine.
+// The job state is readable from the engine's store.
+func (g *Goflow) Execute(job string) string {
+
+	// create job
+	j := g.Jobs[job]()
+
+	// create and persist a new execution
+	e := j.newExecution()
+	persistNewExecution(g.Store, e)
+	indexExecutions(g.Store, e)
+
+	// execute
+	go j.run(g.Store, e)
+
+	return e.ID
 }
 
 // Use middleware in the Gin router.

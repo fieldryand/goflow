@@ -44,8 +44,8 @@ function updateJobStateCircles() {
   stream.addEventListener("message", function(e) {
     const data = JSON.parse(e.data);
     const executionStates = data.executions.map(getJobRunState);
-    const jobSubmissions = data.executions.map(getJobRunSubmitted);
-    updateStateCircles("job-table", data.jobName, executionStates, jobSubmissions);
+    const startTimestamps = data.executions.map(getExecutionStartTimestamp);
+    updateStateCircles("job-table", data.jobName, executionStates, startTimestamps);
   });
 }
 
@@ -139,7 +139,7 @@ function getJobRunState(execution) {
   return stateColor(execution.state)
 }
 
-function getJobRunSubmitted(execution) {
+function getExecutionStartTimestamp(execution) {
   return execution.startTimestamp
 }
 
