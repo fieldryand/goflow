@@ -7,6 +7,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/gomap"
 	"github.com/robfig/cron/v3"
@@ -115,7 +116,7 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 
 // Execute tells the engine to run a given job in a goroutine.
 // The job state is readable from the engine's store.
-func (g *Goflow) Execute(job string) string {
+func (g *Goflow) Execute(job string) uuid.UUID {
 
 	// create job
 	j := g.Jobs[job]()
