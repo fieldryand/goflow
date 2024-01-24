@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/philippgille/gokv/gomap"
 )
 
 var router = exampleRouter()
@@ -193,12 +194,14 @@ func TestStreamRoute(t *testing.T) {
 }
 
 func exampleRouter() *gin.Engine {
+	store := gomap.NewStore(gomap.DefaultOptions)
 	g := New(Options{ShowExamples: true})
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute()
 	g.addUIRoutes()
 	g.addAPIRoutes()
+	g.AttachStore(store)
 	return g.router
 }
 
@@ -218,7 +221,19 @@ func cyclicJob() *Job {
 
 func TestCyclicJob(t *testing.T) {
 	g := New(Options{})
-	if g.AddJob(cyclicJob) == nil {
+	if g.Add(cyclicJob) == nil {
 		t.Errorf("cyclic job should be rejected")
+	}
+}
+
+func invalidJob() *Job {
+	return &Job{Name: "", Schedule: "* * * * *"}
+}
+
+func TestInvalidJobName(t *testing.T) {
+	g := New(Options{})
+	err := g.Add(invalidJob)
+	if err == nil {
+		t.Errorf("job with invalid name should be rejected")
 	}
 }

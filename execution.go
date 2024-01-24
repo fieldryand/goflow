@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -41,11 +40,7 @@ func (j *Job) newExecution() *Execution {
 // Persist a new execution.
 func persistNewExecution(s gokv.Store, e *Execution) error {
 	key := e.ID
-	err := s.Set(key, e)
-	if err != nil {
-		fmt.Println(err)
-	}
-	return err
+	return s.Set(key, e)
 }
 
 type executionIndex struct {

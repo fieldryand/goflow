@@ -48,21 +48,21 @@ func New(opts Options) *Goflow {
 	}
 
 	if opts.ShowExamples {
-		g.AddJob(complexAnalyticsJob)
-		g.AddJob(customOperatorJob)
+		g.Add(complexAnalyticsJob)
+		g.Add(customOperatorJob)
 	}
 
 	return g
 }
 
-// AttachStorage attaches a store.
-func (g *Goflow) AttachStorage(store gokv.Store) {
+// AttachStore attaches a store.
+func (g *Goflow) AttachStore(store gokv.Store) {
 	g.Store = store
 }
 
-// AddJob takes a job-emitting function and registers it
+// Add takes a job-emitting function and registers it
 // with the engine.
-func (g *Goflow) AddJob(jobFn func() *Job) error {
+func (g *Goflow) Add(jobFn func() *Job) error {
 
 	jobName := jobFn().Name
 
