@@ -49,6 +49,12 @@ func TestGetNotFound(t *testing.T) {
 	if err == nil {
 		t.Errorf("Expected an error")
 	}
+
+	_, err = Get{client, "nonsense-url"}.Run()
+
+	if err == nil {
+		t.Errorf("Expected an error")
+	}
 }
 
 func TestPostSuccess(t *testing.T) {
