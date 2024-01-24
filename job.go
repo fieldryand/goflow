@@ -139,14 +139,9 @@ func (j *Job) SetDownstream(ind, dep string) error {
 	return nil
 }
 
-func (j *Job) run(store gokv.Store) error {
+func (j *Job) run(store gokv.Store, e *Execution) error {
 
 	log.Printf("starting job <%v>", j.Name)
-
-	// create and persist a new execution
-	e := j.newExecution()
-	persistNewExecution(store, e)
-	indexExecutions(store, e)
 
 	writes := make(chan writeOp)
 

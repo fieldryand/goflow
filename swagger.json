@@ -203,10 +203,10 @@
         }
       }
     },
-    "/api/jobs/{jobname}/submit": {
+    "/api/jobs/{jobname}/execution": {
       "post": {
-        "operationId": "submitJob",
-        "summary": "submit a job for execution",
+        "operationId": "executeJob",
+        "summary": "execute a job",
         "parameters": [
           {
             "in": "path",

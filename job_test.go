@@ -95,7 +95,7 @@ func TestJob(t *testing.T) {
 
 	store := gomap.NewStore(gomap.DefaultOptions)
 
-	go j.run(store)
+	go j.run(store, j.newExecution())
 
 	for {
 		if j.allDone() {

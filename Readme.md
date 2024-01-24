@@ -283,7 +283,7 @@ You can use the API to integrate Goflow with other applications, such as an exis
 - `GET /api/jobs`: List registered jobs
 - `GET /api/jobs/{jobname}`: Get the details for a given job
 - `GET /api/executions`: Query and list executions
-- `POST /api/jobs/{jobname}/submit`: Submit a job for execution
+- `POST /api/jobs/{jobname}/execute`: Execute a job
 - `POST /api/jobs/{jobname}/toggle`: Toggle a job schedule on or off
 - `/stream`: This endpoint returns Server-Sent Events with a `data` payload matching the one returned by `/api/executions`. The dashboard that ships with Goflow uses this endpoint.
 
