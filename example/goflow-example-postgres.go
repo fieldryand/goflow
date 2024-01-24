@@ -20,7 +20,7 @@ package main
 //		WithSeconds:  true,
 //	}
 //	gf := goflow.New(options)
-//	gf.AttachStorage(client)
+//	gf.AttachStore(client)
 //	gf.Use(goflow.DefaultLogger())
 //	gf.Run(":8181")
 //}

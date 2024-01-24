@@ -219,7 +219,7 @@ Finally, let's create a Goflow engine, register our job, attach a logger, and ru
 ```go
 func main() {
 	gf := goflow.New(goflow.Options{Streaming: true})
-	gf.AddJob(myJob)
+	gf.Add(myJob)
 	gf.Use(goflow.DefaultLogger())
 	gf.Run(":8181")
 }
