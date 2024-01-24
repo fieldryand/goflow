@@ -193,15 +193,23 @@ func TestStreamRoute(t *testing.T) {
 	}
 }
 
+func simpleJob() *Job {
+	j := &Job{Name: "simple", Schedule: "* * * * *"}
+	j.Add(&Task{Name: "addTwoTwo", Operator: Addition{2, 2}})
+	return j
+}
+
 func exampleRouter() *gin.Engine {
 	store := gomap.NewStore(gomap.DefaultOptions)
 	g := New(Options{ShowExamples: true})
+	g.AttachStore(store)
+	g.Add(simpleJob)
+	g.runJob("simple")
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute()
 	g.addUIRoutes()
 	g.addAPIRoutes()
-	g.AttachStore(store)
 	return g.router
 }
 
