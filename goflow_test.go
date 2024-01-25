@@ -197,6 +197,7 @@ func exampleRouter() *gin.Engine {
 	g.AttachStore(store)
 	g.Add(simpleJob)
 	g.Execute("simple")
+	g.scheduledExecute("simple")
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute()
