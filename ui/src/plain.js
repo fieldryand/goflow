@@ -42,23 +42,21 @@ function updateTaskStateCircles(executions) {
 function updateJobStateCircles() {
   var stream = new EventSource(`/stream`);
   stream.addEventListener("message", function(e) {
-    const data = JSON.parse(e.data);
-    const executionStates = data.executions.map(getJobRunState);
-    const startTimestamps = data.executions.map(getExecutionStartTimestamp);
-    updateStateCircles("job-table", data.jobName, executionStates, startTimestamps);
+    const d = JSON.parse(e.data);
+    const s = d.executions.map(x => stateColor(x.state));
+    const ts = d.executions.map(x => x.startTimestamp);
+    updateStateCircles("job-table", d.jobName, s, ts);
   });
 }
 
 function updateGraphViz(executions) {
   if (executions.length) {
-    const lastExecution = executions.reverse()[0]
-    const taskState = lastExecution.state.tasks.state;
-    for (taskName in taskState) {
+    const tasks = executions.reverse()[0].tasks
+    for (i in tasks) {
       if (document.getElementsByClassName("output")) {
-        const taskRunColor = getJobRunTaskColor(lastExecution, taskName);
 	try {
-          const rect = document.getElementById("node-" + taskName).querySelector("rect");
-          rect.setAttribute("style", "stroke-width: 2; stroke: " + taskRunColor);
+          const rect = document.getElementById("node-" + tasks[i].name).querySelector("rect");
+          rect.setAttribute("style", "stroke-width: 2; stroke: " + stateColor(tasks[i].state));
 	}
 	catch(err) {
           console.log(`${err}. This might be a temporary error when the graph is still loading.`)
@@ -70,10 +68,10 @@ function updateGraphViz(executions) {
 
 function updateLastRunTs(executions) {
   if (executions.reverse()[0]) {
-    const lastJobRunTs = executions.reverse()[0].startTimestamp;
-    const lastJobRunTsHTML = document.getElementById("last-job-run-ts-wrapper").innerHTML;
-    const newHTML = lastJobRunTsHTML.replace(/.*/, `Last run: ${lastJobRunTs}`);
-    document.getElementById("last-job-run-ts-wrapper").innerHTML = newHTML;
+    const lastExecutionTs = executions.reverse()[0].startTimestamp;
+    const lastExecutionTsHTML = document.getElementById("last-execution-ts-wrapper").innerHTML;
+    const newHTML = lastExecutionTsHTML.replace(/.*/, `Last run: ${lastExecutionTs}`);
+    document.getElementById("last-execution-ts-wrapper").innerHTML = newHTML;
   }
 }
 
@@ -96,11 +94,11 @@ function updateJobActive(jobName) {
 function readTaskStream(jobName) {
   var stream = new EventSource(`/stream`);
   stream.addEventListener("message", function(e) {
-    const data = JSON.parse(e.data);
-    if (jobName == data.jobName) {
-      updateTaskStateCircles(data.executions);
-      updateGraphViz(data.executions);
-      updateLastRunTs(data.executions);
+    const d = JSON.parse(e.data);
+    if (jobName == d.jobName) {
+      updateTaskStateCircles(d.executions);
+      updateGraphViz(d.executions);
+      updateLastRunTs(d.executions);
     }
   });
 }
@@ -128,19 +126,6 @@ function stateColor(taskState) {
   }
 
   return color
-}
-
-function getJobRunTaskColor(execution, task) {
-  const taskState = execution.state.tasks.state[task];
-  return stateColor(taskState)
-}
-
-function getJobRunState(execution) {
-  return stateColor(execution.state)
-}
-
-function getExecutionStartTimestamp(execution) {
-  return execution.startTimestamp
 }
 
 async function buttonPress(buttonName, jobName) {
