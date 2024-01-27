@@ -54,6 +54,7 @@ func New(opts Options) *Goflow {
 	if opts.ShowExamples {
 		g.AddJob(complexAnalyticsJob)
 		g.AddJob(customOperatorJob)
+		g.AddJob(ctxPassJob)
 	}
 
 	// set up storage

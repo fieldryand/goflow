@@ -1,6 +1,7 @@
 package goflow
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"sync"
@@ -15,6 +16,7 @@ type Job struct {
 	Dag      dag
 	Active   bool
 	jobState *jobState
+	Ctx      context.Context
 }
 
 // Jobs and tasks are stateful.

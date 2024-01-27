@@ -184,6 +184,18 @@ func TestStreamRoute(t *testing.T) {
 	}
 }
 
+func TestCtxJobSubmitToRouter(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/jobs/exampleCtxOperator/submit", nil)
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+	select {}
+}
+
 func exampleRouter() *gin.Engine {
 	g := New(Options{UIPath: "ui/", ShowExamples: true})
 	g.Use(DefaultLogger())
