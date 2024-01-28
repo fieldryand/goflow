@@ -1,6 +1,7 @@
 package goflow
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -18,6 +19,7 @@ type Job struct {
 	Schedule string
 	Dag      dag
 	Active   bool
+	Timeout  time.Duration
 	state    state
 	sync.RWMutex
 }
@@ -32,6 +34,7 @@ const (
 	skipped    state = "skipped"
 	failed     state = "failed"
 	successful state = "successful"
+	timeout    state = "timeout"
 )
 
 func (j *Job) loadState() state {
@@ -77,9 +80,8 @@ func (j *Job) storeTaskState(task string, value state) {
 }
 
 type writeOp struct {
-	key  string
-	val  state
-	resp chan bool
+	key string
+	val state
 }
 
 // Initialize a job.
@@ -104,7 +106,7 @@ func (j *Job) Add(t *Task) error {
 		t.TriggerRule = allSuccessful
 	}
 
-	t.attemptsRemaining = t.Retries
+	t.attempts = t.Retries
 	t.state = none
 
 	j.Tasks = append(j.Tasks, t)
@@ -141,7 +143,10 @@ func (j *Job) SetDownstream(ind, dep string) error {
 
 func (j *Job) run(store gokv.Store, e *Execution) error {
 
-	log.Printf("starting job <%v>", j.Name)
+	log.Printf("starting job: name=%v, ID=%v", j.Name, e.ID)
+
+	ctx, cancelCtx := context.WithTimeout(context.Background(), j.Timeout)
+	defer cancelCtx()
 
 	writes := make(chan writeOp)
 
@@ -152,15 +157,15 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 			v := j.loadTaskState(task.Name)
 			if v == none && !j.Dag.isDownstream(task.Name) {
 				j.storeTaskState(task.Name, running)
-				go task.run(writes)
+				go task.run(ctx, writes)
 			}
 
 			// Start the tasks that need to be re-tried
 			if v == upForRetry {
-				task.RetryDelay.wait(task.Name, task.Retries-task.attemptsRemaining)
-				task.attemptsRemaining = task.attemptsRemaining - 1
+				task.RetryDelay.wait(task.Name, task.Retries-task.attempts)
+				task.attempts = task.attempts - 1
 				j.storeTaskState(task.Name, running)
-				go task.run(writes)
+				go task.run(ctx, writes)
 			}
 
 			// If dependencies are done, start the dependent tasks
@@ -179,12 +184,12 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 
 				if upstreamDone && task.TriggerRule == allDone {
 					j.storeTaskState(task.Name, running)
-					go task.run(writes)
+					go task.run(ctx, writes)
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
 					j.storeTaskState(task.Name, running)
-					go task.run(writes)
+					go task.run(ctx, writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
@@ -194,22 +199,31 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 			}
 		}
 
+		select {
+
 		// Receive updates on task state
-		write := <-writes
-		j.storeTaskState(write.key, write.val)
+		case write := <-writes:
 
-		// Sync to store
-		e.State = j.loadState()
-		e.ElapsedSeconds = time.Since(e.StartTimestamp).Seconds()
-		syncStateToStore(store, e, write.key, write.val)
+			j.storeTaskState(write.key, write.val)
 
-		// Acknowledge the update
-		write.resp <- true
+			// Sync to store
+			e.State = j.loadState()
+			e.ElapsedSeconds = time.Since(e.StartTimestamp).Seconds()
+			syncStateToStore(store, e, write.key, write.val)
 
-		if j.allDone() {
+		// Receive deadline
+		case <-ctx.Done():
+			j.storeState(timeout)
+			//panic("timeout!!!")
+
+		}
+
+		if j.allDone() || j.loadState() == timeout {
 			break
 		}
 	}
+
+	log.Printf("job done: name=%v, ID=%v, state=%v", j.Name, e.ID, j.loadState())
 
 	return nil
 }

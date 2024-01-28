@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/philippgille/gokv/gomap"
@@ -186,8 +187,8 @@ func TestStreamRoute(t *testing.T) {
 }
 
 func simpleJob() *Job {
-	j := &Job{Name: "simple", Schedule: "* * * * *"}
-	j.Add(&Task{Name: "addTwoTwo", Operator: Addition{2, 2}})
+	j := &Job{Name: "simple", Schedule: "* * * * *", Timeout: 1 * time.Second}
+	j.Add(&Task{Name: "add-two-two", Operator: Addition{2, 2}})
 	return j
 }
 

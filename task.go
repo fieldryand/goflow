@@ -1,6 +1,7 @@
 package goflow
 
 import (
+	"context"
 	"log"
 	"math"
 	"time"
@@ -9,13 +10,13 @@ import (
 // A Task is the unit of work that makes up a job. Whenever a task is executed, it
 // calls its associated operator.
 type Task struct {
-	Name              string
-	Operator          Operator
-	TriggerRule       triggerRule
-	Retries           int
-	RetryDelay        RetryDelay
-	attemptsRemaining int
-	state             state
+	Name        string
+	Operator    Operator
+	TriggerRule triggerRule
+	Retries     int
+	RetryDelay  RetryDelay
+	attempts    int // attempts remaining
+	state       state
 }
 
 type triggerRule string
@@ -25,40 +26,40 @@ const (
 	allSuccessful triggerRule = "allSuccessful"
 )
 
-func (t *Task) run(writes chan writeOp) error {
-	log.Printf("starting task <%v>", t.Name)
-	res, err := t.Operator.Run()
-	logMsg := "task <%v> reached state <%v> - %v attempt(s) remaining - result: %v"
+func (t *Task) log(s state, res interface{}) {
+	msg := "task update: name=%v, state=%v, remainingattempts=%v, result=%v"
+	log.Printf(msg, t.Name, s, t.attempts, res)
+}
 
-	if err != nil && t.attemptsRemaining > 0 {
-		log.Printf(logMsg, t.Name, upForRetry, t.attemptsRemaining, err)
-		write := writeOp{t.Name, upForRetry, make(chan bool)}
-		writes <- write
-		<-write.resp
+func (t *Task) run(ctx context.Context, writes chan writeOp) error {
+
+	log.Printf("starting task: name=%v", t.Name)
+	res, err := t.Operator.Run(ctx)
+
+	// retry
+	if err != nil && t.attempts > 0 {
+		t.log(upForRetry, err)
+		writes <- writeOp{t.Name, upForRetry}
 		return nil
 	}
 
-	if err != nil && t.attemptsRemaining <= 0 {
-		log.Printf(logMsg, t.Name, failed, t.attemptsRemaining, err)
-		write := writeOp{t.Name, failed, make(chan bool)}
-		writes <- write
-		<-write.resp
+	// failed
+	if err != nil && t.attempts <= 0 {
+		t.log(failed, err)
+		writes <- writeOp{t.Name, failed}
 		return err
 	}
 
-	log.Printf(logMsg, t.Name, successful, t.attemptsRemaining, res)
-	write := writeOp{t.Name, successful, make(chan bool)}
-	writes <- write
-	<-write.resp
+	// success
+	t.log(successful, res)
+	writes <- writeOp{t.Name, successful}
 	return nil
+
 }
 
 func (t *Task) skip(writes chan writeOp) error {
-	logMsg := "task <%v> reached state <%v>"
-	log.Printf(logMsg, t.Name, skipped)
-	write := writeOp{t.Name, skipped, make(chan bool)}
-	writes <- write
-	<-write.resp
+	t.log(skipped, nil)
+	writes <- writeOp{t.Name, skipped}
 	return nil
 }
 
@@ -71,16 +72,16 @@ type RetryDelay interface {
 // ConstantDelay waits a constant number of seconds between task retries.
 type ConstantDelay struct{ Period int }
 
-func (d ConstantDelay) wait(taskName string, attempt int) {
-	log.Printf("waiting %v second(s) to retry task <%v>", d.Period, taskName)
+func (d ConstantDelay) wait(task string, attempt int) {
+	log.Printf("task update: name=%v, secondsuntilretry=%v", task, d.Period)
 	time.Sleep(time.Duration(d.Period) * time.Second)
 }
 
 // ExponentialBackoff waits exponentially longer between each retry attempt.
 type ExponentialBackoff struct{}
 
-func (d ExponentialBackoff) wait(taskName string, attempt int) {
+func (d ExponentialBackoff) wait(task string, attempt int) {
 	delay := math.Pow(2, float64(attempt))
-	log.Printf("waiting %v seconds to retry task <%v>", delay, taskName)
+	log.Printf("task update: name=%v, secondsuntilretry=%v", task, delay)
 	time.Sleep(time.Duration(delay) * time.Second)
 }
