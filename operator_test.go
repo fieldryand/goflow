@@ -2,17 +2,14 @@ package goflow
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-var ctx = context.Background()
-
 func TestCommand(t *testing.T) {
-	result, _ := Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}}.Run(ctx)
+	result, _ := Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}}.Run()
 	resultStr := fmt.Sprintf("%v", result)
 	expected := "6\n"
 
@@ -31,7 +28,7 @@ func TestGetSuccess(t *testing.T) {
 	defer srv.Close()
 
 	client := &http.Client{}
-	result, _ := Get{client, srv.URL}.Run(ctx)
+	result, _ := Get{client, srv.URL}.Run()
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -47,13 +44,13 @@ func TestGetNotFound(t *testing.T) {
 	defer srv.Close()
 
 	client := &http.Client{}
-	_, err := Get{client, srv.URL}.Run(ctx)
+	_, err := Get{client, srv.URL}.Run()
 
 	if err == nil {
 		t.Errorf("Expected an error")
 	}
 
-	_, err = Get{client, "nonsense-url"}.Run(ctx)
+	_, err = Get{client, "nonsense-url"}.Run()
 
 	if err == nil {
 		t.Errorf("Expected an error")
@@ -70,7 +67,7 @@ func TestPostSuccess(t *testing.T) {
 	defer srv.Close()
 
 	client := &http.Client{}
-	result, _ := Post{client, srv.URL, bytes.NewBuffer([]byte(""))}.Run(ctx)
+	result, _ := Post{client, srv.URL, bytes.NewBuffer([]byte(""))}.Run()
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -86,7 +83,7 @@ func TestPostNotFound(t *testing.T) {
 	defer srv.Close()
 
 	client := &http.Client{}
-	_, err := Post{client, srv.URL, bytes.NewBuffer([]byte(""))}.Run(ctx)
+	_, err := Post{client, srv.URL, bytes.NewBuffer([]byte(""))}.Run()
 
 	if err == nil {
 		t.Errorf("Expected an error")

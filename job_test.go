@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"context"
 	"errors"
 	"testing"
 	"time"
@@ -134,7 +133,7 @@ func TestJob(t *testing.T) {
 // Adds two nonnegative numbers.
 type Addition struct{ a, b int }
 
-func (o Addition) Run(ctx context.Context) (interface{}, error) {
+func (o Addition) Run() (interface{}, error) {
 
 	if o.a < 0 || o.b < 0 {
 		return 0, errors.New("Can't add negative numbers")

@@ -10,13 +10,15 @@ import (
 // A Task is the unit of work that makes up a job. Whenever a task is executed, it
 // calls its associated operator.
 type Task struct {
-	Name        string
-	Operator    Operator
-	TriggerRule triggerRule
-	Retries     int
-	RetryDelay  RetryDelay
-	attempts    int // attempts remaining
-	state       state
+	Name                string
+	Operator            Operator
+	OperatorWithContext OperatorWithContext
+	UseContext          bool
+	TriggerRule         triggerRule
+	Retries             int
+	RetryDelay          RetryDelay
+	attempts            int // attempts remaining
+	state               state
 }
 
 type triggerRule string
@@ -31,10 +33,38 @@ func (t *Task) log(s state, res interface{}) {
 	log.Printf(msg, t.Name, s, t.attempts, res)
 }
 
-func (t *Task) run(ctx context.Context, writes chan writeOp) error {
+func (t *Task) run(writes chan writeOp) error {
 
 	log.Printf("starting task: name=%v", t.Name)
-	res, err := t.Operator.Run(ctx)
+
+	res, err := t.Operator.Run()
+
+	// retry
+	if err != nil && t.attempts > 0 {
+		t.log(upForRetry, err)
+		writes <- writeOp{t.Name, upForRetry}
+		return nil
+	}
+
+	// failed
+	if err != nil && t.attempts <= 0 {
+		t.log(failed, err)
+		writes <- writeOp{t.Name, failed}
+		return err
+	}
+
+	// success
+	t.log(successful, res)
+	writes <- writeOp{t.Name, successful}
+	return nil
+
+}
+
+func (t *Task) runWithContext(ctx context.Context, writes chan writeOp) error {
+
+	log.Printf("starting task: name=%v", t.Name)
+
+	res, err := t.OperatorWithContext.RunWithContext(ctx)
 
 	// retry
 	if err != nil && t.attempts > 0 {

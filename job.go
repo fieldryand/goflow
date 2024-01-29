@@ -34,7 +34,6 @@ const (
 	skipped    state = "skipped"
 	failed     state = "failed"
 	successful state = "successful"
-	timeout    state = "timeout"
 )
 
 func (j *Job) loadState() state {
@@ -157,7 +156,11 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 			v := j.loadTaskState(task.Name)
 			if v == none && !j.Dag.isDownstream(task.Name) {
 				j.storeTaskState(task.Name, running)
-				go task.run(ctx, writes)
+				if task.UseContext {
+					go task.runWithContext(ctx, writes)
+				} else {
+					go task.run(writes)
+				}
 			}
 
 			// Start the tasks that need to be re-tried
@@ -165,7 +168,11 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 				task.RetryDelay.wait(task.Name, task.Retries-task.attempts)
 				task.attempts = task.attempts - 1
 				j.storeTaskState(task.Name, running)
-				go task.run(ctx, writes)
+				if task.UseContext {
+					go task.runWithContext(ctx, writes)
+				} else {
+					go task.run(writes)
+				}
 			}
 
 			// If dependencies are done, start the dependent tasks
@@ -184,12 +191,20 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 
 				if upstreamDone && task.TriggerRule == allDone {
 					j.storeTaskState(task.Name, running)
-					go task.run(ctx, writes)
+					if task.UseContext {
+						go task.runWithContext(ctx, writes)
+					} else {
+						go task.run(writes)
+					}
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
 					j.storeTaskState(task.Name, running)
-					go task.run(ctx, writes)
+					if task.UseContext {
+						go task.runWithContext(ctx, writes)
+					} else {
+						go task.run(writes)
+					}
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
@@ -199,26 +214,16 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 			}
 		}
 
-		select {
-
 		// Receive updates on task state
-		case write := <-writes:
+		write := <-writes
+		j.storeTaskState(write.key, write.val)
 
-			j.storeTaskState(write.key, write.val)
+		// Sync to store
+		e.State = j.loadState()
+		e.ElapsedSeconds = time.Since(e.StartTimestamp).Seconds()
+		syncStateToStore(store, e, write.key, write.val)
 
-			// Sync to store
-			e.State = j.loadState()
-			e.ElapsedSeconds = time.Since(e.StartTimestamp).Seconds()
-			syncStateToStore(store, e, write.key, write.val)
-
-		// Receive deadline
-		case <-ctx.Done():
-			j.storeState(timeout)
-			//panic("timeout!!!")
-
-		}
-
-		if j.allDone() || j.loadState() == timeout {
+		if j.allDone() {
 			break
 		}
 	}
