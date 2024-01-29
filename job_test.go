@@ -3,13 +3,12 @@ package goflow
 import (
 	"errors"
 	"testing"
-	"time"
 
 	"github.com/philippgille/gokv/gomap"
 )
 
 func TestInvalidTask(t *testing.T) {
-	j := &Job{Name: "example", Schedule: "* * * * *", Timeout: 1 * time.Second}
+	j := &Job{Name: "example", Schedule: "* * * * *"}
 
 	err := j.Add(&Task{
 		Name:     "",
@@ -44,7 +43,7 @@ func TestInvalidTask(t *testing.T) {
 }
 
 func TestJob(t *testing.T) {
-	j := &Job{Name: "example", Schedule: "* * * * *", Timeout: 1 * time.Second}
+	j := &Job{Name: "example", Schedule: "* * * * *"}
 
 	j.Add(&Task{
 		Name:     "add-one-one",
@@ -141,4 +140,46 @@ func (o Addition) Run() (interface{}, error) {
 
 	result := o.a + o.b
 	return result, nil
+}
+
+// Increment a counter by x.
+type Increment struct{ x int }
+
+func (i Increment) RunWithPipe(r pipe) (pipe, error) {
+
+	counter, ok := r["counter"].(int)
+
+	if !ok {
+		r["counter"] = i.x
+		return r, nil
+	}
+
+	r["counter"] = counter + i.x
+	return r, nil
+}
+
+func TestJobWithContext(t *testing.T) {
+	j := &Job{Name: "example-with-context", Schedule: "* * * * *"}
+
+	j.Add(&Task{
+		Name:         "increment-one",
+		PipeOperator: Increment{1},
+	})
+	j.Add(&Task{
+		Name:         "increment-two",
+		PipeOperator: Increment{2},
+	})
+
+	j.SetDownstream("increment-one", "increment-two")
+
+	store := gomap.NewStore(gomap.DefaultOptions)
+
+	go j.run(store, j.newExecution(false))
+
+	for {
+		if j.allDone() {
+			break
+		}
+	}
+
 }

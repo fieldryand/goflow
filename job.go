@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -19,7 +18,6 @@ type Job struct {
 	Schedule string
 	Dag      dag
 	Active   bool
-	Timeout  time.Duration
 	state    state
 	sync.RWMutex
 }
@@ -81,6 +79,7 @@ func (j *Job) storeTaskState(task string, value state) {
 type writeOp struct {
 	key string
 	val state
+	res pipe
 }
 
 // Initialize a job.
@@ -144,8 +143,7 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 
 	log.Printf("starting job: name=%v, ID=%v", j.Name, e.ID)
 
-	ctx, cancelCtx := context.WithTimeout(context.Background(), j.Timeout)
-	defer cancelCtx()
+	res := make(pipe)
 
 	writes := make(chan writeOp)
 
@@ -156,10 +154,10 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 			v := j.loadTaskState(task.Name)
 			if v == none && !j.Dag.isDownstream(task.Name) {
 				j.storeTaskState(task.Name, running)
-				if task.UseContext {
-					go task.runWithContext(ctx, writes)
+				if task.PipeOperator != nil {
+					go task.runWithPipe(res, writes)
 				} else {
-					go task.run(writes)
+					go task.run(res, writes)
 				}
 			}
 
@@ -168,10 +166,10 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 				task.RetryDelay.wait(task.Name, task.Retries-task.attempts)
 				task.attempts = task.attempts - 1
 				j.storeTaskState(task.Name, running)
-				if task.UseContext {
-					go task.runWithContext(ctx, writes)
+				if task.PipeOperator != nil {
+					go task.runWithPipe(res, writes)
 				} else {
-					go task.run(writes)
+					go task.run(res, writes)
 				}
 			}
 
@@ -191,37 +189,43 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 
 				if upstreamDone && task.TriggerRule == allDone {
 					j.storeTaskState(task.Name, running)
-					if task.UseContext {
-						go task.runWithContext(ctx, writes)
+					if task.PipeOperator != nil {
+						go task.runWithPipe(res, writes)
 					} else {
-						go task.run(writes)
+						go task.run(res, writes)
 					}
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
 					j.storeTaskState(task.Name, running)
-					if task.UseContext {
-						go task.runWithContext(ctx, writes)
+					if task.PipeOperator != nil {
+						go task.runWithPipe(res, writes)
 					} else {
-						go task.run(writes)
+						go task.run(res, writes)
 					}
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
 					j.storeTaskState(task.Name, skipped)
-					go task.skip(writes)
+					go task.skip(res, writes)
 				}
 			}
 		}
 
 		// Receive updates on task state
 		write := <-writes
+		log.Printf("task update: job=%v, ID=%v, task=%v, state=%v", j.Name, e.ID, write.key, write.val)
 		j.storeTaskState(write.key, write.val)
+
+		if write.val == successful {
+			res = write.res
+		}
 
 		// Sync to store
 		e.State = j.loadState()
 		e.ElapsedSeconds = time.Since(e.StartTimestamp).Seconds()
 		syncStateToStore(store, e, write.key, write.val)
+		//log.Printf("task update: job=%v, ID=%v, task=%v, state=%v", j.Name, e.ID, write.key, write.val)
 
 		if j.allDone() {
 			break

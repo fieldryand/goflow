@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"context"
 	"log"
 	"math"
 	"time"
@@ -10,15 +9,14 @@ import (
 // A Task is the unit of work that makes up a job. Whenever a task is executed, it
 // calls its associated operator.
 type Task struct {
-	Name                string
-	Operator            Operator
-	OperatorWithContext OperatorWithContext
-	UseContext          bool
-	TriggerRule         triggerRule
-	Retries             int
-	RetryDelay          RetryDelay
-	attempts            int // attempts remaining
-	state               state
+	Name         string
+	Operator     Operator
+	PipeOperator PipeOperator
+	TriggerRule  triggerRule
+	Retries      int
+	RetryDelay   RetryDelay
+	attempts     int // attempts remaining
+	state        state
 }
 
 type triggerRule string
@@ -33,7 +31,7 @@ func (t *Task) log(s state, res interface{}) {
 	log.Printf(msg, t.Name, s, t.attempts, res)
 }
 
-func (t *Task) run(writes chan writeOp) error {
+func (t *Task) run(p pipe, writes chan writeOp) error {
 
 	log.Printf("starting task: name=%v", t.Name)
 
@@ -42,54 +40,54 @@ func (t *Task) run(writes chan writeOp) error {
 	// retry
 	if err != nil && t.attempts > 0 {
 		t.log(upForRetry, err)
-		writes <- writeOp{t.Name, upForRetry}
+		writes <- writeOp{t.Name, upForRetry, p}
 		return nil
 	}
 
 	// failed
 	if err != nil && t.attempts <= 0 {
 		t.log(failed, err)
-		writes <- writeOp{t.Name, failed}
+		writes <- writeOp{t.Name, failed, p}
 		return err
 	}
 
 	// success
 	t.log(successful, res)
-	writes <- writeOp{t.Name, successful}
+	writes <- writeOp{t.Name, successful, p}
 	return nil
 
 }
 
-func (t *Task) runWithContext(ctx context.Context, writes chan writeOp) error {
+func (t *Task) runWithPipe(p pipe, writes chan writeOp) error {
 
 	log.Printf("starting task: name=%v", t.Name)
 
-	res, err := t.OperatorWithContext.RunWithContext(ctx)
+	res, err := t.PipeOperator.RunWithPipe(p)
 
 	// retry
 	if err != nil && t.attempts > 0 {
 		t.log(upForRetry, err)
-		writes <- writeOp{t.Name, upForRetry}
+		writes <- writeOp{t.Name, upForRetry, res}
 		return nil
 	}
 
 	// failed
 	if err != nil && t.attempts <= 0 {
 		t.log(failed, err)
-		writes <- writeOp{t.Name, failed}
+		writes <- writeOp{t.Name, failed, res}
 		return err
 	}
 
 	// success
 	t.log(successful, res)
-	writes <- writeOp{t.Name, successful}
+	writes <- writeOp{t.Name, successful, res}
 	return nil
 
 }
 
-func (t *Task) skip(writes chan writeOp) error {
+func (t *Task) skip(p pipe, writes chan writeOp) error {
 	t.log(skipped, nil)
-	writes <- writeOp{t.Name, skipped}
+	writes <- writeOp{t.Name, skipped, p}
 	return nil
 }
 

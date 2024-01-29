@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"context"
 	"fmt"
 	"io"
 	"net/http"
@@ -14,11 +13,12 @@ type Operator interface {
 	Run() (interface{}, error)
 }
 
-// An OperatorWithContext implements a RunWithContext() method.
-// When a job executes a task that uses the operator, the operator
-// has access to a Context passed from previous tasks.
-type OperatorWithContext interface {
-	RunWithContext(ctx context.Context) (interface{}, error)
+type pipe map[string]interface{}
+
+// A PipeOperator implements a RunWithPipe method. Results from PipeOperators
+// are available to other PipeOperators via a shared map.
+type PipeOperator interface {
+	RunWithPipe(p pipe) (pipe, error)
 }
 
 // Command executes a shell command.

@@ -2,7 +2,6 @@ package goflow
 
 import (
 	"net/http"
-	"time"
 )
 
 func exampleAnalytics() *Job {
@@ -10,7 +9,6 @@ func exampleAnalytics() *Job {
 		Name:     "example-complex-analytics",
 		Schedule: "* * * * * *",
 		Active:   false,
-		Timeout:  3000 * time.Millisecond,
 	}
 
 	j.Add(&Task{
