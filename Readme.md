@@ -67,6 +67,7 @@ import "github.com/fieldryand/goflow/v2"
 
 func main() {
         options := goflow.Options{
+                UIPath: "ui/",
                 Streaming: true,
                 ShowExamples:  true,
         }
@@ -112,7 +113,7 @@ import (
 
 func myJob() *goflow.Job {
 	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *", Active: true}
-	j.Add(&goflow.Task{
+	j.RegisterJob(&goflow.Task{
 		Name:     "sleepForOneSecond",
 		Operator: goflow.Command{Cmd: "sleep", Args: []string{"1"}},
 	})
@@ -227,6 +228,7 @@ func main() {
 
 You can pass different options to the engine. Options currently supported:
 - `Store`: This is [described in more detail below.](#storage)
+- `UIPath`: The path to the dashboard code. The default value is an empty string, meaning Goflow serves only the API and not the dashboard. Suggested value if you want the dashboard: `ui/`
 - `Streaming`: Whether to stream updates to the dashboard. The default value is `false`, but if you use the dashboard then it's recommended to change this.
 - `ShowExamples`: Whether to show the example jobs. Default value: `false`
 - `WithSeconds`: Whether to include the seconds field in the cron spec. See the [cron package documentation](https://github.com/robfig/cron) for details. Thanks to [zengzhengrong](https://github.com/zengzhengrong) for this feature. Default value: `false`
@@ -266,6 +268,7 @@ func main() {
         // pass the client as a Goflow option
         options := goflow.Options{
                 Store: client,
+                UIPath: "ui/",
                 Streaming: true,
                 ShowExamples:  true,
         }

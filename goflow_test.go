@@ -195,7 +195,7 @@ func exampleRouter() *gin.Engine {
 	store := gomap.NewStore(gomap.DefaultOptions)
 	g := New(Options{ShowExamples: true})
 	g.AttachStore(store)
-	g.Add(simpleJob)
+	g.RegisterJob(simpleJob)
 	g.Execute("simple")
 	g.scheduledExecute("simple")
 	g.Use(DefaultLogger())
@@ -222,7 +222,7 @@ func cyclicJob() *Job {
 
 func TestCyclicJob(t *testing.T) {
 	g := New(Options{})
-	if g.Add(cyclicJob) == nil {
+	if g.RegisterJob(cyclicJob) == nil {
 		t.Errorf("cyclic job should be rejected")
 	}
 }
@@ -233,7 +233,7 @@ func invalidJob() *Job {
 
 func TestInvalidJobName(t *testing.T) {
 	g := New(Options{})
-	err := g.Add(invalidJob)
+	err := g.RegisterJob(invalidJob)
 	if err == nil {
 		t.Errorf("job with invalid name should be rejected")
 	}

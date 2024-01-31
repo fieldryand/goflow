@@ -25,6 +25,8 @@ type Goflow struct {
 
 // Options to control various Goflow behavior.
 type Options struct {
+	Store        gokv.Store // deprecated, use AttachStore()
+	UIPath       string
 	Streaming    bool
 	ShowExamples bool
 	WithSeconds  bool
@@ -49,8 +51,8 @@ func New(opts Options) *Goflow {
 	}
 
 	if opts.ShowExamples {
-		g.Add(exampleAnalytics)
-		g.Add(exampleHTTP)
+		g.RegisterJob(exampleAnalytics)
+		g.RegisterJob(exampleHTTP)
 	}
 
 	return g
@@ -61,9 +63,9 @@ func (g *Goflow) AttachStore(store gokv.Store) {
 	g.Store = store
 }
 
-// Add takes a job-emitting function and registers it
+// RegisterJob takes a job-emitting function and registers it
 // with the engine.
-func (g *Goflow) Add(jobFn func() *Job) error {
+func (g *Goflow) RegisterJob(jobFn func() *Job) error {
 
 	jobName := jobFn().Name
 
@@ -85,6 +87,30 @@ func (g *Goflow) Add(jobFn func() *Job) error {
 	}
 
 	return nil
+}
+
+// AddJob (DEPRECATED) takes a job-emitting function and registers it
+// with the engine.
+func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
+
+	jobName := jobFn().Name
+
+	// TODO: change the return type here to error
+	// "" is not a valid key in the storage layer
+	//if jobName == "" {
+	//		return errors.New("\"\" is not a valid job name")
+	//	}
+
+	// Register the job
+	g.Jobs[jobName] = jobFn
+
+	// If the job is active by default, add it to the cron schedule
+	if jobFn().Active {
+		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.scheduledExecute(jobName) })
+		g.activeJobCronIDs[jobName] = entryID
+	}
+
+	return g
 }
 
 // setUnsetActive takes a job-emitting function and modifies it so it emits
@@ -149,19 +175,22 @@ func (g *Goflow) scheduledExecute(job string) uuid.UUID {
 }
 
 // Use middleware in the Gin router.
-func (g *Goflow) Use(middleware gin.HandlerFunc) gin.IRoutes {
-	return g.router.Use(middleware)
+func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
+	g.router.Use(middleware)
+	return g
 }
 
 // Run runs the webserver.
-func (g *Goflow) Run(port string) error {
+func (g *Goflow) Run(port string) {
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
 	g.router.Use(gin.Recovery())
 	g.addStreamRoute()
 	g.addAPIRoutes()
-	g.addStaticRoutes()
-	g.addUIRoutes()
+	if g.Options.UIPath != "" {
+		g.addUIRoutes()
+		g.addStaticRoutes()
+	}
 	g.cron.Start()
-	return g.router.Run(port)
+	g.router.Run(port)
 }
