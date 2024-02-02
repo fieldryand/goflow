@@ -100,7 +100,7 @@ First a few definitions.
 
 ### Jobs and tasks
 
-Let's start by creating a function that returns a job called `myJob`. There is a single task in this job that sleeps for one second.
+Let's start by creating a function that returns a job called `my-job`. There is a single task in this job that sleeps for one second.
 
 ```go
 package main
@@ -112,9 +112,9 @@ import (
 )
 
 func myJob() *goflow.Job {
-	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *", Active: true}
+	j := &goflow.Job{Name: "my-job", Schedule: "* * * * *", Active: true}
 	j.Add(&goflow.Task{
-		Name:     "sleepForOneSecond",
+		Name:     "sleep-for-one-second",
 		Operator: goflow.Command{Cmd: "sleep", Args: []string{"1"}},
 	})
 	return j
@@ -142,13 +142,13 @@ func (o PositiveAddition) Run() (interface{}, error) {
 
 ### Retries
 
-Let's add a retry strategy to the `sleepForOneSecond` task:
+Let's add a retry strategy to the `sleep-for-one-second` task:
 
 ```go
 func myJob() *goflow.Job {
-	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *"}
+	j := &goflow.Job{Name: "my-job", Schedule: "* * * * *"}
 	j.Add(&goflow.Task{
-		Name:       "sleepForOneSecond",
+		Name:       "sleep-for-one-second",
 		Operator:   goflow.Command{Cmd: "sleep", Args: []string{"1"}},
 		Retries:    5,
 		RetryDelay: goflow.ConstantDelay{Period: 1},
@@ -162,28 +162,28 @@ Instead of `ConstantDelay`, we could also use `ExponentialBackoff` (see https://
 ### Task dependencies
 
 A job can define a directed acyclic graph (DAG) of independent and dependent tasks. Let's use the `SetDownstream` method to
-define two tasks that are dependent on `sleepForOneSecond`. The tasks will use the `PositiveAddition` operator we defined earlier,
+define two tasks that are dependent on `sleep-for-one-second`. The tasks will use the `PositiveAddition` operator we defined earlier,
 as well as a new operator provided by Goflow, `Get`.
 
 ```go
 func myJob() *goflow.Job {
-	j := &goflow.Job{Name: "myJob", Schedule: "* * * * *"}
+	j := &goflow.Job{Name: "my-job", Schedule: "* * * * *"}
 	j.Add(&goflow.Task{
-		Name:       "sleepForOneSecond",
+		Name:       "sleep-for-one-second",
 		Operator:   goflow.Command{Cmd: "sleep", Args: []string{"1"}},
 		Retries:    5,
 		RetryDelay: goflow.ConstantDelay{Period: 1},
 	})
 	j.Add(&goflow.Task{
-		Name:       "getGoogle",
+		Name:       "get-google",
 		Operator:   goflow.Get{Client: &http.Client{}, URL: "https://www.google.com"},
 	})
 	j.Add(&goflow.Task{
-		Name:       "AddTwoPlusThree",
+		Name:       "add-two-plus-three",
 		Operator:   PositiveAddition{a: 2, b: 3},
 	})
-	j.SetDownstream(j.Task("sleepForOneSecond"), j.Task("getGoogle"))
-	j.SetDownstream(j.Task("sleepForOneSecond"), j.Task("AddTwoPlusThree"))
+	j.SetDownstream(j.Task("sleep-for-one-second"), j.Task("get-google"))
+	j.SetDownstream(j.Task("sleep-for-one-second"), j.Task("add-two-plus-three"))
 	return j
 }
 ```
@@ -196,14 +196,14 @@ upstream exit successfully. If any dependency exits with an error, all downstrea
 Sometimes you want a downstream task to execute even if there are upstream failures. Often these are situations where you want
 to perform some cleanup task, such as shutting down a server. In such cases, you can give a task the trigger rule `allDone`.
 
-Let's modify `sleepForOneSecond` to have the trigger rule `allDone`.
+Let's modify `sleep-for-one-second` to have the trigger rule `allDone`.
 
 
 ```go
 func myJob() *goflow.Job {
 	// other stuff
 	j.Add(&goflow.Task{
-		Name:        "sleepForOneSecond",
+		Name:        "sleep-for-one-second",
 		Operator:    goflow.Command{Cmd: "sleep", Args: []string{"1"}},
 		Retries:     5,
 		RetryDelay:  goflow.ConstantDelay{Period: 1},
