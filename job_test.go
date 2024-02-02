@@ -10,52 +10,52 @@ func TestJob(t *testing.T) {
 	j := &Job{Name: "example", Schedule: "* * * * *"}
 
 	j.Add(&Task{
-		Name:     "addOneOne",
+		Name:     "add-one-one",
 		Operator: Addition{1, 1},
 	})
 	j.Add(&Task{
-		Name:     "sleepTwo",
+		Name:     "sleep-two",
 		Operator: Command{Cmd: "sleep", Args: []string{"2"}},
 	})
 	j.Add(&Task{
-		Name:     "addTwoFour",
+		Name:     "add-two-four",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
 	})
 	j.Add(&Task{
-		Name:     "addThreeFour",
+		Name:     "add-three-four",
 		Operator: Addition{3, 4},
 	})
 	j.Add(&Task{
-		Name:       "whoopsWithConstantDelay",
+		Name:       "whoops-with-constant-delay",
 		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    5,
 		RetryDelay: ConstantDelay{1},
 	})
 	j.Add(&Task{
-		Name:       "whoopsWithExponentialBackoff",
+		Name:       "whoops-with-exponential-delay",
 		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    1,
 		RetryDelay: ExponentialBackoff{},
 	})
 	j.Add(&Task{
-		Name:        "totallySkippable",
+		Name:        "totally-skippable",
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
 		TriggerRule: "allSuccessful",
 	})
 	j.Add(&Task{
-		Name:        "cleanUp",
+		Name:        "clean-up",
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
 		TriggerRule: "allDone",
 	})
 
-	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
-	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("whoopsWithConstantDelay"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("whoopsWithExponentialBackoff"))
-	j.SetDownstream(j.Task("whoopsWithConstantDelay"), j.Task("totallySkippable"))
-	j.SetDownstream(j.Task("whoopsWithExponentialBackoff"), j.Task("totallySkippable"))
-	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
+	j.SetDownstream(j.Task("add-one-one"), j.Task("sleep-two"))
+	j.SetDownstream(j.Task("sleep-two"), j.Task("add-two-four"))
+	j.SetDownstream(j.Task("add-one-one"), j.Task("add-three-four"))
+	j.SetDownstream(j.Task("add-one-one"), j.Task("whoops-with-constant-delay"))
+	j.SetDownstream(j.Task("add-one-one"), j.Task("whoops-with-exponential-delay"))
+	j.SetDownstream(j.Task("whoops-with-constant-delay"), j.Task("totally-skippable"))
+	j.SetDownstream(j.Task("whoops-with-exponential-delay"), j.Task("totally-skippable"))
+	j.SetDownstream(j.Task("totally-skippable"), j.Task("clean-up"))
 
 	go j.run()
 	func() {
@@ -68,14 +68,14 @@ func TestJob(t *testing.T) {
 	}()
 
 	expectedState := newStringStateMap()
-	expectedState.Store("addOneOne", successful)
-	expectedState.Store("sleepTwo", successful)
-	expectedState.Store("addTwoFour", successful)
-	expectedState.Store("addThreeFour", successful)
-	expectedState.Store("whoopsWithConstantDelay", failed)
-	expectedState.Store("whoopsWithExponentialBackoff", failed)
-	expectedState.Store("totallySkippable", skipped)
-	expectedState.Store("cleanUp", successful)
+	expectedState.Store("add-one-one", successful)
+	expectedState.Store("sleep-two", successful)
+	expectedState.Store("add-two-four", successful)
+	expectedState.Store("add-three-four", successful)
+	expectedState.Store("whoops-with-constant-delay", failed)
+	expectedState.Store("whoops-with-exponential-delay", failed)
+	expectedState.Store("totally-skippable", skipped)
+	expectedState.Store("clean-up", successful)
 
 	if !reflect.DeepEqual(j.jobState.TaskState.Internal, expectedState.Internal) {
 		t.Errorf("Got status %v, expected %v", j.jobState.TaskState.Internal, expectedState.Internal)

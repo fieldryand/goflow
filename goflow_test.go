@@ -62,7 +62,7 @@ func TestJobsRoute(t *testing.T) {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 
-	req, _ = http.NewRequest("GET", "/api/jobs/exampleComplexAnalytics", nil)
+	req, _ = http.NewRequest("GET", "/api/jobs/example-complex-analytics", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -82,7 +82,7 @@ func TestJobRunsRoute(t *testing.T) {
 
 func TestJobSubmitToRouter(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/jobs/exampleComplexAnalytics/submit", nil)
+	req, _ := http.NewRequest("POST", "/api/jobs/example-complex-analytics/submit", nil)
 
 	router.ServeHTTP(w, req)
 
@@ -91,7 +91,7 @@ func TestJobSubmitToRouter(t *testing.T) {
 	}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/jobs/exampleCustomOperator/submit", nil)
+	req, _ = http.NewRequest("POST", "/api/jobs/example-custom-operator/submit", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -109,14 +109,14 @@ func TestJobSubmitToRouter(t *testing.T) {
 
 func TestJobToggleActiveRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("POST", "/api/jobs/exampleComplexAnalytics/toggle", nil)
+	req, _ := http.NewRequest("POST", "/api/jobs/example-complex-analytics/toggle", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 
-	req, _ = http.NewRequest("POST", "/api/jobs/exampleCustomOperator/toggle", nil)
+	req, _ = http.NewRequest("POST", "/api/jobs/example-custom-operator/toggle", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -158,7 +158,7 @@ func TestRouteNotFound(t *testing.T) {
 
 func TestJobOverviewRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/ui/jobs/exampleComplexAnalytics", nil)
+	req, _ := http.NewRequest("GET", "/ui/jobs/example-complex-analytics", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {

@@ -7,63 +7,63 @@ import (
 // Crunch some numbers
 func complexAnalyticsJob() *Job {
 	j := &Job{
-		Name:     "exampleComplexAnalytics",
+		Name:     "example-complex-analytics",
 		Schedule: "* * * * * *",
 		Active:   false,
 	}
 
 	j.Add(&Task{
-		Name:     "sleepOne",
+		Name:     "sleep-one",
 		Operator: Command{Cmd: "sleep", Args: []string{"1"}},
 	})
 	j.Add(&Task{
-		Name:     "addOneOne",
+		Name:     "add-one-one",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
 	})
 	j.Add(&Task{
-		Name:     "sleepTwo",
+		Name:     "sleep-two",
 		Operator: Command{Cmd: "sleep", Args: []string{"2"}},
 	})
 	j.Add(&Task{
-		Name:     "addTwoFour",
+		Name:     "add-two-four",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
 	})
 	j.Add(&Task{
-		Name:     "addThreeFour",
+		Name:     "add-three-four",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
 	})
 	j.Add(&Task{
-		Name:       "whoopsWithConstantDelay",
+		Name:       "whoops-with-constant-delay",
 		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    5,
 		RetryDelay: ConstantDelay{Period: 1},
 	})
 	j.Add(&Task{
-		Name:       "whoopsWithExponentialBackoff",
+		Name:       "whoops-with-exponential-backoff",
 		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    1,
 		RetryDelay: ExponentialBackoff{},
 	})
 	j.Add(&Task{
-		Name:        "totallySkippable",
+		Name:        "totally-skippable",
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
 		TriggerRule: "allSuccessful",
 	})
 	j.Add(&Task{
-		Name:        "cleanUp",
+		Name:        "clean-up",
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
 		TriggerRule: "allDone",
 	})
 
-	j.SetDownstream(j.Task("sleepOne"), j.Task("addOneOne"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("sleepTwo"))
-	j.SetDownstream(j.Task("sleepTwo"), j.Task("addTwoFour"))
-	j.SetDownstream(j.Task("addOneOne"), j.Task("addThreeFour"))
-	j.SetDownstream(j.Task("sleepOne"), j.Task("whoopsWithConstantDelay"))
-	j.SetDownstream(j.Task("sleepOne"), j.Task("whoopsWithExponentialBackoff"))
-	j.SetDownstream(j.Task("whoopsWithConstantDelay"), j.Task("totallySkippable"))
-	j.SetDownstream(j.Task("whoopsWithExponentialBackoff"), j.Task("totallySkippable"))
-	j.SetDownstream(j.Task("totallySkippable"), j.Task("cleanUp"))
+	j.SetDownstream(j.Task("sleep-one"), j.Task("add-one-one"))
+	j.SetDownstream(j.Task("add-one-one"), j.Task("sleep-two"))
+	j.SetDownstream(j.Task("sleep-two"), j.Task("add-two-four"))
+	j.SetDownstream(j.Task("add-one-one"), j.Task("add-three-four"))
+	j.SetDownstream(j.Task("sleep-one"), j.Task("whoops-with-constant-delay"))
+	j.SetDownstream(j.Task("sleep-one"), j.Task("whoops-with-exponential-backoff"))
+	j.SetDownstream(j.Task("whoops-with-constant-delay"), j.Task("totally-skippable"))
+	j.SetDownstream(j.Task("whoops-with-exponential-backoff"), j.Task("totally-skippable"))
+	j.SetDownstream(j.Task("totally-skippable"), j.Task("clean-up"))
 
 	return j
 }
@@ -83,7 +83,7 @@ func (o PositiveAddition) Run() (interface{}, error) {
 
 // Use our custom operation in a job.
 func customOperatorJob() *Job {
-	j := &Job{Name: "exampleCustomOperator", Schedule: "* * * * * *", Active: true}
-	j.Add(&Task{Name: "posAdd", Operator: PositiveAddition{5, 6}})
+	j := &Job{Name: "example-custom-operator", Schedule: "* * * * * *", Active: true}
+	j.Add(&Task{Name: "pos-add", Operator: PositiveAddition{5, 6}})
 	return j
 }
