@@ -144,7 +144,8 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 	log.Printf("starting job: name=%v, ID=%v", j.Name, e.ID)
 
 	res := make(pipe)
-
+	// defalut key value
+	res["job_id"] = e.ID
 	writes := make(chan writeOp)
 
 	for {
