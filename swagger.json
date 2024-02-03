@@ -127,18 +127,18 @@
           {
             "in": "query",
             "name": "jobname",
-	    "schema": {
-		    "type": "string"
-	    },
-	    "description": "(optional) the job name"
+            "schema": {
+              "type": "string"
+            },
+            "description": "(optional) the job name"
           },
           {
             "in": "query",
             "name": "state",
-	    "schema": {
-		    "type": "string"
-	    },
-	    "description": "(optional) the job state, valid values are [running, failed, successful]"
+            "schema": {
+              "type": "string"
+            },
+            "description": "(optional) the job state, valid values are [running, failed, successful]"
           }
         ],
         "responses": {
@@ -169,6 +169,91 @@
                               }
                             }
                           }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/executions": {
+      "get": {
+        "operationId": "listExecutions",
+        "summary": "query and list job executions",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "jobname",
+            "schema": {
+              "type": "string"
+            },
+            "description": "(optional) the job name"
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "schema": {
+              "type": "string"
+            },
+            "description": "(optional) the job state, valid values are [running, failed, successful]"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200 response",
+            "content": {
+              "application/json": {
+                "examples": {
+                  "exampleJobRuns": {
+                    "value": {
+                      "executions": [
+                        {
+                          "id": "b43e5f75-aa2a-4859-b6b9-f551ca258196",
+                          "job": "example-complex-analytics",
+                          "submitted": "2024-02-03T13:26:42.038130297Z",
+                          "state": "failed",
+                          "tasks": [
+                            {
+                              "name": "sleep-one",
+                              "state": "successful"
+                            },
+                            {
+                              "name": "add-one-one",
+                              "state": "successful"
+                            },
+                            {
+                              "name": "sleep-two",
+                              "state": "successful"
+                            },
+                            {
+                              "name": "add-two-four",
+                              "state": "successful"
+                            },
+                            {
+                              "name": "add-three-four",
+                              "state": "successful"
+                            },
+                            {
+                              "name": "whoops-with-constant-delay",
+                              "state": "failed"
+                            },
+                            {
+                              "name": "whoops-with-exponential-backoff",
+                              "state": "failed"
+                            },
+                            {
+                              "name": "totally-skippable",
+                              "state": "skipped"
+                            },
+                            {
+                              "name": "clean-up",
+                              "state": "successful"
+                            }
+                          ]
                         }
                       ]
                     }

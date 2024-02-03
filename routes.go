@@ -20,6 +20,21 @@ func (g *Goflow) addStreamRoute() *Goflow {
 	return g
 }
 
+type jobrun struct {
+	JobName   string   `json:"job"`
+	Submitted string   `json:"submitted"`
+	JobState  jobstate `json:"state"`
+}
+
+type jobstate struct {
+	State     state     `json:"job"`
+	TaskState taskstate `json:"tasks"`
+}
+
+type taskstate struct {
+	Taskstate map[string]state `json:"state"`
+}
+
 func (g *Goflow) addAPIRoutes() *Goflow {
 	api := g.router.Group("/api")
 	{
@@ -43,30 +58,72 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			c.JSON(http.StatusOK, msg)
 		})
 
-		//api.GET("/jobruns", func(c *gin.Context) {
-		//	jobName := c.Query("jobname")
-		//	stateQuery := c.Query("state")
+		// Deprecated: will be removed in v3.0.0
+		api.GET("/jobruns", func(c *gin.Context) {
+			jobName := c.Query("jobname")
+			stateQuery := c.Query("state")
 
-		//	jobruns := make([]*jobRun, 0)
+			jobruns := make([]jobrun, 0)
 
-		//	for job := range g.Jobs {
-		//		stored, _ := readJobRuns(g.Store, job)
-		//		for _, jobrun := range stored {
-		//			if stateQuery != "" && stateQuery != string(jobrun.JobState.State) {
-		//			} else if jobName != "" && jobName != jobrun.JobName {
-		//			} else {
-		//				jobruns = append(jobruns, jobrun)
-		//			}
-		//		}
-		//	}
+			for job := range g.Jobs {
+				stored, _ := readExecutions(g.Store, job)
+				for _, execution := range stored {
+					if stateQuery != "" && stateQuery != string(execution.State) {
+					} else if jobName != "" && jobName != execution.JobName {
+					} else {
 
-		//	var msg struct {
-		//		JobRuns []*jobRun `json:"jobruns"`
-		//	}
-		//	msg.JobRuns = jobruns
+						t := taskstate{make(map[string]state, 0)}
 
-		//	c.JSON(http.StatusOK, msg)
-		//})
+						for _, task := range execution.TaskExecutions {
+							t.Taskstate[task.Name] = task.State
+						}
+
+						j := jobrun{
+							JobName:   job,
+							Submitted: execution.StartedAt,
+							JobState: jobstate{
+								State:     execution.State,
+								TaskState: t,
+							},
+						}
+
+						jobruns = append(jobruns, j)
+					}
+				}
+			}
+
+			var msg struct {
+				Jobruns []jobrun `json:"jobruns"`
+			}
+			msg.Jobruns = jobruns
+
+			c.JSON(http.StatusOK, msg)
+		})
+
+		api.GET("/executions", func(c *gin.Context) {
+			jobName := c.Query("jobname")
+			stateQuery := c.Query("state")
+
+			executions := make([]*execution, 0)
+
+			for job := range g.Jobs {
+				stored, _ := readExecutions(g.Store, job)
+				for _, execution := range stored {
+					if stateQuery != "" && stateQuery != string(execution.State) {
+					} else if jobName != "" && jobName != execution.JobName {
+					} else {
+						executions = append(executions, execution)
+					}
+				}
+			}
+
+			var msg struct {
+				Executions []*execution `json:"executions"`
+			}
+			msg.Executions = executions
+
+			c.JSON(http.StatusOK, msg)
+		})
 
 		api.GET("/jobs/:name", func(c *gin.Context) {
 			name := c.Param("name")
