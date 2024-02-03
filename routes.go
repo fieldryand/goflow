@@ -2,6 +2,7 @@ package goflow
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -42,30 +43,30 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			c.JSON(http.StatusOK, msg)
 		})
 
-		api.GET("/jobruns", func(c *gin.Context) {
-			jobName := c.Query("jobname")
-			stateQuery := c.Query("state")
+		//api.GET("/jobruns", func(c *gin.Context) {
+		//	jobName := c.Query("jobname")
+		//	stateQuery := c.Query("state")
 
-			jobruns := make([]*jobRun, 0)
+		//	jobruns := make([]*jobRun, 0)
 
-			for job := range g.Jobs {
-				stored, _ := readJobRuns(g.Store, job)
-				for _, jobrun := range stored {
-					if stateQuery != "" && stateQuery != string(jobrun.JobState.State) {
-					} else if jobName != "" && jobName != jobrun.JobName {
-					} else {
-						jobruns = append(jobruns, jobrun)
-					}
-				}
-			}
+		//	for job := range g.Jobs {
+		//		stored, _ := readJobRuns(g.Store, job)
+		//		for _, jobrun := range stored {
+		//			if stateQuery != "" && stateQuery != string(jobrun.JobState.State) {
+		//			} else if jobName != "" && jobName != jobrun.JobName {
+		//			} else {
+		//				jobruns = append(jobruns, jobrun)
+		//			}
+		//		}
+		//	}
 
-			var msg struct {
-				JobRuns []*jobRun `json:"jobruns"`
-			}
-			msg.JobRuns = jobruns
+		//	var msg struct {
+		//		JobRuns []*jobRun `json:"jobruns"`
+		//	}
+		//	msg.JobRuns = jobruns
 
-			c.JSON(http.StatusOK, msg)
-		})
+		//	c.JSON(http.StatusOK, msg)
+		//})
 
 		api.GET("/jobs/:name", func(c *gin.Context) {
 			name := c.Param("name")
@@ -110,9 +111,9 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			msg.Job = name
 
 			if ok {
-				jobRun := g.runJob(name)
+				g.execute(name)
 				msg.Success = true
-				msg.Submitted = jobRun.StartedAt
+				msg.Submitted = time.Now().UTC().Format(time.RFC3339Nano)
 				c.JSON(http.StatusOK, msg)
 			} else {
 				msg.Success = false

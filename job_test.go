@@ -2,8 +2,9 @@ package goflow
 
 import (
 	"errors"
-	"reflect"
 	"testing"
+
+	"github.com/philippgille/gokv/gomap"
 )
 
 func TestJob(t *testing.T) {
@@ -32,7 +33,7 @@ func TestJob(t *testing.T) {
 		RetryDelay: ConstantDelay{1},
 	})
 	j.Add(&Task{
-		Name:       "whoops-with-exponential-delay",
+		Name:       "whoops-with-exponential-backoff",
 		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    1,
 		RetryDelay: ExponentialBackoff{},
@@ -52,34 +53,46 @@ func TestJob(t *testing.T) {
 	j.SetDownstream(j.Task("sleep-two"), j.Task("add-two-four"))
 	j.SetDownstream(j.Task("add-one-one"), j.Task("add-three-four"))
 	j.SetDownstream(j.Task("add-one-one"), j.Task("whoops-with-constant-delay"))
-	j.SetDownstream(j.Task("add-one-one"), j.Task("whoops-with-exponential-delay"))
+	j.SetDownstream(j.Task("add-one-one"), j.Task("whoops-with-exponential-backoff"))
 	j.SetDownstream(j.Task("whoops-with-constant-delay"), j.Task("totally-skippable"))
-	j.SetDownstream(j.Task("whoops-with-exponential-delay"), j.Task("totally-skippable"))
+	j.SetDownstream(j.Task("whoops-with-exponential-backoff"), j.Task("totally-skippable"))
 	j.SetDownstream(j.Task("totally-skippable"), j.Task("clean-up"))
 
-	go j.run()
-	func() {
-		for {
-			jobState := j.getJobState()
-			if jobState.State != running && jobState.State != none {
-				break
-			}
+	store := gomap.NewStore(gomap.DefaultOptions)
+
+	go j.run(store, j.newExecution())
+
+	for {
+		if j.allDone() {
+			break
 		}
-	}()
-
-	expectedState := newStringStateMap()
-	expectedState.Store("add-one-one", successful)
-	expectedState.Store("sleep-two", successful)
-	expectedState.Store("add-two-four", successful)
-	expectedState.Store("add-three-four", successful)
-	expectedState.Store("whoops-with-constant-delay", failed)
-	expectedState.Store("whoops-with-exponential-delay", failed)
-	expectedState.Store("totally-skippable", skipped)
-	expectedState.Store("clean-up", successful)
-
-	if !reflect.DeepEqual(j.jobState.TaskState.Internal, expectedState.Internal) {
-		t.Errorf("Got status %v, expected %v", j.jobState.TaskState.Internal, expectedState.Internal)
 	}
+
+	if j.loadTaskState("add-one-one") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("add-one-one"), successful)
+	}
+	if j.loadTaskState("sleep-two") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("sleep-two"), successful)
+	}
+	if j.loadTaskState("add-two-four") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("add-two-four"), successful)
+	}
+	if j.loadTaskState("add-three-four") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("add-three-four"), successful)
+	}
+	if j.loadTaskState("whoops-with-constant-delay") != failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("whoops-with-constant-delay"), failed)
+	}
+	if j.loadTaskState("whoops-with-exponential-backoff") != failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("whoops-with-exponential-backoff"), failed)
+	}
+	if j.loadTaskState("totally-skippable") != skipped {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("totally-skippable"), skipped)
+	}
+	if j.loadTaskState("clean-up") != successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("clean-up"), successful)
+	}
+
 }
 
 func TestCyclicJob(t *testing.T) {
@@ -90,7 +103,9 @@ func TestCyclicJob(t *testing.T) {
 	j.SetDownstream(j.Task("addTwoTwo"), j.Task("addFourFour"))
 	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
 
-	j.run()
+	store := gomap.NewStore(gomap.DefaultOptions)
+
+	j.run(store, j.newExecution())
 }
 
 // Adds two nonnegative numbers.
