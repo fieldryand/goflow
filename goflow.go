@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/gomap"
 	"github.com/robfig/cron/v3"
@@ -56,14 +57,6 @@ func New(opts Options) *Goflow {
 		g.AddJob(customOperatorJob)
 	}
 
-	// set up storage
-	value := nextID{}
-	found, _ := g.Store.Get("nextID", &value)
-	if !found {
-		key := nextID{1}
-		g.Store.Set("nextID", key)
-	}
-
 	return g
 }
 
@@ -84,7 +77,7 @@ func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
 
 	// If the job is active by default, add it to the cron schedule
 	if jobFn().Active {
-		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.runJob(jobName) })
+		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.execute(jobName) })
 		g.activeJobCronIDs[jobName] = entryID
 	}
 
@@ -113,43 +106,27 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 	}
 
 	g.Jobs[jobName] = setUnsetActive(g.Jobs[jobName], true)
-	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.runJob(jobName) })
+	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.execute(jobName) })
 	g.activeJobCronIDs[jobName] = entryID
 	return true, nil
 }
 
-// runJob tells the engine to run a given job and returns
-// the corresponding jobRun.
-func (g *Goflow) runJob(jobName string) *jobRun {
-	// generate the job
-	job := g.Jobs[jobName]()
+// execute tells the engine to run a given job in a goroutine.
+// The job state is readable from the engine's store.
+func (g *Goflow) execute(job string) uuid.UUID {
 
-	// create and persist a new jobrun record
-	jobrun := job.newJobRun()
-	persistNewJobRun(g.Store, jobrun)
-	indexJobRuns(g.Store, jobrun)
+	// create job
+	j := g.Jobs[job]()
+
+	// create and persist a new execution
+	e := j.newExecution()
+	persistNewExecution(g.Store, e)
+	indexExecutions(g.Store, e)
 
 	// start running the job
-	go job.run()
+	go j.run(g.Store, e)
 
-	// in parallel, keep syncing the job state to the store
-	go func() {
-		for {
-			// get the current state
-			jobState := job.getJobState()
-
-			// sync to the store
-			updateJobState(g.Store, jobrun, jobState)
-
-			// stop syncing when the job is done
-			if jobState.State != running && jobState.State != none {
-				log.Printf("job <%v> reached state <%v>", job.Name, job.jobState.State)
-				break
-			}
-		}
-	}()
-
-	return jobrun
+	return e.ID
 }
 
 // Use middleware in the Gin router.

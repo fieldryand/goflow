@@ -2,6 +2,7 @@ package goflow
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -17,6 +18,21 @@ func (g *Goflow) addStaticRoutes() *Goflow {
 func (g *Goflow) addStreamRoute() *Goflow {
 	g.router.GET("/stream", g.stream(g.Options.Streaming))
 	return g
+}
+
+type jobrun struct {
+	JobName   string   `json:"job"`
+	Submitted string   `json:"submitted"`
+	JobState  jobstate `json:"state"`
+}
+
+type jobstate struct {
+	State     state     `json:"job"`
+	TaskState taskstate `json:"tasks"`
+}
+
+type taskstate struct {
+	Taskstate map[string]state `json:"state"`
 }
 
 func (g *Goflow) addAPIRoutes() *Goflow {
@@ -42,27 +58,69 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			c.JSON(http.StatusOK, msg)
 		})
 
+		// Deprecated: will be removed in v3.0.0
 		api.GET("/jobruns", func(c *gin.Context) {
 			jobName := c.Query("jobname")
 			stateQuery := c.Query("state")
 
-			jobruns := make([]*jobRun, 0)
+			jobruns := make([]jobrun, 0)
 
 			for job := range g.Jobs {
-				stored, _ := readJobRuns(g.Store, job)
-				for _, jobrun := range stored {
-					if stateQuery != "" && stateQuery != string(jobrun.JobState.State) {
-					} else if jobName != "" && jobName != jobrun.JobName {
+				stored, _ := readExecutions(g.Store, job)
+				for _, execution := range stored {
+					if stateQuery != "" && stateQuery != string(execution.State) {
+					} else if jobName != "" && jobName != execution.JobName {
 					} else {
-						jobruns = append(jobruns, jobrun)
+
+						t := taskstate{make(map[string]state, 0)}
+
+						for _, task := range execution.TaskExecutions {
+							t.Taskstate[task.Name] = task.State
+						}
+
+						j := jobrun{
+							JobName:   job,
+							Submitted: execution.StartedAt,
+							JobState: jobstate{
+								State:     execution.State,
+								TaskState: t,
+							},
+						}
+
+						jobruns = append(jobruns, j)
 					}
 				}
 			}
 
 			var msg struct {
-				JobRuns []*jobRun `json:"jobruns"`
+				Jobruns []jobrun `json:"jobruns"`
 			}
-			msg.JobRuns = jobruns
+			msg.Jobruns = jobruns
+
+			c.JSON(http.StatusOK, msg)
+		})
+
+		api.GET("/executions", func(c *gin.Context) {
+			jobName := c.Query("jobname")
+			stateQuery := c.Query("state")
+
+			executions := make([]*execution, 0)
+
+			for job := range g.Jobs {
+				stored, _ := readExecutions(g.Store, job)
+				for _, execution := range stored {
+					if stateQuery != "" && stateQuery != string(execution.State) {
+					} else if jobName != "" && jobName != execution.JobName {
+					} else {
+						executions = append(executions, execution)
+					}
+				}
+			}
+
+			var msg struct {
+				Executions []*execution `json:"executions"`
+			}
+			msg.Executions = executions
 
 			c.JSON(http.StatusOK, msg)
 		})
@@ -110,9 +168,9 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			msg.Job = name
 
 			if ok {
-				jobRun := g.runJob(name)
+				g.execute(name)
 				msg.Success = true
-				msg.Submitted = jobRun.StartedAt
+				msg.Submitted = time.Now().UTC().Format(time.RFC3339Nano)
 				c.JSON(http.StatusOK, msg)
 			} else {
 				msg.Success = false

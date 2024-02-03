@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"sync"
+
+	"github.com/philippgille/gokv"
 )
 
 // A Job is a workflow consisting of independent and dependent tasks
@@ -14,7 +16,9 @@ type Job struct {
 	Schedule string
 	Dag      dag
 	Active   bool
-	jobState *jobState
+	state    state
+	tasks    []*Task
+	sync.RWMutex
 }
 
 // Jobs and tasks are stateful.
@@ -29,34 +33,59 @@ const (
 	successful state = "successful"
 )
 
-type jobState struct {
-	sync.RWMutex
-	State     state           `json:"job"`
-	TaskState *stringStateMap `json:"tasks"`
+func (j *Job) loadState() state {
+	if !j.allDone() {
+		j.storeState(running)
+	}
+	if j.allSuccessful() {
+		j.storeState(successful)
+	}
+	if j.allDone() && j.anyFailed() {
+		j.storeState(failed)
+	}
+	return j.state
 }
 
-func newJobState() *jobState {
-	js := jobState{State: none, TaskState: newStringStateMap()}
-	return &js
+func (j *Job) loadTaskState(task string) state {
+	j.RLock()
+	result := none
+	for _, t := range j.tasks {
+		if t.Name == task {
+			result = t.state
+			break
+		}
+	}
+	j.RUnlock()
+	return result
 }
 
-func (js *jobState) Update(value *jobState) {
-	js.Lock()
-	js = value
-	js.Unlock()
+func (j *Job) storeState(value state) {
+	j.Lock()
+	j.state = value
+	j.Unlock()
+}
+
+func (j *Job) storeTaskState(task string, value state) {
+	j.Lock()
+	for _, t := range j.tasks {
+		if t.Name == task {
+			t.state = value
+		}
+	}
+	j.Unlock()
 }
 
 type writeOp struct {
-	key  string
-	val  state
-	resp chan bool
+	key string
+	val state
 }
 
 // Initialize a job.
 func (j *Job) initialize() *Job {
 	j.Dag = make(dag)
 	j.Tasks = make(map[string]*Task)
-	j.jobState = newJobState()
+	j.tasks = make([]*Task, 0)
+	j.storeState(none)
 	return j
 }
 
@@ -70,11 +99,12 @@ func (j *Job) Add(t *Task) *Job {
 		t.TriggerRule = allSuccessful
 	}
 
-	t.attemptsRemaining = t.Retries
+	t.remaining = t.Retries
 
 	j.Tasks[t.Name] = t
+	j.tasks = append(j.tasks, t)
 	j.Dag.addNode(t.Name)
-	j.jobState.TaskState.Store(t.Name, none)
+	j.storeTaskState(t.Name, none)
 	return j
 }
 
@@ -92,39 +122,42 @@ func (j *Job) SetDownstream(ind, dep *Task) *Job {
 	return j
 }
 
-func (j *Job) run() error {
+func (j *Job) run(store gokv.Store, e *execution) error {
+
 	if !j.Dag.validate() {
 		return fmt.Errorf("Invalid Dag for job %s", j.Name)
 	}
 
-	log.Printf("starting job <%v>", j.Name)
+	log.Printf("jobID=%v, jobname=%v, msg=starting", e.ID, j.Name)
 
 	writes := make(chan writeOp)
-	taskState := j.jobState.TaskState
 
 	for {
-		for t, task := range j.Tasks {
+		for _, task := range j.tasks {
+
 			// Start the independent tasks
-			v, _ := taskState.Load(t)
-			if v == none && !j.Dag.isDownstream(t) {
-				taskState.Store(t, running)
+			v := j.loadTaskState(task.Name)
+			if v == none && !j.Dag.isDownstream(task.Name) {
+				j.storeTaskState(task.Name, running)
+				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 				go task.run(writes)
 			}
 
 			// Start the tasks that need to be re-tried
 			if v == upForRetry {
-				task.RetryDelay.wait(task.Name, task.Retries-task.attemptsRemaining)
-				task.attemptsRemaining = task.attemptsRemaining - 1
-				taskState.Store(t, running)
+				task.RetryDelay.wait(task.Name, task.Retries-task.remaining)
+				task.remaining = task.remaining - 1
+				j.storeTaskState(task.Name, running)
+				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 				go task.run(writes)
 			}
 
 			// If dependencies are done, start the dependent tasks
-			if v == none && j.Dag.isDownstream(t) {
+			if v == none && j.Dag.isDownstream(task.Name) {
 				upstreamDone := true
 				upstreamSuccessful := true
-				for _, us := range j.Dag.dependencies(t) {
-					w, _ := taskState.Load(us)
+				for _, us := range j.Dag.dependencies(task.Name) {
+					w := j.loadTaskState(us)
 					if w == none || w == running || w == upForRetry {
 						upstreamDone = false
 					}
@@ -134,17 +167,20 @@ func (j *Job) run() error {
 				}
 
 				if upstreamDone && task.TriggerRule == allDone {
-					taskState.Store(t, running)
+					j.storeTaskState(task.Name, running)
+					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 					go task.run(writes)
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
-					taskState.Store(t, running)
+					j.storeTaskState(task.Name, running)
+					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 					go task.run(writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
-					taskState.Store(t, skipped)
+					j.storeTaskState(task.Name, skipped)
+					log.Printf("jobID=%v, job=%v, task=%v, msg=skipping", e.ID, j.Name, task.Name)
 					go task.skip(writes)
 				}
 
@@ -153,64 +189,55 @@ func (j *Job) run() error {
 
 		// Receive updates on task state
 		write := <-writes
-		taskState.Store(write.key, write.val)
+		j.storeTaskState(write.key, write.val)
+		log.Printf("jobID=%v, job=%v, task=%v, msg=%v", e.ID, j.Name, write.key, write.val)
 
-		// Acknowledge the update
-		write.resp <- true
+		// Sync to store
+		e.State = j.loadState()
+		syncStateToStore(store, e, write.key, write.val)
 
 		if j.allDone() {
 			break
 		}
 	}
 
+	log.Printf("jobID=%v, job=%v, msg=%v", e.ID, j.Name, j.loadState())
+
 	return nil
 }
 
-func (j *Job) getJobState() *jobState {
-	out := j.jobState
-	out.Lock()
-	if !j.allDone() {
-		out.State = running
-	}
-	if j.allSuccessful() {
-		out.State = successful
-	}
-	if j.allDone() && j.anyFailed() {
-		out.State = failed
-	}
-	out.Unlock()
-	return out
-}
-
 func (j *Job) allDone() bool {
+	j.RLock()
 	out := true
-	j.jobState.TaskState.Range(func(k string, v state) bool {
-		if v == none || v == running || v == upForRetry {
+	for _, t := range j.tasks {
+		if t.state == none || t.state == running || t.state == upForRetry {
 			out = false
 		}
-		return out
-	})
+	}
+	j.RUnlock()
 	return out
 }
 
 func (j *Job) allSuccessful() bool {
+	j.RLock()
 	out := true
-	j.jobState.TaskState.Range(func(k string, v state) bool {
-		if v != successful {
+	for _, t := range j.tasks {
+		if t.state != successful {
 			out = false
 		}
-		return out
-	})
+	}
+	j.RUnlock()
 	return out
 }
 
 func (j *Job) anyFailed() bool {
+	j.RLock()
 	out := false
-	j.jobState.TaskState.Range(func(k string, v state) bool {
-		if v == failed {
+	for _, t := range j.tasks {
+		if t.state == failed {
 			out = true
 		}
-		return out
-	})
+	}
+	j.RUnlock()
 	return out
 }

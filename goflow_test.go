@@ -80,6 +80,16 @@ func TestJobRunsRoute(t *testing.T) {
 	}
 }
 
+func TestExecutionsRoute(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/api/executions", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+}
+
 func TestJobSubmitToRouter(t *testing.T) {
 	var w = httptest.NewRecorder()
 	req, _ := http.NewRequest("POST", "/api/jobs/example-complex-analytics/submit", nil)
@@ -186,6 +196,7 @@ func TestStreamRoute(t *testing.T) {
 
 func exampleRouter() *gin.Engine {
 	g := New(Options{UIPath: "ui/", ShowExamples: true})
+	g.execute("example-custom-operator")
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute()
