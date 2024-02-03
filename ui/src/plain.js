@@ -1,63 +1,64 @@
-function updateStateCircles(tableName, wrapperId, colorArray, submissions) {
+function updateStateCircles(tableName, wrapperId, colorArray, startTimestamps) {
   const oldWrapper = document.getElementById(wrapperId);
   const newWrapper = document.createElement("div");
   newWrapper.setAttribute("class", "status-wrapper");
   newWrapper.setAttribute("id", wrapperId);
   for (k in colorArray) {
     const color = colorArray[k];
-    const submitted = submissions[k];
+    const startTimestamp = startTimestamps[k];
     div = document.createElement("div");
     div.setAttribute("class", "status-indicator");
     div.setAttribute("style", `background-color:${color}`);
-    div.setAttribute("title", submitted);
+    div.setAttribute("title", startTimestamp);
     newWrapper.appendChild(div);
   }
   document.getElementById(tableName).replaceChild(newWrapper, oldWrapper);
 }
 
-function updateTaskStateCircles(jobRuns) {
+function updateTaskStateCircles(executions) {
   var tasks = {};
-  var submissions = {};
-  for (i in jobRuns) {
-    const taskState = jobRuns[i].state.tasks.state;
-    var submitted = jobRuns[i].submitted;
-    for (taskName in taskState) {
-      const state = taskState[taskName];
+  var startTimestamps = {};
+  for (i in executions) {
+    const taskList = executions[i].tasks;
+    //const startTimestamp = executions[i].startTimestamp;
+    const startTimestamp = executions[i].submitted;
+    for (j in taskList) {
+      const state = taskList[j].state;
+      const taskName = taskList[j].name;
       const color = stateColor(state);
       if (taskName in tasks) {
         tasks[taskName].push(color);
-        submissions[taskName].push(submitted);
+        startTimestamps[taskName].push(startTimestamp);
       } else {
         tasks[taskName] = [color];
-        submissions[taskName] = [submitted];
+        startTimestamps[taskName] = [startTimestamp];
       }
     }
   }
   for (task in tasks) {
-    updateStateCircles("task-table", task, tasks[task], submissions[task]);
+    updateStateCircles("task-table", task, tasks[task], startTimestamps[task]);
   }
 }
 
 function updateJobStateCircles() {
   var stream = new EventSource(`/stream`);
   stream.addEventListener("message", function(e) {
-    const data = JSON.parse(e.data);
-    const jobRunStates = data.jobRuns.map(getJobRunState);
-    const jobSubmissions = data.jobRuns.map(getJobRunSubmitted);
-    updateStateCircles("job-table", data.jobName, jobRunStates, jobSubmissions);
+    const d = JSON.parse(e.data);
+    const s = d.executions.map(x => stateColor(x.state));
+    //const ts = d.executions.map(x => x.startTimestamp);
+    const ts = d.executions.map(x => x.submitted);
+    updateStateCircles("job-table", d.jobName, s, ts);
   });
 }
 
-function updateGraphViz(jobRuns) {
-  if (jobRuns.length) {
-    const lastJobRun = jobRuns.reverse()[0]
-    const taskState = lastJobRun.state.tasks.state;
-    for (taskName in taskState) {
+function updateGraphViz(executions) {
+  if (executions.length) {
+    const tasks = executions.reverse()[0].tasks
+    for (i in tasks) {
       if (document.getElementsByClassName("output")) {
-        const taskRunColor = getJobRunTaskColor(lastJobRun, taskName);
 	try {
-          const rect = document.getElementById("node-" + taskName).querySelector("rect");
-          rect.setAttribute("style", "stroke-width: 2; stroke: " + taskRunColor);
+          const rect = document.getElementById("node-" + tasks[i].name).querySelector("rect");
+          rect.setAttribute("style", "stroke-width: 2; stroke: " + stateColor(tasks[i].state));
 	}
 	catch(err) {
           console.log(`${err}. This might be a temporary error when the graph is still loading.`)
@@ -67,12 +68,13 @@ function updateGraphViz(jobRuns) {
   }
 }
 
-function updateLastRunTs(jobRuns) {
-  if (jobRuns.reverse()[0]) {
-    const lastJobRunTs = jobRuns.reverse()[0].submitted;
-    const lastJobRunTsHTML = document.getElementById("last-job-run-ts-wrapper").innerHTML;
-    const newHTML = lastJobRunTsHTML.replace(/.*/, `Last run: ${lastJobRunTs}`);
-    document.getElementById("last-job-run-ts-wrapper").innerHTML = newHTML;
+function updateLastRunTs(executions) {
+  if (executions.reverse()[0]) {
+    //const lastExecutionTs = executions.reverse()[0].startTimestamp;
+    const lastExecutionTs = executions.reverse()[0].submitted;
+    const lastExecutionTsHTML = document.getElementById("last-execution-ts-wrapper").innerHTML;
+    const newHTML = lastExecutionTsHTML.replace(/.*/, `Last run: ${lastExecutionTs}`);
+    document.getElementById("last-execution-ts-wrapper").innerHTML = newHTML;
   }
 }
 
@@ -95,11 +97,11 @@ function updateJobActive(jobName) {
 function readTaskStream(jobName) {
   var stream = new EventSource(`/stream`);
   stream.addEventListener("message", function(e) {
-    const data = JSON.parse(e.data);
-    if (jobName == data.jobName) {
-      updateTaskStateCircles(data.jobRuns);
-      updateGraphViz(data.jobRuns);
-      updateLastRunTs(data.jobRuns);
+    const d = JSON.parse(e.data);
+    if (jobName == d.jobName) {
+      updateTaskStateCircles(d.executions);
+      updateGraphViz(d.executions);
+      updateLastRunTs(d.executions);
     }
   });
 }
@@ -127,19 +129,6 @@ function stateColor(taskState) {
   }
 
   return color
-}
-
-function getJobRunTaskColor(jobRun, task) {
-  const taskState = jobRun.state.tasks.state[task];
-  return stateColor(taskState)
-}
-
-function getJobRunState(jobRun) {
-  return stateColor(jobRun.state.job)
-}
-
-function getJobRunSubmitted(jobRun) {
-  return jobRun.submitted
 }
 
 async function buttonPress(buttonName, jobName) {

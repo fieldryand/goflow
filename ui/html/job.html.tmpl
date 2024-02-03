@@ -16,7 +16,7 @@
       </div>
       <div class="button-container-job-page">
         <button id="button-toggle-{{ .jobName }}" class="button" onclick="buttonPress('toggle', {{ .jobName }})">Toggle scheduling</button>
-        <button id="button-submit-{{ .jobName }}" class="button" onclick="buttonPress('submit', {{ .jobName }})">Submit</button>
+        <button id="button-submit-{{ .jobName }}" class="button" onclick="buttonPress('submit', {{ .jobName }})">Execute</button>
       </div>
     </div>
     <div class="job-container">
@@ -29,7 +29,7 @@
         {{ end }}
       </div>
       <div class="graph-container">
-        <div id="last-job-run-ts-wrapper">Last run:</div>
+        <div id="last-execution-ts-wrapper">Last run:</div>
         <svg class="graph" width="100%"><g/></svg>
       </div>
     </div>
