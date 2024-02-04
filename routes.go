@@ -138,7 +138,7 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			}
 
 			if ok {
-				tasks := jobFn().Tasks
+				tasks := jobFn().tasks
 				taskNames := make([]string, 0)
 				for _, task := range tasks {
 					taskNames = append(taskNames, task.Name)
@@ -220,7 +220,7 @@ func (g *Goflow) addUIRoutes() *Goflow {
 			jobFn, ok := g.Jobs[name]
 
 			if ok {
-				tasks := jobFn().Tasks
+				tasks := jobFn().tasks
 				taskNames := make([]string, 0)
 				for _, task := range tasks {
 					taskNames = append(taskNames, task.Name)
