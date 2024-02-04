@@ -33,11 +33,14 @@ type Options struct {
 
 // New returns a Goflow engine.
 func New(opts Options) *Goflow {
-	var c *cron.Cron
+
+	// Add a default store if necessary
 	if opts.Store == nil {
 		opts.Store = gomap.NewStore(gomap.DefaultOptions)
 	}
-	defer opts.Store.Close()
+
+	// Add the cron schedule
+	var c *cron.Cron
 	if opts.WithSeconds {
 		c = cron.New(cron.WithSeconds())
 	} else {
