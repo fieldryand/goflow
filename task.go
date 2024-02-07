@@ -15,6 +15,7 @@ type Task struct {
 	RetryDelay  RetryDelay
 	remaining   int
 	state       state
+	result      any
 }
 
 type triggerRule string
@@ -24,29 +25,29 @@ const (
 	allSuccessful triggerRule = "allSuccessful"
 )
 
-func (t *Task) run(writes chan writeOp) error {
+func (t *Task) run(e *Execution, writes chan writeOp) error {
 
-	_, err := t.Operator.Run()
+	res, err := t.Operator.Run(e)
 
 	// retry
 	if err != nil && t.remaining > 0 {
-		writes <- writeOp{t.Name, upForRetry}
+		writes <- writeOp{t.Name, upForRetry, err}
 		return nil
 	}
 
 	// failed
 	if err != nil && t.remaining <= 0 {
-		writes <- writeOp{t.Name, failed}
+		writes <- writeOp{t.Name, failed, err}
 		return err
 	}
 
 	// success
-	writes <- writeOp{t.Name, successful}
+	writes <- writeOp{t.Name, successful, res}
 	return nil
 }
 
 func (t *Task) skip(writes chan writeOp) error {
-	writes <- writeOp{t.Name, skipped}
+	writes <- writeOp{t.Name, skipped, nil}
 	return nil
 }
 

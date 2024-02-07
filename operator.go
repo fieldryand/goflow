@@ -10,7 +10,7 @@ import (
 // An Operator implements a Run() method. When a job executes a task that
 // uses the operator, the Run() method is called.
 type Operator interface {
-	Run() (interface{}, error)
+	Run(*Execution) (any, error)
 }
 
 // Command executes a shell command.
@@ -21,7 +21,7 @@ type Command struct {
 
 // Run passes the command and arguments to exec.Command and captures the
 // output.
-func (o Command) Run() (interface{}, error) {
+func (o Command) Run(e *Execution) (any, error) {
 	out, err := exec.Command(o.Cmd, o.Args...).Output()
 	return string(out), err
 }
@@ -34,7 +34,7 @@ type Get struct {
 
 // Run sends the request and returns an error if the status code is
 // outside the 2xx range.
-func (o Get) Run() (interface{}, error) {
+func (o Get) Run(e *Execution) (any, error) {
 	res, err := o.Client.Get(o.URL)
 	if err != nil {
 		return nil, err
@@ -56,7 +56,7 @@ type Post struct {
 
 // Run sends the request and returns an error if the status code is
 // outside the 2xx range.
-func (o Post) Run() (interface{}, error) {
+func (o Post) Run(e *Execution) (any, error) {
 	res, err := o.Client.Post(o.URL, "application/json", o.Body)
 	if err != nil {
 		return nil, err
