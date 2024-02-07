@@ -8,37 +8,38 @@ import (
 )
 
 // Execution of a job.
-type execution struct {
+type Execution struct {
 	ID                uuid.UUID       `json:"id"`
 	JobName           string          `json:"job"`
 	StartedAt         string          `json:"submitted"`
 	ModifiedTimestamp string          `json:"modifiedTimestamp"`
 	State             state           `json:"state"`
-	TaskExecutions    []taskExecution `json:"tasks"`
+	Tasks             []taskExecution `json:"tasks"`
 }
 
 type taskExecution struct {
-	Name  string `json:"name"`
-	State state  `json:"state"`
+	Name   string `json:"name"`
+	State  state  `json:"state"`
+	Result any    `json:"result"`
 }
 
-func (j *Job) newExecution() *execution {
+func (j *Job) newExecution() *Execution {
 	taskExecutions := make([]taskExecution, 0)
 	for _, task := range j.Tasks {
-		taskrun := taskExecution{task.Name, none}
+		taskrun := taskExecution{task.Name, none, nil}
 		taskExecutions = append(taskExecutions, taskrun)
 	}
-	return &execution{
+	return &Execution{
 		ID:                uuid.New(),
 		JobName:           j.Name,
 		StartedAt:         time.Now().UTC().Format(time.RFC3339Nano),
 		ModifiedTimestamp: time.Now().UTC().Format(time.RFC3339Nano),
 		State:             none,
-		TaskExecutions:    taskExecutions}
+		Tasks:             taskExecutions}
 }
 
 // Persist a new execution.
-func persistNewExecution(s gokv.Store, e *execution) error {
+func persistNewExecution(s gokv.Store, e *Execution) error {
 	key := e.ID
 	return s.Set(key.String(), e)
 }
@@ -48,7 +49,7 @@ type executionIndex struct {
 }
 
 // Index the job runs
-func indexExecutions(s gokv.Store, e *execution) error {
+func indexExecutions(s gokv.Store, e *Execution) error {
 
 	// get the job from the execution
 	j := e.JobName
@@ -63,16 +64,16 @@ func indexExecutions(s gokv.Store, e *execution) error {
 }
 
 // Read all the persisted executions for a given job.
-func readExecutions(s gokv.Store, j string) ([]*execution, error) {
+func readExecutions(s gokv.Store, j string) ([]*Execution, error) {
 
 	// retrieve the list of executions of the job
 	i := executionIndex{}
 	s.Get(j, &i)
 
 	// return the list
-	executions := make([]*execution, 0)
+	executions := make([]*Execution, 0)
 	for _, key := range i.ExecutionIDs {
-		val := execution{}
+		val := Execution{}
 		s.Get(key, &val)
 		executions = append(executions, &val)
 	}
@@ -80,13 +81,13 @@ func readExecutions(s gokv.Store, j string) ([]*execution, error) {
 	return executions, nil
 }
 
-// Sync the current state to the persisted execution.
-func syncStateToStore(s gokv.Store, e *execution, taskName string, taskState state) error {
-	key := e.ID
-	for ix, task := range e.TaskExecutions {
-		if task.Name == taskName {
-			e.TaskExecutions[ix].State = taskState
+// Sync the task result and state to an execution
+func syncResultToExecution(e *Execution, task string, s state, r any) *Execution {
+	for ix, t := range e.Tasks {
+		if t.Name == task {
+			e.Tasks[ix].State = s
+			e.Tasks[ix].Result = r
 		}
 	}
-	return s.Set(key.String(), e)
+	return e
 }

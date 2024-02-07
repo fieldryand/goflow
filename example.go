@@ -76,7 +76,7 @@ type RandomFailure struct{ n int }
 var r = rand.New(rand.NewSource(1))
 
 // Run implements failures at random intervals.
-func (o RandomFailure) Run() (interface{}, error) {
+func (o RandomFailure) Run(e *Execution) (interface{}, error) {
 	x := r.Intn(o.n)
 
 	if x == o.n-1 {
