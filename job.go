@@ -66,19 +66,21 @@ func (j *Job) storeState(value state) {
 	j.Unlock()
 }
 
-func (j *Job) storeTaskState(task string, value state) {
+func (j *Job) storeTaskState(task string, value state, result any) {
 	j.Lock()
 	for _, t := range j.Tasks {
 		if t.Name == task {
 			t.state = value
+			t.result = result
 		}
 	}
 	j.Unlock()
 }
 
 type writeOp struct {
-	key string
-	val state
+	key    string
+	val    state
+	result any
 }
 
 // Initialize a job.
@@ -105,7 +107,7 @@ func (j *Job) Add(t *Task) *Job {
 	j.Tasks[t.Name] = t
 	j.tasks = append(j.tasks, t.Name)
 	j.Dag.addNode(t.Name)
-	j.storeTaskState(t.Name, none)
+	j.storeTaskState(t.Name, none, nil)
 	return j
 }
 
@@ -123,7 +125,7 @@ func (j *Job) SetDownstream(ind, dep *Task) *Job {
 	return j
 }
 
-func (j *Job) run(store gokv.Store, e *execution) error {
+func (j *Job) run(store gokv.Store, e *Execution) error {
 
 	if !j.Dag.validate() {
 		return fmt.Errorf("Invalid Dag for job %s", j.Name)
@@ -139,18 +141,18 @@ func (j *Job) run(store gokv.Store, e *execution) error {
 			// Start the independent tasks
 			v := j.loadTaskState(task.Name)
 			if v == none && !j.Dag.isDownstream(task.Name) {
-				j.storeTaskState(task.Name, running)
+				j.storeTaskState(task.Name, running, nil)
 				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
-				go task.run(writes)
+				go task.run(e, writes)
 			}
 
 			// Start the tasks that need to be re-tried
 			if v == upForRetry {
 				task.RetryDelay.wait(task.Name, task.Retries-task.remaining)
 				task.remaining = task.remaining - 1
-				j.storeTaskState(task.Name, running)
+				j.storeTaskState(task.Name, running, nil)
 				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
-				go task.run(writes)
+				go task.run(e, writes)
 			}
 
 			// If dependencies are done, start the dependent tasks
@@ -168,19 +170,19 @@ func (j *Job) run(store gokv.Store, e *execution) error {
 				}
 
 				if upstreamDone && task.TriggerRule == allDone {
-					j.storeTaskState(task.Name, running)
+					j.storeTaskState(task.Name, running, nil)
 					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
-					go task.run(writes)
+					go task.run(e, writes)
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
-					j.storeTaskState(task.Name, running)
+					j.storeTaskState(task.Name, running, nil)
 					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
-					go task.run(writes)
+					go task.run(e, writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
-					j.storeTaskState(task.Name, skipped)
+					j.storeTaskState(task.Name, skipped, nil)
 					log.Printf("jobID=%v, job=%v, task=%v, msg=skipping", e.ID, j.Name, task.Name)
 					go task.skip(writes)
 				}
@@ -190,13 +192,14 @@ func (j *Job) run(store gokv.Store, e *execution) error {
 
 		// Receive updates on task state
 		write := <-writes
-		j.storeTaskState(write.key, write.val)
+		j.storeTaskState(write.key, write.val, write.result)
 		log.Printf("jobID=%v, job=%v, task=%v, msg=%v", e.ID, j.Name, write.key, write.val)
 
 		// Sync to store
 		e.State = j.loadState()
 		e.ModifiedTimestamp = time.Now().UTC().Format(time.RFC3339Nano)
-		syncStateToStore(store, e, write.key, write.val)
+		e = syncResultToExecution(e, write.key, write.val, write.result)
+		store.Set(e.ID.String(), e)
 
 		if j.allDone() {
 			break

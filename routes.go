@@ -58,7 +58,7 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			jobName := c.Query("jobname")
 			stateQuery := c.Query("state")
 
-			executions := make([]*execution, 0)
+			executions := make([]*Execution, 0)
 
 			for job := range g.Jobs {
 				stored, _ := readExecutions(g.Store, job)
@@ -72,7 +72,7 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			}
 
 			var msg struct {
-				Executions []*execution `json:"executions"`
+				Executions []*Execution `json:"executions"`
 			}
 			msg.Executions = executions
 
