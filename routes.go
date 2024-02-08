@@ -47,14 +47,10 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 		})
 
 		api.GET("/jobs", func(c *gin.Context) {
-			jobNames := make([]string, 0)
-			for _, job := range g.jobs {
-				jobNames = append(jobNames, job().Name)
-			}
 			var msg struct {
 				Jobs []string `json:"jobs"`
 			}
-			msg.Jobs = jobNames
+			msg.Jobs = g.jobs
 			c.JSON(http.StatusOK, msg)
 		})
 
@@ -138,14 +134,8 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 			}
 
 			if ok {
-				tasks := jobFn().tasks
-				taskNames := make([]string, 0)
-				for _, task := range tasks {
-					taskNames = append(taskNames, task.Name)
-				}
-
 				msg.JobName = name
-				msg.TaskNames = taskNames
+				msg.TaskNames = jobFn().tasks
 				msg.Dag = jobFn().Dag
 				msg.Schedule = g.Jobs[name]().Schedule
 				msg.Active = jobFn().Active
@@ -210,7 +200,7 @@ func (g *Goflow) addUIRoutes() *Goflow {
 		ui.GET("/", func(c *gin.Context) {
 			jobs := make([]*Job, 0)
 			for _, job := range g.jobs {
-				jobs = append(jobs, job())
+				jobs = append(jobs, g.Jobs[job]())
 			}
 			c.HTML(http.StatusOK, "index.html.tmpl", gin.H{"jobs": jobs})
 		})
@@ -220,15 +210,9 @@ func (g *Goflow) addUIRoutes() *Goflow {
 			jobFn, ok := g.Jobs[name]
 
 			if ok {
-				tasks := jobFn().tasks
-				taskNames := make([]string, 0)
-				for _, task := range tasks {
-					taskNames = append(taskNames, task.Name)
-				}
-
 				c.HTML(http.StatusOK, "job.html.tmpl", gin.H{
 					"jobName":   name,
-					"taskNames": taskNames,
+					"taskNames": jobFn().tasks,
 					"schedule":  g.Jobs[name]().Schedule,
 				})
 			} else {

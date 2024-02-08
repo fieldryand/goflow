@@ -19,7 +19,7 @@ type Goflow struct {
 	router           *gin.Engine
 	cron             *cron.Cron
 	activeJobCronIDs map[string]cron.EntryID
-	jobs             [](func() *Job)
+	jobs             []string
 }
 
 // Options to control various Goflow behavior.
@@ -78,7 +78,7 @@ func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
 
 	// Register the job
 	g.Jobs[jobName] = jobFn
-	g.jobs = append(g.jobs, jobFn)
+	g.jobs = append(g.jobs, jobName)
 
 	// If the job is active by default, add it to the cron schedule
 	if jobFn().Active {

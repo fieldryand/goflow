@@ -17,7 +17,7 @@ type Job struct {
 	Dag      dag
 	Active   bool
 	state    state
-	tasks    []*Task
+	tasks    []string
 	sync.RWMutex
 }
 
@@ -49,7 +49,7 @@ func (j *Job) loadState() state {
 func (j *Job) loadTaskState(task string) state {
 	j.RLock()
 	result := none
-	for _, t := range j.tasks {
+	for _, t := range j.Tasks {
 		if t.Name == task {
 			result = t.state
 			break
@@ -67,7 +67,7 @@ func (j *Job) storeState(value state) {
 
 func (j *Job) storeTaskState(task string, value state) {
 	j.Lock()
-	for _, t := range j.tasks {
+	for _, t := range j.Tasks {
 		if t.Name == task {
 			t.state = value
 		}
@@ -84,7 +84,7 @@ type writeOp struct {
 func (j *Job) initialize() *Job {
 	j.Dag = make(dag)
 	j.Tasks = make(map[string]*Task)
-	j.tasks = make([]*Task, 0)
+	j.tasks = make([]string, 0)
 	j.storeState(none)
 	return j
 }
@@ -102,7 +102,7 @@ func (j *Job) Add(t *Task) *Job {
 	t.remaining = t.Retries
 
 	j.Tasks[t.Name] = t
-	j.tasks = append(j.tasks, t)
+	j.tasks = append(j.tasks, t.Name)
 	j.Dag.addNode(t.Name)
 	j.storeTaskState(t.Name, none)
 	return j
@@ -133,7 +133,7 @@ func (j *Job) run(store gokv.Store, e *execution) error {
 	writes := make(chan writeOp)
 
 	for {
-		for _, task := range j.tasks {
+		for _, task := range j.Tasks {
 
 			// Start the independent tasks
 			v := j.loadTaskState(task.Name)
@@ -209,7 +209,7 @@ func (j *Job) run(store gokv.Store, e *execution) error {
 func (j *Job) allDone() bool {
 	j.RLock()
 	out := true
-	for _, t := range j.tasks {
+	for _, t := range j.Tasks {
 		if t.state == none || t.state == running || t.state == upForRetry {
 			out = false
 		}
@@ -221,7 +221,7 @@ func (j *Job) allDone() bool {
 func (j *Job) allSuccessful() bool {
 	j.RLock()
 	out := true
-	for _, t := range j.tasks {
+	for _, t := range j.Tasks {
 		if t.state != successful {
 			out = false
 		}
@@ -233,7 +233,7 @@ func (j *Job) allSuccessful() bool {
 func (j *Job) anyFailed() bool {
 	j.RLock()
 	out := false
-	for _, t := range j.tasks {
+	for _, t := range j.Tasks {
 		if t.state == failed {
 			out = true
 		}
