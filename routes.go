@@ -47,14 +47,10 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 		})
 
 		api.GET("/jobs", func(c *gin.Context) {
-			jobNames := make([]string, 0)
-			for _, job := range g.jobs {
-				jobNames = append(jobNames, job().Name)
-			}
 			var msg struct {
 				Jobs []string `json:"jobs"`
 			}
-			msg.Jobs = jobNames
+			msg.Jobs = g.jobs
 			c.JSON(http.StatusOK, msg)
 		})
 
@@ -210,7 +206,7 @@ func (g *Goflow) addUIRoutes() *Goflow {
 		ui.GET("/", func(c *gin.Context) {
 			jobs := make([]*Job, 0)
 			for _, job := range g.jobs {
-				jobs = append(jobs, job())
+				jobs = append(jobs, g.Jobs[job]())
 			}
 			c.HTML(http.StatusOK, "index.html.tmpl", gin.H{"jobs": jobs})
 		})
