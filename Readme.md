@@ -231,6 +231,7 @@ You can pass different options to the engine. Options currently supported:
 - `UIPath`: The path to the dashboard code. The default value is an empty string, meaning Goflow serves only the API and not the dashboard. Suggested value if you want the dashboard: `ui/`
 - `Streaming`: Whether to stream updates to the dashboard. The default value is `false`, but if you use the dashboard then it's recommended to change this.
 - `ShowExamples`: Whether to show the example jobs. Default value: `false`
+- `WithSeconds`: Whether to include the seconds field in the cron spec. See the [cron package documentation](https://github.com/robfig/cron) for details. Default value: `false`
 
 Goflow is built on the [Gin framework](https://github.com/gin-gonic/gin), so you can pass any Gin handler to `Use`.
 
@@ -284,10 +285,10 @@ You can use the API to integrate Goflow with other applications, such as an exis
 - `GET /api/health`: Check health of the service
 - `GET /api/jobs`: List registered jobs
 - `GET /api/jobs/{jobname}`: Get the details for a given job
-- `GET /api/jobruns`: Query and list jobruns
+- `GET /api/executions`: Query and list job executions
 - `POST /api/jobs/{jobname}/submit`: Submit a job for execution
 - `POST /api/jobs/{jobname}/toggle`: Toggle a job schedule on or off
-- `/stream`: This endpoint returns Server-Sent Events with a `data` payload matching the one returned by `/api/jobruns`. The dashboard that ships with Goflow uses this endpoint.
+- `/stream`: This endpoint returns Server-Sent Events with a `data` payload matching the one returned by `/api/executions`. The dashboard that ships with Goflow uses this endpoint.
 
 Check out the OpenAPI spec for more details. Easiest way is to clone the repo, then within the repo use Swagger as in the following:
 
