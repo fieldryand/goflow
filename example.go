@@ -82,7 +82,7 @@ func (o PositiveAddition) Run() (interface{}, error) {
 	return result, nil
 }
 
-// RandomFailure fails randomly.
+// RandomFailure fails randomly. This is a contrived example for demo purposes.
 type RandomFailure struct{ n int }
 
 // Run implements failures at random intervals.

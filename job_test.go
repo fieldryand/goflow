@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/philippgille/gokv/gomap"
@@ -12,7 +11,7 @@ func TestJob(t *testing.T) {
 
 	j.Add(&Task{
 		Name:     "add-one-one",
-		Operator: Addition{1, 1},
+		Operator: PositiveAddition{1, 1},
 	})
 	j.Add(&Task{
 		Name:     "sleep-two",
@@ -24,7 +23,7 @@ func TestJob(t *testing.T) {
 	})
 	j.Add(&Task{
 		Name:     "add-three-four",
-		Operator: Addition{3, 4},
+		Operator: PositiveAddition{3, 4},
 	})
 	j.Add(&Task{
 		Name:       "whoops-with-constant-delay",
@@ -98,25 +97,12 @@ func TestJob(t *testing.T) {
 func TestCyclicJob(t *testing.T) {
 	j := &Job{Name: "cyclic", Schedule: "* * * * *"}
 
-	j.Add(&Task{Name: "addTwoTwo", Operator: Addition{2, 2}})
-	j.Add(&Task{Name: "addFourFour", Operator: Addition{4, 4}})
+	j.Add(&Task{Name: "addTwoTwo", Operator: PositiveAddition{2, 2}})
+	j.Add(&Task{Name: "addFourFour", Operator: PositiveAddition{4, 4}})
 	j.SetDownstream(j.Task("addTwoTwo"), j.Task("addFourFour"))
 	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
 
 	store := gomap.NewStore(gomap.DefaultOptions)
 
 	j.run(store, j.newExecution())
-}
-
-// Adds two nonnegative numbers.
-type Addition struct{ a, b int }
-
-func (o Addition) Run() (interface{}, error) {
-
-	if o.a < 0 || o.b < 0 {
-		return 0, errors.New("Can't add negative numbers")
-	}
-
-	result := o.a + o.b
-	return result, nil
 }
