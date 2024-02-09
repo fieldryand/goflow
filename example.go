@@ -85,9 +85,12 @@ func (o PositiveAddition) Run() (interface{}, error) {
 // RandomFailure fails randomly. This is a contrived example for demo purposes.
 type RandomFailure struct{ n int }
 
+// rng with seed=1
+var r = rand.New(rand.NewSource(1))
+
 // Run implements failures at random intervals.
 func (o RandomFailure) Run() (interface{}, error) {
-	x := rand.Intn(o.n)
+	x := r.Intn(o.n)
 
 	if x == o.n-1 {
 		return nil, errors.New("unlucky")

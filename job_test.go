@@ -47,6 +47,10 @@ func TestJob(t *testing.T) {
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
 		TriggerRule: "allDone",
 	})
+	j.Add(&Task{
+		Name:     "failure",
+		Operator: RandomFailure{1},
+	})
 
 	j.SetDownstream(j.Task("add-one-one"), j.Task("sleep-two"))
 	j.SetDownstream(j.Task("sleep-two"), j.Task("add-two-four"))
@@ -90,6 +94,9 @@ func TestJob(t *testing.T) {
 	}
 	if j.loadTaskState("clean-up") != successful {
 		t.Errorf("Got status %v, expected %v", j.loadTaskState("clean-up"), successful)
+	}
+	if j.loadTaskState("failure") != failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("failure"), failed)
 	}
 
 }
