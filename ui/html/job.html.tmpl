@@ -17,6 +17,14 @@
       <div class="button-container-job-page">
         <button id="button-toggle-{{ .jobName }}" class="button" onclick="buttonPress('toggle', {{ .jobName }})">Toggle scheduling</button>
         <button id="button-submit-{{ .jobName }}" class="button" onclick="buttonPress('submit', {{ .jobName }})">Execute</button>
+        <div class="div-select-n-executions">
+          <select name="select-n-executions" id="select-n-executions">
+            <option value="10">Display last 10 executions</option>
+            <option value="25">Display last 25 executions</option>
+            <option value="50">Display last 50 executions</option>
+            <option value="100">Display last 100 executions</option>
+          </select>
+        </div>
       </div>
     </div>
     <div class="job-container">

@@ -2,6 +2,7 @@ package goflow
 
 import (
 	"errors"
+	"math/rand"
 )
 
 // Crunch some numbers
@@ -68,22 +69,26 @@ func complexAnalyticsJob() *Job {
 	return j
 }
 
-// PositiveAddition adds two nonnegative numbers. This is just a contrived example to
-// demonstrate the usage of custom operators.
-type PositiveAddition struct{ a, b int }
+// RandomFailure fails randomly. This is a contrived example for demo purposes.
+type RandomFailure struct{ n int }
 
-// Run implements the custom operation.
-func (o PositiveAddition) Run() (interface{}, error) {
-	if o.a < 0 || o.b < 0 {
-		return 0, errors.New("Can't add negative numbers")
+// rng with seed=1
+var r = rand.New(rand.NewSource(1))
+
+// Run implements failures at random intervals.
+func (o RandomFailure) Run() (interface{}, error) {
+	x := r.Intn(o.n)
+
+	if x == o.n-1 {
+		return nil, errors.New("unlucky")
 	}
-	result := o.a + o.b
-	return result, nil
+
+	return x, nil
 }
 
 // Use our custom operation in a job.
 func customOperatorJob() *Job {
 	j := &Job{Name: "example-custom-operator", Schedule: "* * * * * *", Active: true}
-	j.Add(&Task{Name: "pos-add", Operator: PositiveAddition{5, 6}})
+	j.Add(&Task{Name: "random-failure", Operator: RandomFailure{4}})
 	return j
 }

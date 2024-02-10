@@ -1,7 +1,6 @@
 package goflow
 
 import (
-	"errors"
 	"testing"
 
 	"github.com/philippgille/gokv/gomap"
@@ -12,7 +11,7 @@ func TestJob(t *testing.T) {
 
 	j.Add(&Task{
 		Name:     "add-one-one",
-		Operator: Addition{1, 1},
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
 	})
 	j.Add(&Task{
 		Name:     "sleep-two",
@@ -24,7 +23,7 @@ func TestJob(t *testing.T) {
 	})
 	j.Add(&Task{
 		Name:     "add-three-four",
-		Operator: Addition{3, 4},
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
 	})
 	j.Add(&Task{
 		Name:       "whoops-with-constant-delay",
@@ -47,6 +46,10 @@ func TestJob(t *testing.T) {
 		Name:        "clean-up",
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
 		TriggerRule: "allDone",
+	})
+	j.Add(&Task{
+		Name:     "failure",
+		Operator: RandomFailure{1},
 	})
 
 	j.SetDownstream(j.Task("add-one-one"), j.Task("sleep-two"))
@@ -92,31 +95,28 @@ func TestJob(t *testing.T) {
 	if j.loadTaskState("clean-up") != successful {
 		t.Errorf("Got status %v, expected %v", j.loadTaskState("clean-up"), successful)
 	}
+	if j.loadTaskState("failure") != failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("failure"), failed)
+	}
 
 }
 
 func TestCyclicJob(t *testing.T) {
 	j := &Job{Name: "cyclic", Schedule: "* * * * *"}
 
-	j.Add(&Task{Name: "addTwoTwo", Operator: Addition{2, 2}})
-	j.Add(&Task{Name: "addFourFour", Operator: Addition{4, 4}})
-	j.SetDownstream(j.Task("addTwoTwo"), j.Task("addFourFour"))
-	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
+	j.Add(&Task{
+		Name:     "add-two-four",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+	})
+	j.Add(&Task{
+		Name:     "add-three-four",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
+	})
+
+	j.SetDownstream(j.Task("add-two-four"), j.Task("add-three-four"))
+	j.SetDownstream(j.Task("add-three-four"), j.Task("add-two-four"))
 
 	store := gomap.NewStore(gomap.DefaultOptions)
 
 	j.run(store, j.newExecution())
-}
-
-// Adds two nonnegative numbers.
-type Addition struct{ a, b int }
-
-func (o Addition) Run() (interface{}, error) {
-
-	if o.a < 0 || o.b < 0 {
-		return 0, errors.New("Can't add negative numbers")
-	}
-
-	result := o.a + o.b
-	return result, nil
 }

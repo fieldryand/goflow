@@ -76,6 +76,17 @@ body {
   font-size: 1.5em;
 }
 
+/* Default select style */
+select {
+  background-color: mediumslateblue;
+  border-radius: .2em;
+  color:white;
+  border-color:mediumslateblue;
+  border-style: none;
+  padding:.5em .75em;
+  white-space: nowrap;
+}
+
 /* Default button style */
 button {
   background-color: mediumslateblue;
