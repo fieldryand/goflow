@@ -11,7 +11,7 @@ func TestJob(t *testing.T) {
 
 	j.Add(&Task{
 		Name:     "add-one-one",
-		Operator: PositiveAddition{1, 1},
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
 	})
 	j.Add(&Task{
 		Name:     "sleep-two",
@@ -23,7 +23,7 @@ func TestJob(t *testing.T) {
 	})
 	j.Add(&Task{
 		Name:     "add-three-four",
-		Operator: PositiveAddition{3, 4},
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
 	})
 	j.Add(&Task{
 		Name:       "whoops-with-constant-delay",
@@ -104,10 +104,17 @@ func TestJob(t *testing.T) {
 func TestCyclicJob(t *testing.T) {
 	j := &Job{Name: "cyclic", Schedule: "* * * * *"}
 
-	j.Add(&Task{Name: "addTwoTwo", Operator: PositiveAddition{2, 2}})
-	j.Add(&Task{Name: "addFourFour", Operator: PositiveAddition{4, 4}})
-	j.SetDownstream(j.Task("addTwoTwo"), j.Task("addFourFour"))
-	j.SetDownstream(j.Task("addFourFour"), j.Task("addTwoTwo"))
+	j.Add(&Task{
+		Name:     "add-two-four",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+	})
+	j.Add(&Task{
+		Name:     "add-three-four",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
+	})
+
+	j.SetDownstream(j.Task("add-two-four"), j.Task("add-three-four"))
+	j.SetDownstream(j.Task("add-three-four"), j.Task("add-two-four"))
 
 	store := gomap.NewStore(gomap.DefaultOptions)
 

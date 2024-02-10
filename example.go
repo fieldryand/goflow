@@ -69,19 +69,6 @@ func complexAnalyticsJob() *Job {
 	return j
 }
 
-// PositiveAddition adds two nonnegative numbers. This is just a contrived example to
-// demonstrate the usage of custom operators.
-type PositiveAddition struct{ a, b int }
-
-// Run implements the custom operation.
-func (o PositiveAddition) Run() (interface{}, error) {
-	if o.a < 0 || o.b < 0 {
-		return 0, errors.New("Can't add negative numbers")
-	}
-	result := o.a + o.b
-	return result, nil
-}
-
 // RandomFailure fails randomly. This is a contrived example for demo purposes.
 type RandomFailure struct{ n int }
 
@@ -102,8 +89,6 @@ func (o RandomFailure) Run() (interface{}, error) {
 // Use our custom operation in a job.
 func customOperatorJob() *Job {
 	j := &Job{Name: "example-custom-operator", Schedule: "* * * * * *", Active: true}
-	j.Add(&Task{Name: "positive-addition", Operator: PositiveAddition{5, 6}})
 	j.Add(&Task{Name: "random-failure", Operator: RandomFailure{4}})
-	j.SetDownstream(j.Task("positive-addition"), j.Task("random-failure"))
 	return j
 }
