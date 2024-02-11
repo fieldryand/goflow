@@ -70,6 +70,7 @@ func main() {
                 UIPath: "ui/",
                 Streaming: true,
                 ShowExamples:  true,
+                WithSeconds:  true,
         }
         gf := goflow.New(options)
         gf.Use(goflow.DefaultLogger())
