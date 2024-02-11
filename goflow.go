@@ -82,7 +82,7 @@ func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
 
 	// If the job is active by default, add it to the cron schedule
 	if jobFn().Active {
-		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.execute(jobName) })
+		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.executeScheduled(jobName) })
 		g.activeJobCronIDs[jobName] = entryID
 	}
 
@@ -111,13 +111,30 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 	}
 
 	g.Jobs[jobName] = setUnsetActive(g.Jobs[jobName], true)
-	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.execute(jobName) })
+	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.executeScheduled(jobName) })
 	g.activeJobCronIDs[jobName] = entryID
 	return true, nil
 }
 
-// execute tells the engine to run a given job in a goroutine.
-// The job state is readable from the engine's store.
+// executeScheduled tells the engine to run a given job. The cron scheduler will
+// run it in a new goroutine.
+func (g *Goflow) executeScheduled(job string) uuid.UUID {
+
+	// create job
+	j := g.Jobs[job]()
+
+	// create and persist a new execution
+	e := j.newExecution()
+	persistNewExecution(g.Store, e)
+	indexExecutions(g.Store, e)
+
+	// start running the job
+	j.run(g.Store, e)
+
+	return e.ID
+}
+
+// execute tells the engine to run a given job in a new goroutine.
 func (g *Goflow) execute(job string) uuid.UUID {
 
 	// create job
