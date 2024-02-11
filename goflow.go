@@ -62,6 +62,7 @@ func New(opts Options) *Goflow {
 	return g
 }
 
+// scheduledExecution implements cron.Job
 type scheduledExecution struct {
 	store   gokv.Store
 	jobFunc func() *Job
@@ -110,29 +111,21 @@ func (g *Goflow) AddJob(jobFunc func() *Job) *Goflow {
 	return g
 }
 
-// setUnsetActive takes a job-emitting function and modifies it so it emits
-// jobs with the desired active value.
-func setUnsetActive(fn func() *Job, active bool) func() *Job {
-	return func() *Job {
-		job := fn()
-		job.Active = active
-		return job
-	}
-}
-
 // toggle flips a job's cron schedule status from active to inactive
 // and vice versa. It returns true if the new status is active and false
 // if it is inactive.
 func (g *Goflow) toggle(jobName string) (bool, error) {
 
-	jobFunc := g.Jobs[jobName]
-
-	if jobFunc().Active {
-		g.Jobs[jobName] = setUnsetActive(jobFunc, false)
-		return false, nil
+	// if the job is found in the list of entries, remove it
+	for _, entry := range g.cron.Entries() {
+		if name := entry.Job.(*scheduledExecution).jobFunc().Name; name == jobName {
+			g.cron.Remove(entry.ID)
+			return false, nil
+		}
 	}
 
-	g.Jobs[jobName] = setUnsetActive(jobFunc, true)
+	// else add a new entry
+	jobFunc := g.Jobs[jobName]
 	e := &scheduledExecution{g.Store, jobFunc}
 	g.cron.AddJob(jobFunc().Schedule, e)
 	return true, nil
