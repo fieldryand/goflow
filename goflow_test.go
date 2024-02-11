@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/philippgille/gokv/gomap"
 )
 
 var router = exampleRouter()
@@ -210,4 +211,10 @@ func exampleRouter() *gin.Engine {
 	g.addUIRoutes()
 	g.addAPIRoutes()
 	return g.router
+}
+
+func TestScheduledExecution(t *testing.T) {
+	store := gomap.NewStore(gomap.DefaultOptions)
+	schedExec := scheduledExecution{store, customOperatorJob}
+	schedExec.Run()
 }
