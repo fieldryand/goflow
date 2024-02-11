@@ -13,13 +13,12 @@ import (
 
 // Goflow contains job data and a router.
 type Goflow struct {
-	Store            gokv.Store
-	Options          Options
-	Jobs             map[string](func() *Job)
-	router           *gin.Engine
-	cron             *cron.Cron
-	activeJobCronIDs map[string]cron.EntryID
-	jobs             []string
+	Store   gokv.Store
+	Options Options
+	Jobs    map[string](func() *Job)
+	router  *gin.Engine
+	cron    *cron.Cron
+	jobs    []string
 }
 
 // Options to control various Goflow behavior.
@@ -48,12 +47,11 @@ func New(opts Options) *Goflow {
 	}
 
 	g := &Goflow{
-		Store:            opts.Store,
-		Options:          opts,
-		Jobs:             make(map[string](func() *Job)),
-		router:           gin.New(),
-		cron:             c,
-		activeJobCronIDs: make(map[string]cron.EntryID),
+		Store:   opts.Store,
+		Options: opts,
+		Jobs:    make(map[string](func() *Job)),
+		router:  gin.New(),
+		cron:    c,
 	}
 
 	if opts.ShowExamples {
@@ -102,8 +100,11 @@ func (g *Goflow) AddJob(jobFunc func() *Job) *Goflow {
 	// If the job is active by default, add it to the cron schedule
 	if j.Active {
 		e := &scheduledExecution{g.Store, jobFunc}
-		entryID, _ := g.cron.AddJob(j.Schedule, e)
-		g.activeJobCronIDs[j.Name] = entryID
+		_, err := g.cron.AddJob(j.Schedule, e)
+
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return g
@@ -128,15 +129,12 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 
 	if jobFunc().Active {
 		g.Jobs[jobName] = setUnsetActive(jobFunc, false)
-		g.cron.Remove(g.activeJobCronIDs[jobName])
-		delete(g.activeJobCronIDs, jobName)
 		return false, nil
 	}
 
 	g.Jobs[jobName] = setUnsetActive(jobFunc, true)
 	e := &scheduledExecution{g.Store, jobFunc}
-	entryID, _ := g.cron.AddJob(jobFunc().Schedule, e)
-	g.activeJobCronIDs[jobName] = entryID
+	g.cron.AddJob(jobFunc().Schedule, e)
 	return true, nil
 }
 
