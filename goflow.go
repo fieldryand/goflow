@@ -64,26 +64,46 @@ func New(opts Options) *Goflow {
 	return g
 }
 
+type scheduledExecution struct {
+	store   gokv.Store
+	jobFunc func() *Job
+}
+
+func (schedExec *scheduledExecution) Run() {
+
+	// create job
+	job := schedExec.jobFunc()
+
+	// create and persist a new execution
+	e := job.newExecution()
+	persistNewExecution(schedExec.store, e)
+	indexExecutions(schedExec.store, e)
+
+	// start running the job
+	job.run(schedExec.store, e)
+}
+
 // AddJob takes a job-emitting function and registers it
 // with the engine.
-func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
+func (g *Goflow) AddJob(jobFunc func() *Job) *Goflow {
 
-	jobName := jobFn().Name
+	j := jobFunc()
 
 	// TODO: change the return type here to error
 	// "" is not a valid key in the storage layer
-	//if jobName == "" {
+	//if j.Name == "" {
 	//		return errors.New("\"\" is not a valid job name")
 	//	}
 
 	// Register the job
-	g.Jobs[jobName] = jobFn
-	g.jobs = append(g.jobs, jobName)
+	g.Jobs[j.Name] = jobFunc
+	g.jobs = append(g.jobs, j.Name)
 
 	// If the job is active by default, add it to the cron schedule
-	if jobFn().Active {
-		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.executeScheduled(jobName) })
-		g.activeJobCronIDs[jobName] = entryID
+	if j.Active {
+		e := &scheduledExecution{g.Store, jobFunc}
+		entryID, _ := g.cron.AddJob(j.Schedule, e)
+		g.activeJobCronIDs[j.Name] = entryID
 	}
 
 	return g
@@ -103,35 +123,21 @@ func setUnsetActive(fn func() *Job, active bool) func() *Job {
 // and vice versa. It returns true if the new status is active and false
 // if it is inactive.
 func (g *Goflow) toggle(jobName string) (bool, error) {
-	if g.Jobs[jobName]().Active {
-		g.Jobs[jobName] = setUnsetActive(g.Jobs[jobName], false)
+
+	jobFunc := g.Jobs[jobName]
+
+	if jobFunc().Active {
+		g.Jobs[jobName] = setUnsetActive(jobFunc, false)
 		g.cron.Remove(g.activeJobCronIDs[jobName])
 		delete(g.activeJobCronIDs, jobName)
 		return false, nil
 	}
 
-	g.Jobs[jobName] = setUnsetActive(g.Jobs[jobName], true)
-	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.executeScheduled(jobName) })
+	g.Jobs[jobName] = setUnsetActive(jobFunc, true)
+	e := &scheduledExecution{g.Store, jobFunc}
+	entryID, _ := g.cron.AddJob(jobFunc().Schedule, e)
 	g.activeJobCronIDs[jobName] = entryID
 	return true, nil
-}
-
-// executeScheduled tells the engine to run a given job. The cron scheduler will
-// run it in a new goroutine.
-func (g *Goflow) executeScheduled(job string) uuid.UUID {
-
-	// create job
-	j := g.Jobs[job]()
-
-	// create and persist a new execution
-	e := j.newExecution()
-	persistNewExecution(g.Store, e)
-	indexExecutions(g.Store, e)
-
-	// start running the job
-	j.run(g.Store, e)
-
-	return e.ID
 }
 
 // execute tells the engine to run a given job in a new goroutine.
