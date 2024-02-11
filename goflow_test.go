@@ -194,6 +194,13 @@ func TestStreamRoute(t *testing.T) {
 	}
 }
 
+// check for a race against /stream
+func TestToggleRaceCondition(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/jobs/example-complex-analytics/toggle", nil)
+	router.ServeHTTP(w, req)
+}
+
 func exampleRouter() *gin.Engine {
 	g := New(Options{UIPath: "ui/", ShowExamples: true})
 	g.execute("example-custom-operator")
