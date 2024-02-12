@@ -13,13 +13,12 @@ import (
 
 // Goflow contains job data and a router.
 type Goflow struct {
-	Store            gokv.Store
-	Options          Options
-	Jobs             map[string](func() *Job)
-	router           *gin.Engine
-	cron             *cron.Cron
-	activeJobCronIDs map[string]cron.EntryID
-	jobs             []string
+	Store   gokv.Store
+	Options Options
+	Jobs    map[string](func() *Job)
+	router  *gin.Engine
+	cron    *cron.Cron
+	jobs    []string
 }
 
 // Options to control various Goflow behavior.
@@ -48,12 +47,11 @@ func New(opts Options) *Goflow {
 	}
 
 	g := &Goflow{
-		Store:            opts.Store,
-		Options:          opts,
-		Jobs:             make(map[string](func() *Job)),
-		router:           gin.New(),
-		cron:             c,
-		activeJobCronIDs: make(map[string]cron.EntryID),
+		Store:   opts.Store,
+		Options: opts,
+		Jobs:    make(map[string](func() *Job)),
+		router:  gin.New(),
+		cron:    c,
 	}
 
 	if opts.ShowExamples {
@@ -64,60 +62,76 @@ func New(opts Options) *Goflow {
 	return g
 }
 
+// scheduledExecution implements cron.Job
+type scheduledExecution struct {
+	store   gokv.Store
+	jobFunc func() *Job
+}
+
+func (schedExec *scheduledExecution) Run() {
+
+	// create job
+	job := schedExec.jobFunc()
+
+	// create and persist a new execution
+	e := job.newExecution()
+	persistNewExecution(schedExec.store, e)
+	indexExecutions(schedExec.store, e)
+
+	// start running the job
+	job.run(schedExec.store, e)
+}
+
 // AddJob takes a job-emitting function and registers it
 // with the engine.
-func (g *Goflow) AddJob(jobFn func() *Job) *Goflow {
+func (g *Goflow) AddJob(jobFunc func() *Job) *Goflow {
 
-	jobName := jobFn().Name
+	j := jobFunc()
 
 	// TODO: change the return type here to error
 	// "" is not a valid key in the storage layer
-	//if jobName == "" {
+	//if j.Name == "" {
 	//		return errors.New("\"\" is not a valid job name")
 	//	}
 
 	// Register the job
-	g.Jobs[jobName] = jobFn
-	g.jobs = append(g.jobs, jobName)
+	g.Jobs[j.Name] = jobFunc
+	g.jobs = append(g.jobs, j.Name)
 
 	// If the job is active by default, add it to the cron schedule
-	if jobFn().Active {
-		entryID, _ := g.cron.AddFunc(jobFn().Schedule, func() { g.execute(jobName) })
-		g.activeJobCronIDs[jobName] = entryID
+	if j.Active {
+		e := &scheduledExecution{g.Store, jobFunc}
+		_, err := g.cron.AddJob(j.Schedule, e)
+
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return g
-}
-
-// setUnsetActive takes a job-emitting function and modifies it so it emits
-// jobs with the desired active value.
-func setUnsetActive(fn func() *Job, active bool) func() *Job {
-	return func() *Job {
-		job := fn()
-		job.Active = active
-		return job
-	}
 }
 
 // toggle flips a job's cron schedule status from active to inactive
 // and vice versa. It returns true if the new status is active and false
 // if it is inactive.
 func (g *Goflow) toggle(jobName string) (bool, error) {
-	if g.Jobs[jobName]().Active {
-		g.Jobs[jobName] = setUnsetActive(g.Jobs[jobName], false)
-		g.cron.Remove(g.activeJobCronIDs[jobName])
-		delete(g.activeJobCronIDs, jobName)
-		return false, nil
+
+	// if the job is found in the list of entries, remove it
+	for _, entry := range g.cron.Entries() {
+		if name := entry.Job.(*scheduledExecution).jobFunc().Name; name == jobName {
+			g.cron.Remove(entry.ID)
+			return false, nil
+		}
 	}
 
-	g.Jobs[jobName] = setUnsetActive(g.Jobs[jobName], true)
-	entryID, _ := g.cron.AddFunc(g.Jobs[jobName]().Schedule, func() { g.execute(jobName) })
-	g.activeJobCronIDs[jobName] = entryID
+	// else add a new entry
+	jobFunc := g.Jobs[jobName]
+	e := &scheduledExecution{g.Store, jobFunc}
+	g.cron.AddJob(jobFunc().Schedule, e)
 	return true, nil
 }
 
-// execute tells the engine to run a given job in a goroutine.
-// The job state is readable from the engine's store.
+// execute tells the engine to run a given job in a new goroutine.
 func (g *Goflow) execute(job string) uuid.UUID {
 
 	// create job

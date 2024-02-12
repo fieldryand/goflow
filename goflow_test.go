@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/gin-gonic/gin"
+	"github.com/philippgille/gokv/gomap"
 )
 
 var router = exampleRouter()
@@ -194,8 +195,15 @@ func TestStreamRoute(t *testing.T) {
 	}
 }
 
+// check for a race against /stream
+func TestToggleRaceCondition(t *testing.T) {
+	var w = httptest.NewRecorder()
+	req, _ := http.NewRequest("POST", "/api/jobs/example-complex-analytics/toggle", nil)
+	router.ServeHTTP(w, req)
+}
+
 func exampleRouter() *gin.Engine {
-	g := New(Options{UIPath: "ui/", ShowExamples: true})
+	g := New(Options{UIPath: "ui/", ShowExamples: true, WithSeconds: true})
 	g.execute("example-custom-operator")
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
@@ -203,4 +211,15 @@ func exampleRouter() *gin.Engine {
 	g.addUIRoutes()
 	g.addAPIRoutes()
 	return g.router
+}
+
+func TestScheduledExecution(t *testing.T) {
+	store := gomap.NewStore(gomap.DefaultOptions)
+	schedExec := scheduledExecution{store, customOperatorJob}
+	schedExec.Run()
+}
+
+func TestGoflowWithoutOptions(t *testing.T) {
+	g := New(Options{})
+	g.Use(DefaultLogger())
 }

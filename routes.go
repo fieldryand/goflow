@@ -138,7 +138,13 @@ func (g *Goflow) addAPIRoutes() *Goflow {
 				msg.TaskNames = jobFn().tasks
 				msg.Dag = jobFn().Dag
 				msg.Schedule = g.Jobs[name]().Schedule
-				msg.Active = jobFn().Active
+
+				// check if the job is active by looking in the list of cron entries
+				for _, entry := range g.cron.Entries() {
+					if jobName := entry.Job.(*scheduledExecution).jobFunc().Name; name == jobName {
+						msg.Active = true
+					}
+				}
 
 				c.JSON(http.StatusOK, msg)
 			} else {
@@ -200,7 +206,19 @@ func (g *Goflow) addUIRoutes() *Goflow {
 		ui.GET("/", func(c *gin.Context) {
 			jobs := make([]*Job, 0)
 			for _, job := range g.jobs {
-				jobs = append(jobs, g.Jobs[job]())
+
+				// create the job, assume it's inactive
+				j := g.Jobs[job]()
+				j.Active = false
+
+				// check if the job is active by looking in the list of cron entries
+				for _, entry := range g.cron.Entries() {
+					if name := entry.Job.(*scheduledExecution).jobFunc().Name; name == j.Name {
+						j.Active = true
+					}
+				}
+
+				jobs = append(jobs, j)
 			}
 			c.HTML(http.StatusOK, "index.html.tmpl", gin.H{"jobs": jobs})
 		})
