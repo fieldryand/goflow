@@ -218,3 +218,8 @@ func TestScheduledExecution(t *testing.T) {
 	schedExec := scheduledExecution{store, customOperatorJob}
 	schedExec.Run()
 }
+
+func TestGoflowWithoutOptions(t *testing.T) {
+	g := New(Options{})
+	g.Use(DefaultLogger())
+}
