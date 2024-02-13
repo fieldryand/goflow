@@ -18,15 +18,17 @@ type Execution struct {
 }
 
 type taskExecution struct {
-	Name   string `json:"name"`
-	State  state  `json:"state"`
-	Result any    `json:"result"`
+	Name     string `json:"name"`
+	State    state  `json:"state"`
+	Result   any    `json:"result"`
+	Error    string `json:"error"`
+	Operator any    `json:"operator"`
 }
 
 func (j *Job) newExecution() *Execution {
 	taskExecutions := make([]taskExecution, 0)
 	for _, task := range j.Tasks {
-		taskrun := taskExecution{task.Name, none, nil}
+		taskrun := taskExecution{task.Name, none, nil, "", task.Operator}
 		taskExecutions = append(taskExecutions, taskrun)
 	}
 	return &Execution{
@@ -82,12 +84,21 @@ func readExecutions(s gokv.Store, j string) ([]*Execution, error) {
 }
 
 // Sync the task result and state to an execution
-func syncResultToExecution(e *Execution, task string, s state, r any) *Execution {
+func syncResultToExecution(e *Execution, task string, s state, r any, err error) *Execution {
+
+	// if there is an error, convert it to a string
+	errString := ""
+	if err != nil {
+		errString = err.Error()
+	}
+
 	for ix, t := range e.Tasks {
 		if t.Name == task {
 			e.Tasks[ix].State = s
 			e.Tasks[ix].Result = r
+			e.Tasks[ix].Error = errString
 		}
 	}
+
 	return e
 }
