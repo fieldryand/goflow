@@ -57,6 +57,7 @@ func New(opts Options) *Goflow {
 	if opts.ShowExamples {
 		g.AddJob(complexAnalyticsJob)
 		g.AddJob(customOperatorJob)
+		g.AddJob(summationJob)
 	}
 
 	return g

@@ -66,12 +66,13 @@ func (j *Job) storeState(value state) {
 	j.Unlock()
 }
 
-func (j *Job) storeTaskState(task string, value state, result any) {
+func (j *Job) storeTaskState(task string, value state, result any, err error) {
 	j.Lock()
 	for _, t := range j.Tasks {
 		if t.Name == task {
 			t.state = value
 			t.result = result
+			t.err = err
 		}
 	}
 	j.Unlock()
@@ -81,6 +82,7 @@ type writeOp struct {
 	key    string
 	val    state
 	result any
+	err    error
 }
 
 // Initialize a job.
@@ -107,7 +109,7 @@ func (j *Job) Add(t *Task) *Job {
 	j.Tasks[t.Name] = t
 	j.tasks = append(j.tasks, t.Name)
 	j.Dag.addNode(t.Name)
-	j.storeTaskState(t.Name, none, nil)
+	j.storeTaskState(t.Name, none, nil, nil)
 	return j
 }
 
@@ -141,7 +143,7 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 			// Start the independent tasks
 			v := j.loadTaskState(task.Name)
 			if v == none && !j.Dag.isDownstream(task.Name) {
-				j.storeTaskState(task.Name, running, nil)
+				j.storeTaskState(task.Name, running, nil, nil)
 				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 				go task.run(e, writes)
 			}
@@ -150,7 +152,7 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 			if v == upForRetry {
 				task.RetryDelay.wait(task.Name, task.Retries-task.remaining)
 				task.remaining = task.remaining - 1
-				j.storeTaskState(task.Name, running, nil)
+				j.storeTaskState(task.Name, running, nil, nil)
 				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 				go task.run(e, writes)
 			}
@@ -170,19 +172,19 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 				}
 
 				if upstreamDone && task.TriggerRule == allDone {
-					j.storeTaskState(task.Name, running, nil)
+					j.storeTaskState(task.Name, running, nil, nil)
 					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 					go task.run(e, writes)
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
-					j.storeTaskState(task.Name, running, nil)
+					j.storeTaskState(task.Name, running, nil, nil)
 					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 					go task.run(e, writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
-					j.storeTaskState(task.Name, skipped, nil)
+					j.storeTaskState(task.Name, skipped, nil, nil)
 					log.Printf("jobID=%v, job=%v, task=%v, msg=skipping", e.ID, j.Name, task.Name)
 					go task.skip(writes)
 				}
@@ -192,13 +194,13 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 
 		// Receive updates on task state
 		write := <-writes
-		j.storeTaskState(write.key, write.val, write.result)
+		j.storeTaskState(write.key, write.val, write.result, write.err)
 		log.Printf("jobID=%v, job=%v, task=%v, msg=%v", e.ID, j.Name, write.key, write.val)
 
 		// Sync to store
 		e.State = j.loadState()
 		e.ModifiedTimestamp = time.Now().UTC().Format(time.RFC3339Nano)
-		e = syncResultToExecution(e, write.key, write.val, write.result)
+		e = syncResultToExecution(e, write.key, write.val, write.result, write.err)
 		store.Set(e.ID.String(), e)
 
 		if j.allDone() {

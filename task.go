@@ -16,6 +16,7 @@ type Task struct {
 	remaining   int
 	state       state
 	result      any
+	err         error
 }
 
 type triggerRule string
@@ -31,23 +32,23 @@ func (t *Task) run(e *Execution, writes chan writeOp) error {
 
 	// retry
 	if err != nil && t.remaining > 0 {
-		writes <- writeOp{t.Name, upForRetry, err}
+		writes <- writeOp{t.Name, upForRetry, res, err}
 		return nil
 	}
 
 	// failed
 	if err != nil && t.remaining <= 0 {
-		writes <- writeOp{t.Name, failed, err}
+		writes <- writeOp{t.Name, failed, res, err}
 		return err
 	}
 
 	// success
-	writes <- writeOp{t.Name, successful, res}
+	writes <- writeOp{t.Name, successful, res, err}
 	return nil
 }
 
 func (t *Task) skip(writes chan writeOp) error {
-	writes <- writeOp{t.Name, skipped, nil}
+	writes <- writeOp{t.Name, skipped, nil, nil}
 	return nil
 }
 

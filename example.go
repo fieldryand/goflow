@@ -2,6 +2,7 @@ package goflow
 
 import (
 	"errors"
+	"log"
 	"math/rand"
 )
 
@@ -90,5 +91,41 @@ func (o RandomFailure) Run(e *Execution) (interface{}, error) {
 func customOperatorJob() *Job {
 	j := &Job{Name: "example-custom-operator", Schedule: "* * * * * *", Active: true}
 	j.Add(&Task{Name: "random-failure", Operator: RandomFailure{4}})
+	return j
+}
+
+// Summation is a sum of values. If a summation task is downstream of another,
+// then the final result will be the accumulated sum.
+type Summation struct {
+	Value int
+}
+
+// Run performs summation.
+func (o Summation) Run(e *Execution) (interface{}, error) {
+
+	result := o.Value
+
+	for _, task := range e.Tasks {
+		if task.State == "successful" {
+			if i, ok := task.Operator.(Summation); ok {
+				result = result + i.Value
+			}
+		}
+	}
+
+	log.Printf("sum value=%v", result)
+
+	return result, nil
+}
+
+func summationJob() *Job {
+	j := &Job{Name: "example-summation-job", Schedule: "* * * * * *", Active: true}
+	j.Add(&Task{Name: "summation-1", Operator: Summation{1}})
+	j.Add(&Task{Name: "summation-2", Operator: Summation{1}})
+	j.Add(&Task{Name: "summation-3", Operator: Summation{1}})
+	j.Add(&Task{Name: "summation-4", Operator: Summation{1}})
+	j.SetDownstream(j.Task("summation-1"), j.Task("summation-2"))
+	j.SetDownstream(j.Task("summation-2"), j.Task("summation-3"))
+	j.SetDownstream(j.Task("summation-3"), j.Task("summation-4"))
 	return j
 }
