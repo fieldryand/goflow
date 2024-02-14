@@ -113,18 +113,34 @@ func (j *Job) Add(t *Task) *Job {
 	return j
 }
 
-// Task getter
-func (j *Job) Task(name string) *Task {
-	return j.Tasks[name]
-}
-
 // SetDownstream sets a dependency relationship between two tasks in the job.
 // The dependent task is downstream of the independent task and
 // waits for the independent task to finish before starting
 // execution.
-func (j *Job) SetDownstream(ind, dep *Task) *Job {
-	j.Dag.setDownstream(ind.Name, dep.Name)
-	return j
+func (j *Job) SetDownstream(ind, dep string) error {
+
+	indExists := false
+	depExists := false
+
+	for _, t := range j.Tasks {
+		if ind == t.Name {
+			indExists = true
+		}
+		if dep == t.Name {
+			depExists = true
+		}
+	}
+
+	if !indExists {
+		return fmt.Errorf("Job does not contain task %s", ind)
+	}
+
+	if !depExists {
+		return fmt.Errorf("Job does not contain task %s", dep)
+	}
+
+	j.Dag.setDownstream(ind, dep)
+	return nil
 }
 
 func (j *Job) run(store gokv.Store, e *Execution) error {

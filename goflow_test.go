@@ -100,6 +100,15 @@ func TestJobSubmitToRouter(t *testing.T) {
 	}
 
 	w = httptest.NewRecorder()
+	req, _ = http.NewRequest("POST", "/api/jobs/example-summation-job/submit", nil)
+
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
+
+	w = httptest.NewRecorder()
 	req, _ = http.NewRequest("POST", "/api/jobs/bla/submit", nil)
 	router.ServeHTTP(w, req)
 
