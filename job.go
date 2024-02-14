@@ -26,31 +26,35 @@ type Job struct {
 // Jobs and tasks are stateful.
 type state string
 
+// These constants represent the possible states of a job or task.
+//
+// They are exported so that users can program with them within
+// contextual operators.
 const (
-	none       state = "notstarted"
-	running    state = "running"
-	upForRetry state = "upforretry"
-	skipped    state = "skipped"
-	failed     state = "failed"
-	successful state = "successful"
+	None       state = "notstarted"
+	Running    state = "running"
+	UpForRetry state = "upforretry"
+	Skipped    state = "skipped"
+	Failed     state = "failed"
+	Successful state = "successful"
 )
 
 func (j *Job) loadState() state {
 	if !j.allDone() {
-		j.storeState(running)
+		j.storeState(Running)
 	}
 	if j.allSuccessful() {
-		j.storeState(successful)
+		j.storeState(Successful)
 	}
 	if j.allDone() && j.anyFailed() {
-		j.storeState(failed)
+		j.storeState(Failed)
 	}
 	return j.state
 }
 
 func (j *Job) loadTaskState(task string) state {
 	j.RLock()
-	result := none
+	result := None
 	for _, t := range j.Tasks {
 		if t.Name == task {
 			result = t.state
@@ -91,7 +95,7 @@ func (j *Job) initialize() *Job {
 	j.Dag = make(dag)
 	j.Tasks = make(map[string]*Task)
 	j.tasks = make([]string, 0)
-	j.storeState(none)
+	j.storeState(None)
 	return j
 }
 
@@ -115,7 +119,7 @@ func (j *Job) Add(t *Task) error {
 	j.Tasks[t.Name] = t
 	j.tasks = append(j.tasks, t.Name)
 	j.Dag.addNode(t.Name)
-	j.storeTaskState(t.Name, none, nil, nil)
+	j.storeTaskState(t.Name, None, nil, nil)
 	return nil
 }
 
@@ -165,49 +169,49 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 
 			// Start the independent tasks
 			v := j.loadTaskState(task.Name)
-			if v == none && !j.Dag.isDownstream(task.Name) {
-				j.storeTaskState(task.Name, running, nil, nil)
+			if v == None && !j.Dag.isDownstream(task.Name) {
+				j.storeTaskState(task.Name, Running, nil, nil)
 				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 				go task.run(e, writes)
 			}
 
 			// Start the tasks that need to be re-tried
-			if v == upForRetry {
+			if v == UpForRetry {
 				task.RetryDelay.wait(task.Name, task.Retries-task.remaining)
 				task.remaining = task.remaining - 1
-				j.storeTaskState(task.Name, running, nil, nil)
+				j.storeTaskState(task.Name, Running, nil, nil)
 				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 				go task.run(e, writes)
 			}
 
 			// If dependencies are done, start the dependent tasks
-			if v == none && j.Dag.isDownstream(task.Name) {
+			if v == None && j.Dag.isDownstream(task.Name) {
 				upstreamDone := true
 				upstreamSuccessful := true
 				for _, us := range j.Dag.dependencies(task.Name) {
 					w := j.loadTaskState(us)
-					if w == none || w == running || w == upForRetry {
+					if w == None || w == Running || w == UpForRetry {
 						upstreamDone = false
 					}
-					if w != successful {
+					if w != Successful {
 						upstreamSuccessful = false
 					}
 				}
 
 				if upstreamDone && task.TriggerRule == allDone {
-					j.storeTaskState(task.Name, running, nil, nil)
+					j.storeTaskState(task.Name, Running, nil, nil)
 					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 					go task.run(e, writes)
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
-					j.storeTaskState(task.Name, running, nil, nil)
+					j.storeTaskState(task.Name, Running, nil, nil)
 					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
 					go task.run(e, writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
-					j.storeTaskState(task.Name, skipped, nil, nil)
+					j.storeTaskState(task.Name, Skipped, nil, nil)
 					log.Printf("jobID=%v, job=%v, task=%v, msg=skipping", e.ID, j.Name, task.Name)
 					go task.skip(writes)
 				}
@@ -240,7 +244,7 @@ func (j *Job) allDone() bool {
 	j.RLock()
 	out := true
 	for _, t := range j.Tasks {
-		if t.state == none || t.state == running || t.state == upForRetry {
+		if t.state == None || t.state == Running || t.state == UpForRetry {
 			out = false
 		}
 	}
@@ -252,7 +256,7 @@ func (j *Job) allSuccessful() bool {
 	j.RLock()
 	out := true
 	for _, t := range j.Tasks {
-		if t.state != successful {
+		if t.state != Successful {
 			out = false
 		}
 	}
@@ -264,7 +268,7 @@ func (j *Job) anyFailed() bool {
 	j.RLock()
 	out := false
 	for _, t := range j.Tasks {
-		if t.state == failed {
+		if t.state == Failed {
 			out = true
 		}
 	}

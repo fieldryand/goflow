@@ -32,23 +32,23 @@ func (t *Task) run(e *Execution, writes chan writeOp) error {
 
 	// retry
 	if err != nil && t.remaining > 0 {
-		writes <- writeOp{t.Name, upForRetry, res, err}
+		writes <- writeOp{t.Name, UpForRetry, res, err}
 		return nil
 	}
 
 	// failed
 	if err != nil && t.remaining <= 0 {
-		writes <- writeOp{t.Name, failed, res, err}
+		writes <- writeOp{t.Name, Failed, res, err}
 		return err
 	}
 
 	// success
-	writes <- writeOp{t.Name, successful, res, err}
+	writes <- writeOp{t.Name, Successful, res, err}
 	return nil
 }
 
 func (t *Task) skip(writes chan writeOp) error {
-	writes <- writeOp{t.Name, skipped, nil, nil}
+	writes <- writeOp{t.Name, Skipped, nil, nil}
 	return nil
 }
 
