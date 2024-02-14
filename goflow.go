@@ -153,7 +153,7 @@ func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
 }
 
 // Run runs the webserver.
-func (g *Goflow) Run(port string) {
+func (g *Goflow) Run(port string) error {
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
 	g.router.Use(gin.Recovery())
@@ -164,5 +164,5 @@ func (g *Goflow) Run(port string) {
 		g.addStaticRoutes()
 	}
 	g.cron.Start()
-	g.router.Run(port)
+	return g.router.Run(port)
 }
