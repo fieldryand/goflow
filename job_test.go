@@ -49,7 +49,7 @@ func TestJob(t *testing.T) {
 	})
 	j.Add(&Task{
 		Name:     "failure",
-		Operator: RandomFailure{1},
+		Operator: randomFailure{1},
 	})
 
 	j.SetDownstream("add-one-one", "sleep-two")

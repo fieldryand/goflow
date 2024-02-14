@@ -92,7 +92,7 @@ func TestJobSubmitToRouter(t *testing.T) {
 	}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/jobs/example-custom-operator/submit", nil)
+	req, _ = http.NewRequest("POST", "/api/jobs/example-random-failure/submit", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -126,7 +126,7 @@ func TestJobToggleActiveRoute(t *testing.T) {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 
-	req, _ = http.NewRequest("POST", "/api/jobs/example-custom-operator/toggle", nil)
+	req, _ = http.NewRequest("POST", "/api/jobs/example-random-failure/toggle", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -211,7 +211,7 @@ func TestToggleRaceCondition(t *testing.T) {
 
 func exampleRouter() *gin.Engine {
 	g := New(Options{UIPath: "ui/", ShowExamples: true, WithSeconds: true})
-	g.execute("example-custom-operator")
+	g.execute("example-random-failure")
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute(false)
@@ -222,7 +222,7 @@ func exampleRouter() *gin.Engine {
 
 func TestScheduledExecution(t *testing.T) {
 	store := gomap.NewStore(gomap.DefaultOptions)
-	schedExec := scheduledExecution{store, customOperatorJob}
+	schedExec := scheduledExecution{store, randomFailureJob}
 	schedExec.Run()
 }
 
