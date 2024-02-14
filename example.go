@@ -70,14 +70,14 @@ func complexAnalyticsJob() *Job {
 	return j
 }
 
-// RandomFailure fails randomly. This is a contrived example for demo purposes.
-type RandomFailure struct{ n int }
+// randomFailure fails randomly. This is a contrived example for demo purposes.
+type randomFailure struct{ n int }
 
 // rng with seed=1
 var r = rand.New(rand.NewSource(1))
 
 // Run implements failures at random intervals.
-func (o RandomFailure) Run(e *Execution) (any, error) {
+func (o randomFailure) Run(e *Execution) (any, error) {
 	x := r.Intn(o.n)
 
 	if x == o.n-1 {
@@ -87,27 +87,26 @@ func (o RandomFailure) Run(e *Execution) (any, error) {
 	return x, nil
 }
 
-// Use our custom operation in a job.
-func customOperatorJob() *Job {
-	j := &Job{Name: "example-custom-operator", Schedule: "* * * * * *", Active: true}
-	j.Add(&Task{Name: "random-failure", Operator: RandomFailure{4}})
+func randomFailureJob() *Job {
+	j := &Job{Name: "example-random-failure", Schedule: "* * * * * *", Active: true}
+	j.Add(&Task{Name: "random-failure", Operator: randomFailure{4}})
 	return j
 }
 
-// Summation is a sum of values. If a summation task is downstream of another,
+// summation is a sum of values. If a summation task is downstream of another,
 // then the final result will be the accumulated sum.
-type Summation struct {
+type summation struct {
 	Value int
 }
 
 // Run performs summation.
-func (o Summation) Run(e *Execution) (any, error) {
+func (o summation) Run(e *Execution) (any, error) {
 
 	result := o.Value
 
 	for _, task := range e.Tasks {
 		if task.State == "successful" {
-			if i, ok := task.Operator.(Summation); ok {
+			if i, ok := task.Operator.(summation); ok {
 				result = result + i.Value
 			}
 		}
@@ -120,10 +119,10 @@ func (o Summation) Run(e *Execution) (any, error) {
 
 func summationJob() *Job {
 	j := &Job{Name: "example-summation-job", Schedule: "* * * * * *", Active: true}
-	j.Add(&Task{Name: "summation-1", Operator: Summation{1}})
-	j.Add(&Task{Name: "summation-2", Operator: Summation{1}})
-	j.Add(&Task{Name: "summation-3", Operator: Summation{1}})
-	j.Add(&Task{Name: "summation-4", Operator: Summation{1}})
+	j.Add(&Task{Name: "summation-1", Operator: summation{1}})
+	j.Add(&Task{Name: "summation-2", Operator: summation{1}})
+	j.Add(&Task{Name: "summation-3", Operator: summation{1}})
+	j.Add(&Task{Name: "summation-4", Operator: summation{1}})
 	j.SetDownstream("summation-1", "summation-2")
 	j.SetDownstream("summation-2", "summation-3")
 	j.SetDownstream("summation-3", "summation-4")
