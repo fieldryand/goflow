@@ -230,3 +230,13 @@ func TestGoflowWithoutOptions(t *testing.T) {
 	g := New(Options{})
 	g.Use(DefaultLogger())
 }
+
+func TestInvalidJobName(t *testing.T) {
+	g := New(Options{})
+
+	err := g.AddJob(func() *Job { return &Job{Name: "", Schedule: "* * * * *"} })
+
+	if err == nil {
+		t.Errorf("Expected error adding a job with an invalid name")
+	}
+}

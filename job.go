@@ -140,14 +140,15 @@ func (j *Job) SetDownstream(ind, dep string) error {
 	}
 
 	j.Dag.setDownstream(ind, dep)
-	return nil
-}
-
-func (j *Job) run(store gokv.Store, e *Execution) error {
 
 	if !j.Dag.validate() {
 		return fmt.Errorf("Invalid Dag for job %s", j.Name)
 	}
+
+	return nil
+}
+
+func (j *Job) run(store gokv.Store, e *Execution) error {
 
 	log.Printf("jobID=%v, jobname=%v, msg=starting", e.ID, j.Name)
 

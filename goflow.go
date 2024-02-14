@@ -2,6 +2,7 @@
 package goflow
 
 import (
+	"errors"
 	"log"
 
 	"github.com/gin-gonic/gin"
@@ -85,15 +86,14 @@ func (schedExec *scheduledExecution) Run() {
 
 // AddJob takes a job-emitting function and registers it
 // with the engine.
-func (g *Goflow) AddJob(jobFunc func() *Job) *Goflow {
+func (g *Goflow) AddJob(jobFunc func() *Job) error {
 
 	j := jobFunc()
 
-	// TODO: change the return type here to error
 	// "" is not a valid key in the storage layer
-	//if j.Name == "" {
-	//		return errors.New("\"\" is not a valid job name")
-	//	}
+	if j.Name == "" {
+		return errors.New("\"\" is not a valid job name")
+	}
 
 	// Register the job
 	g.Jobs[j.Name] = jobFunc
@@ -103,13 +103,10 @@ func (g *Goflow) AddJob(jobFunc func() *Job) *Goflow {
 	if j.Active {
 		e := &scheduledExecution{g.Store, jobFunc}
 		_, err := g.cron.AddJob(j.Schedule, e)
-
-		if err != nil {
-			panic(err)
-		}
+		return err
 	}
 
-	return g
+	return nil
 }
 
 // toggle flips a job's cron schedule status from active to inactive
