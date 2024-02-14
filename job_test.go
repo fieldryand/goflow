@@ -114,11 +114,12 @@ func TestCyclicJob(t *testing.T) {
 	})
 
 	j.SetDownstream("add-two-four", "add-three-four")
-	j.SetDownstream("add-three-four", "add-two-four")
+	err := j.SetDownstream("add-three-four", "add-two-four")
 
-	store := gomap.NewStore(gomap.DefaultOptions)
+	if err == nil {
+		t.Errorf("Expected error creating a cyclic dag")
+	}
 
-	j.run(store, j.newExecution())
 }
 
 func TestSetDownstream(t *testing.T) {
