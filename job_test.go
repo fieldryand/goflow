@@ -147,3 +147,17 @@ func TestSetDownstream(t *testing.T) {
 	}
 
 }
+
+func TestInvalidTaskName(t *testing.T) {
+	j := &Job{Name: "test-invalid-task-name", Schedule: "* * * * *"}
+
+	err := j.Add(&Task{
+		Name:     "",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+	})
+
+	if err == nil {
+		t.Errorf("Expected error creating a task with an invalid name")
+	}
+
+}
