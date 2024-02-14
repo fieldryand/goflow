@@ -57,15 +57,15 @@ func complexAnalyticsJob() *Job {
 		TriggerRule: "allDone",
 	})
 
-	j.SetDownstream(j.Task("sleep-one"), j.Task("add-one-one"))
-	j.SetDownstream(j.Task("add-one-one"), j.Task("sleep-two"))
-	j.SetDownstream(j.Task("sleep-two"), j.Task("add-two-four"))
-	j.SetDownstream(j.Task("add-one-one"), j.Task("add-three-four"))
-	j.SetDownstream(j.Task("sleep-one"), j.Task("whoops-with-constant-delay"))
-	j.SetDownstream(j.Task("sleep-one"), j.Task("whoops-with-exponential-backoff"))
-	j.SetDownstream(j.Task("whoops-with-constant-delay"), j.Task("totally-skippable"))
-	j.SetDownstream(j.Task("whoops-with-exponential-backoff"), j.Task("totally-skippable"))
-	j.SetDownstream(j.Task("totally-skippable"), j.Task("clean-up"))
+	j.SetDownstream("sleep-one", "add-one-one")
+	j.SetDownstream("add-one-one", "sleep-two")
+	j.SetDownstream("sleep-two", "add-two-four")
+	j.SetDownstream("add-one-one", "add-three-four")
+	j.SetDownstream("sleep-one", "whoops-with-constant-delay")
+	j.SetDownstream("sleep-one", "whoops-with-exponential-backoff")
+	j.SetDownstream("whoops-with-constant-delay", "totally-skippable")
+	j.SetDownstream("whoops-with-exponential-backoff", "totally-skippable")
+	j.SetDownstream("totally-skippable", "clean-up")
 
 	return j
 }
@@ -77,7 +77,7 @@ type RandomFailure struct{ n int }
 var r = rand.New(rand.NewSource(1))
 
 // Run implements failures at random intervals.
-func (o RandomFailure) Run(e *Execution) (interface{}, error) {
+func (o RandomFailure) Run(e *Execution) (any, error) {
 	x := r.Intn(o.n)
 
 	if x == o.n-1 {
@@ -101,7 +101,7 @@ type Summation struct {
 }
 
 // Run performs summation.
-func (o Summation) Run(e *Execution) (interface{}, error) {
+func (o Summation) Run(e *Execution) (any, error) {
 
 	result := o.Value
 
@@ -124,8 +124,8 @@ func summationJob() *Job {
 	j.Add(&Task{Name: "summation-2", Operator: Summation{1}})
 	j.Add(&Task{Name: "summation-3", Operator: Summation{1}})
 	j.Add(&Task{Name: "summation-4", Operator: Summation{1}})
-	j.SetDownstream(j.Task("summation-1"), j.Task("summation-2"))
-	j.SetDownstream(j.Task("summation-2"), j.Task("summation-3"))
-	j.SetDownstream(j.Task("summation-3"), j.Task("summation-4"))
+	j.SetDownstream("summation-1", "summation-2")
+	j.SetDownstream("summation-2", "summation-3")
+	j.SetDownstream("summation-3", "summation-4")
 	return j
 }

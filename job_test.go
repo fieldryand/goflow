@@ -52,14 +52,14 @@ func TestJob(t *testing.T) {
 		Operator: RandomFailure{1},
 	})
 
-	j.SetDownstream(j.Task("add-one-one"), j.Task("sleep-two"))
-	j.SetDownstream(j.Task("sleep-two"), j.Task("add-two-four"))
-	j.SetDownstream(j.Task("add-one-one"), j.Task("add-three-four"))
-	j.SetDownstream(j.Task("add-one-one"), j.Task("whoops-with-constant-delay"))
-	j.SetDownstream(j.Task("add-one-one"), j.Task("whoops-with-exponential-backoff"))
-	j.SetDownstream(j.Task("whoops-with-constant-delay"), j.Task("totally-skippable"))
-	j.SetDownstream(j.Task("whoops-with-exponential-backoff"), j.Task("totally-skippable"))
-	j.SetDownstream(j.Task("totally-skippable"), j.Task("clean-up"))
+	j.SetDownstream("add-one-one", "sleep-two")
+	j.SetDownstream("sleep-two", "add-two-four")
+	j.SetDownstream("add-one-one", "add-three-four")
+	j.SetDownstream("add-one-one", "whoops-with-constant-delay")
+	j.SetDownstream("add-one-one", "whoops-with-exponential-backoff")
+	j.SetDownstream("whoops-with-constant-delay", "totally-skippable")
+	j.SetDownstream("whoops-with-exponential-backoff", "totally-skippable")
+	j.SetDownstream("totally-skippable", "clean-up")
 
 	store := gomap.NewStore(gomap.DefaultOptions)
 
@@ -113,10 +113,36 @@ func TestCyclicJob(t *testing.T) {
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
 	})
 
-	j.SetDownstream(j.Task("add-two-four"), j.Task("add-three-four"))
-	j.SetDownstream(j.Task("add-three-four"), j.Task("add-two-four"))
+	j.SetDownstream("add-two-four", "add-three-four")
+	j.SetDownstream("add-three-four", "add-two-four")
 
 	store := gomap.NewStore(gomap.DefaultOptions)
 
 	j.run(store, j.newExecution())
+}
+
+func TestSetDownstream(t *testing.T) {
+	j := &Job{Name: "test-downstream", Schedule: "* * * * *"}
+
+	j.Add(&Task{
+		Name:     "add-two-four",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+	})
+	j.Add(&Task{
+		Name:     "add-three-four",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
+	})
+
+	err := j.SetDownstream("does-not-exist", "add-three-four")
+
+	if err == nil {
+		t.Errorf("Expected error setting a dependency on a non-existent task")
+	}
+
+	err = j.SetDownstream("add-two-four", "does-not-exist")
+
+	if err == nil {
+		t.Errorf("Expected error setting a non-existent task as a dependency")
+	}
+
 }
