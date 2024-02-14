@@ -71,32 +71,32 @@ func TestJob(t *testing.T) {
 		}
 	}
 
-	if j.loadTaskState("add-one-one") != successful {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("add-one-one"), successful)
+	if j.loadTaskState("add-one-one") != Successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("add-one-one"), Successful)
 	}
-	if j.loadTaskState("sleep-two") != successful {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("sleep-two"), successful)
+	if j.loadTaskState("sleep-two") != Successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("sleep-two"), Successful)
 	}
-	if j.loadTaskState("add-two-four") != successful {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("add-two-four"), successful)
+	if j.loadTaskState("add-two-four") != Successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("add-two-four"), Successful)
 	}
-	if j.loadTaskState("add-three-four") != successful {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("add-three-four"), successful)
+	if j.loadTaskState("add-three-four") != Successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("add-three-four"), Successful)
 	}
-	if j.loadTaskState("whoops-with-constant-delay") != failed {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("whoops-with-constant-delay"), failed)
+	if j.loadTaskState("whoops-with-constant-delay") != Failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("whoops-with-constant-delay"), Failed)
 	}
-	if j.loadTaskState("whoops-with-exponential-backoff") != failed {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("whoops-with-exponential-backoff"), failed)
+	if j.loadTaskState("whoops-with-exponential-backoff") != Failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("whoops-with-exponential-backoff"), Failed)
 	}
-	if j.loadTaskState("totally-skippable") != skipped {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("totally-skippable"), skipped)
+	if j.loadTaskState("totally-skippable") != Skipped {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("totally-skippable"), Skipped)
 	}
-	if j.loadTaskState("clean-up") != successful {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("clean-up"), successful)
+	if j.loadTaskState("clean-up") != Successful {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("clean-up"), Successful)
 	}
-	if j.loadTaskState("failure") != failed {
-		t.Errorf("Got status %v, expected %v", j.loadTaskState("failure"), failed)
+	if j.loadTaskState("failure") != Failed {
+		t.Errorf("Got status %v, expected %v", j.loadTaskState("failure"), Failed)
 	}
 
 }

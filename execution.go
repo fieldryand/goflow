@@ -14,10 +14,11 @@ type Execution struct {
 	StartedAt         string          `json:"submitted"`
 	ModifiedTimestamp string          `json:"modifiedTimestamp"`
 	State             state           `json:"state"`
-	Tasks             []taskExecution `json:"tasks"`
+	Tasks             []TaskExecution `json:"tasks"`
 }
 
-type taskExecution struct {
+// TaskExecution represents the execution of a task.
+type TaskExecution struct {
 	Name     string `json:"name"`
 	State    state  `json:"state"`
 	Result   any    `json:"result"`
@@ -26,9 +27,9 @@ type taskExecution struct {
 }
 
 func (j *Job) newExecution() *Execution {
-	taskExecutions := make([]taskExecution, 0)
+	taskExecutions := make([]TaskExecution, 0)
 	for _, task := range j.Tasks {
-		taskrun := taskExecution{task.Name, none, nil, "", task.Operator}
+		taskrun := TaskExecution{task.Name, None, nil, "", task.Operator}
 		taskExecutions = append(taskExecutions, taskrun)
 	}
 	return &Execution{
