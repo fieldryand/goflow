@@ -20,21 +20,6 @@ func (g *Goflow) addStreamRoute(keepOpen bool) *Goflow {
 	return g
 }
 
-type jobrun struct {
-	JobName   string   `json:"job"`
-	Submitted string   `json:"submitted"`
-	JobState  jobstate `json:"state"`
-}
-
-type jobstate struct {
-	State     state     `json:"job"`
-	TaskState taskstate `json:"tasks"`
-}
-
-type taskstate struct {
-	Taskstate map[string]state `json:"state"`
-}
-
 func (g *Goflow) addAPIRoutes() *Goflow {
 	api := g.router.Group("/api")
 	{
