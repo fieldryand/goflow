@@ -14,44 +14,44 @@ func complexAnalyticsJob() *Job {
 		Active:   false,
 	}
 
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "sleep-one",
 		Operator: Command{Cmd: "sleep", Args: []string{"1"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "add-one-one",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "sleep-two",
 		Operator: Command{Cmd: "sleep", Args: []string{"2"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "add-two-four",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "add-three-four",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:       "whoops-with-constant-delay",
 		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    5,
 		RetryDelay: ConstantDelay{Period: 1},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:       "whoops-with-exponential-backoff",
 		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    1,
 		RetryDelay: ExponentialBackoff{},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:        "totally-skippable",
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
 		TriggerRule: "allSuccessful",
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:        "clean-up",
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
 		TriggerRule: "allDone",
@@ -89,7 +89,7 @@ func (o randomFailure) Run(e *Execution) (any, error) {
 
 func randomFailureJob() *Job {
 	j := &Job{Name: "example-random-failure", Schedule: "* * * * * *", Active: true}
-	j.Add(&Task{Name: "random-failure", Operator: randomFailure{4}})
+	j.AddTask(&Task{Name: "random-failure", Operator: randomFailure{4}})
 	return j
 }
 
@@ -119,10 +119,10 @@ func (o summation) Run(e *Execution) (any, error) {
 
 func summationJob() *Job {
 	j := &Job{Name: "example-summation-job", Schedule: "* * * * * *", Active: true}
-	j.Add(&Task{Name: "summation-1", Operator: summation{1}})
-	j.Add(&Task{Name: "summation-2", Operator: summation{1}})
-	j.Add(&Task{Name: "summation-3", Operator: summation{1}})
-	j.Add(&Task{Name: "summation-4", Operator: summation{1}})
+	j.AddTask(&Task{Name: "summation-1", Operator: summation{1}})
+	j.AddTask(&Task{Name: "summation-2", Operator: summation{1}})
+	j.AddTask(&Task{Name: "summation-3", Operator: summation{1}})
+	j.AddTask(&Task{Name: "summation-4", Operator: summation{1}})
 	j.SetDownstream("summation-1", "summation-2")
 	j.SetDownstream("summation-2", "summation-3")
 	j.SetDownstream("summation-3", "summation-4")
