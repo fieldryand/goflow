@@ -11,6 +11,5 @@ func main() {
 		WithSeconds:  true,
 	}
 	gf := goflow.New(options)
-	gf.Use(goflow.DefaultLogger())
 	gf.Run(":8181")
 }
