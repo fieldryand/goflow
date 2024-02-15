@@ -25,6 +25,7 @@ type Goflow struct {
 // Options to control various Goflow behavior.
 type Options struct {
 	Store        gokv.Store
+	Server       *gin.Engine
 	UIPath       string
 	Streaming    bool
 	ShowExamples bool
@@ -39,6 +40,11 @@ func New(opts Options) *Goflow {
 		opts.Store = gomap.NewStore(gomap.DefaultOptions)
 	}
 
+	// Add a default webserver if necessary
+	if opts.Server == nil {
+		opts.Server = gin.New()
+	}
+
 	// Add the cron schedule
 	var c *cron.Cron
 	if opts.WithSeconds {
@@ -51,7 +57,7 @@ func New(opts Options) *Goflow {
 		Store:   opts.Store,
 		Options: opts,
 		Jobs:    make(map[string](func() *Job)),
-		router:  gin.New(),
+		router:  opts.Server,
 		cron:    c,
 	}
 
@@ -144,12 +150,6 @@ func (g *Goflow) execute(job string) uuid.UUID {
 	go j.run(g.Store, e)
 
 	return e.ID
-}
-
-// Use middleware in the Gin router.
-func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
-	g.router.Use(middleware)
-	return g
 }
 
 // Run runs the webserver.
