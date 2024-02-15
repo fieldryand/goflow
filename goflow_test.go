@@ -212,7 +212,6 @@ func TestToggleRaceCondition(t *testing.T) {
 func exampleRouter() *gin.Engine {
 	g := New(Options{UIPath: "ui/", ShowExamples: true, WithSeconds: true})
 	g.execute("example-random-failure")
-	g.Use(DefaultLogger())
 	g.addStaticRoutes()
 	g.addStreamRoute(false)
 	g.addUIRoutes()
@@ -224,11 +223,6 @@ func TestScheduledExecution(t *testing.T) {
 	store := gomap.NewStore(gomap.DefaultOptions)
 	schedExec := scheduledExecution{store, randomFailureJob}
 	schedExec.Run()
-}
-
-func TestGoflowWithoutOptions(t *testing.T) {
-	g := New(Options{})
-	g.Use(DefaultLogger())
 }
 
 func TestInvalidJobName(t *testing.T) {
