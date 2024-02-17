@@ -9,11 +9,12 @@ import (
 
 // Execution of a job.
 type execution struct {
-	ID             uuid.UUID       `json:"id"`
-	JobName        string          `json:"job"`
-	StartedAt      string          `json:"submitted"`
-	State          state           `json:"state"`
-	TaskExecutions []taskExecution `json:"tasks"`
+	ID                uuid.UUID       `json:"id"`
+	JobName           string          `json:"job"`
+	StartedAt         string          `json:"submitted"`
+	ModifiedTimestamp string          `json:"modifiedTimestamp"`
+	State             state           `json:"state"`
+	TaskExecutions    []taskExecution `json:"tasks"`
 }
 
 type taskExecution struct {
@@ -28,11 +29,12 @@ func (j *Job) newExecution() *execution {
 		taskExecutions = append(taskExecutions, taskrun)
 	}
 	return &execution{
-		ID:             uuid.New(),
-		JobName:        j.Name,
-		StartedAt:      time.Now().UTC().Format(time.RFC3339Nano),
-		State:          none,
-		TaskExecutions: taskExecutions}
+		ID:                uuid.New(),
+		JobName:           j.Name,
+		StartedAt:         time.Now().UTC().Format(time.RFC3339Nano),
+		ModifiedTimestamp: time.Now().UTC().Format(time.RFC3339Nano),
+		State:             none,
+		TaskExecutions:    taskExecutions}
 }
 
 // Persist a new execution.
