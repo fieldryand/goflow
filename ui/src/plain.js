@@ -29,6 +29,7 @@ function jobPageEventHandler(message) {
 }
 
 function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamps) {
+  const limit = getDropdownValue();
   const wrapper = document.getElementById(wrapperId);
   const startTimestamp = startTimestamps;
   div = document.createElement("div");
@@ -39,7 +40,12 @@ function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamps)
   if (jobID in wrapper.children) {
     wrapper.replaceChild(div, document.getElementById(jobID));
   } else {
-    wrapper.appendChild(div);
+    if (wrapper.childElementCount >= limit) {
+      wrapper.removeChild(wrapper.firstElementChild);
+      wrapper.appendChild(div);
+    } else {
+      wrapper.appendChild(div);
+    }
   }
 }
 
@@ -105,13 +111,6 @@ function updateJobActive(jobName) {
       }
     })
 }
-
-function lastN(array, n) {
-  reversed = array.toReversed()
-  sliced = reversed.slice(0, n)
-  return sliced.toReversed()
-}
-
 
 function stateColor(taskState) {
   switch (taskState) {
