@@ -11,6 +11,7 @@ import (
 func (g *Goflow) stream(clientDisconnect bool) func(*gin.Context) {
 
 	return func(c *gin.Context) {
+		job := c.Query("jobname")
 
 		history := make([]*execution, 0)
 
@@ -35,8 +36,13 @@ func (g *Goflow) stream(clientDisconnect bool) func(*gin.Context) {
 						}
 
 						if !inHistory {
-							chanStream <- e
-							history = append(history, e)
+							if job != "" && job == e.JobName {
+								chanStream <- e
+								history = append(history, e)
+							} else if job == "" {
+								chanStream <- e
+								history = append(history, e)
+							}
 						}
 
 					}
