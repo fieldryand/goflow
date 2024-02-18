@@ -159,7 +159,7 @@ func (g *Goflow) Run(port string) {
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
 	g.router.Use(gin.Recovery())
-	g.addStreamRoute()
+	g.addStreamRoute(true)
 	g.addAPIRoutes()
 	if g.Options.UIPath != "" {
 		g.addUIRoutes()

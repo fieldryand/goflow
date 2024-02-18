@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/philippgille/gokv"
 )
@@ -194,6 +195,7 @@ func (j *Job) run(store gokv.Store, e *execution) error {
 
 		// Sync to store
 		e.State = j.loadState()
+		e.ModifiedTimestamp = time.Now().UTC().Format(time.RFC3339Nano)
 		syncStateToStore(store, e, write.key, write.val)
 
 		if j.allDone() {
