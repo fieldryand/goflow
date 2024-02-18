@@ -15,10 +15,8 @@ function jobPageEventListener(job) {
 
 function indexPageEventHandler(message) {
   const d = JSON.parse(message.data);
-  const jobID = d.id;
   const s = stateColor(d.state);
-  const ts = d.submitted;
-  updateStateCircles("job-table", jobID, d.job, s, ts);
+  updateStateCircles("job-table", d.id, d.job, s, d.submitted);
 }
 
 function jobPageEventHandler(message) {
@@ -28,10 +26,9 @@ function jobPageEventHandler(message) {
   updateLastRunTs(d);
 }
 
-function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamps) {
+function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamp) {
   const limit = getDropdownValue();
   const wrapper = document.getElementById(wrapperId);
-  const startTimestamp = startTimestamps;
   div = document.createElement("div");
   div.setAttribute("id", jobID);
   div.setAttribute("class", "status-indicator");
@@ -50,27 +47,10 @@ function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamps)
 }
 
 function updateTaskStateCircles(execution) {
-  var tasks = {};
-  var startTimestamps = {};
-
-  const taskList = execution.tasks;
-  const startTimestamp = execution.submitted;
-
-  for (j in taskList) {
-    const state = taskList[j].state;
-    const taskName = taskList[j].name;
-    const color = stateColor(state);
-    if (taskName in tasks) {
-      tasks[taskName].push(color);
-      startTimestamps[taskName].push(startTimestamp);
-    } else {
-      tasks[taskName] = [color];
-      startTimestamps[taskName] = [startTimestamp];
-    }
-  }
-
-  for (task in tasks) {
-    updateStateCircles("task-table", `${execution.id}-${task}`, task, tasks[task], startTimestamps[task]);
+  for (i in execution.tasks) {
+    const t = execution.tasks[i];
+    const s = stateColor(t.state);
+    updateStateCircles("task-table", `${execution.id}-${t}`, t.name, s, execution.submitted);
   }
 }
 
