@@ -30,7 +30,6 @@ type Options struct {
 	Streaming    bool
 	ShowExamples bool
 	WithSeconds  bool
-	streaming    bool
 }
 
 // New returns a Goflow engine.
@@ -162,7 +161,7 @@ func (g *Goflow) Run(port string) {
 	log.SetFlags(0)
 	log.SetOutput(new(logWriter))
 	g.router.Use(gin.Recovery())
-	g.addStreamRoute()
+	g.addStreamRoute(true)
 	g.addAPIRoutes()
 	if g.Options.UIPath != "" {
 		g.addUIRoutes()

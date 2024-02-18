@@ -207,7 +207,7 @@ func exampleRouter() *gin.Engine {
 	g.execute("example-custom-operator")
 	g.Use(DefaultLogger())
 	g.addStaticRoutes()
-	g.addStreamRoute()
+	g.addStreamRoute(false)
 	g.addUIRoutes()
 	g.addAPIRoutes()
 	return g.router
