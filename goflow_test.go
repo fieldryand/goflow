@@ -193,6 +193,14 @@ func TestStreamRoute(t *testing.T) {
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
+
+	w = CreateTestResponseRecorder()
+	req, _ = http.NewRequest("GET", "/stream?jobname=example-complex-analytics", nil)
+	router.ServeHTTP(w, req)
+
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
+	}
 }
 
 // check for a race against /stream
