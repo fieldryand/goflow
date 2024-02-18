@@ -22,8 +22,6 @@ type Goflow struct {
 }
 
 // Options to control various Goflow behavior.
-//
-// Deprecated: Streaming
 type Options struct {
 	Store        gokv.Store
 	UIPath       string
