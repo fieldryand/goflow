@@ -7,8 +7,9 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Setting clientDisconnect to false makes testing possible.
-func (g *Goflow) stream(clientDisconnect bool) func(*gin.Context) {
+// Set keepOpen to false when testing--one event will be sent and
+// then the channel is closed by the server.
+func (g *Goflow) stream(keepOpen bool) func(*gin.Context) {
 
 	return func(c *gin.Context) {
 		job := c.Query("jobname")
@@ -54,7 +55,7 @@ func (g *Goflow) stream(clientDisconnect bool) func(*gin.Context) {
 		c.Stream(func(w io.Writer) bool {
 			if msg, ok := <-chanStream; ok {
 				c.SSEvent("message", msg)
-				return clientDisconnect
+				return keepOpen
 			}
 			return false
 		})
