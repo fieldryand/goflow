@@ -3,7 +3,6 @@ package goflow
 
 import (
 	"errors"
-	"log"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
@@ -154,9 +153,6 @@ func (g *Goflow) execute(job string) uuid.UUID {
 
 // Run runs the webserver.
 func (g *Goflow) Run(port string) error {
-	log.SetFlags(0)
-	log.SetOutput(new(logWriter))
-	g.router.Use(gin.Recovery())
 	g.addStreamRoute(true)
 	g.addAPIRoutes()
 	if g.Options.UIPath != "" {
