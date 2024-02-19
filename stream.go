@@ -14,10 +14,10 @@ func (g *Goflow) stream(keepOpen bool) func(*gin.Context) {
 	return func(c *gin.Context) {
 		job := c.Query("jobname")
 
-		history := make([]*execution, 0)
+		history := make([]*Execution, 0)
 
 		// open a channel for live executions
-		chanStream := make(chan *execution)
+		chanStream := make(chan *Execution)
 
 		// periodically push the list of job runs into the stream
 		go func() {
