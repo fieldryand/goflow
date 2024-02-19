@@ -27,13 +27,20 @@ function jobPageEventHandler(message) {
 }
 
 function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamp) {
+  const options = { 
+    hour: '2-digit',  
+    minute: '2-digit',
+    second: '2-digit'
+  };
   const limit = getDropdownValue();
   const wrapper = document.getElementById(wrapperId);
+  const startTs = new Date(startTimestamp);
+  const formattedTs = startTs.toLocaleString(undefined, options); 
   div = document.createElement("div");
   div.setAttribute("id", jobID);
   div.setAttribute("class", "status-indicator");
   div.setAttribute("style", `background-color:${color}`);
-  div.setAttribute("title", jobID);
+  div.setAttribute("title", `ID: ${jobID}\nStarted: ${formattedTs}`);
   if (jobID in wrapper.children) {
     wrapper.replaceChild(div, document.getElementById(jobID));
   } else {
