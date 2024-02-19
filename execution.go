@@ -37,7 +37,7 @@ func (j *Job) newExecution() *Execution {
 		JobName:           j.Name,
 		StartedAt:         time.Now().UTC().Format(time.RFC3339Nano),
 		ModifiedTimestamp: time.Now().UTC().Format(time.RFC3339Nano),
-		State:             none,
+		State:             None,
 		Tasks:             taskExecutions}
 }
 
