@@ -1,15 +1,21 @@
 function updateStateCircles(tableName, wrapperId, colorArray, startTimestamps) {
+  const options = { 
+    hour: '2-digit',  
+    minute: '2-digit',
+    second: '2-digit'
+  };
   const oldWrapper = document.getElementById(wrapperId);
   const newWrapper = document.createElement("div");
   newWrapper.setAttribute("class", "status-wrapper");
   newWrapper.setAttribute("id", wrapperId);
   for (k in colorArray) {
     const color = colorArray[k];
-    const startTimestamp = startTimestamps[k];
+    const startTimestamp = new Date(startTimestamps[k]);
+    const formattedTs = startTimestamp.toLocaleString(undefined, options); 
     div = document.createElement("div");
     div.setAttribute("class", "status-indicator");
     div.setAttribute("style", `background-color:${color}`);
-    div.setAttribute("title", startTimestamp);
+    div.setAttribute("title", formattedTs);
     newWrapper.appendChild(div);
   }
   document.getElementById(tableName).replaceChild(newWrapper, oldWrapper);
@@ -40,11 +46,17 @@ function updateTaskStateCircles(executions) {
   }
 }
 
+function getDropdownValue() {
+  const selectDropdown = document.querySelector('select');
+  return selectDropdown.value
+}
+
 function updateJobStateCircles() {
   var stream = new EventSource(`/stream`);
   stream.addEventListener("message", function(e) {
+    const n = getDropdownValue();
     const d = JSON.parse(e.data);
-    const s = d.executions.map(x => stateColor(x.state));
+    const s = lastN(d.executions, n).map(x => stateColor(x.state));
     //const ts = d.executions.map(x => x.startTimestamp);
     const ts = d.executions.map(x => x.submitted);
     updateStateCircles("job-table", d.jobName, s, ts);
@@ -71,9 +83,17 @@ function updateGraphViz(executions) {
 function updateLastRunTs(executions) {
   if (executions.reverse()[0]) {
     //const lastExecutionTs = executions.reverse()[0].startTimestamp;
-    const lastExecutionTs = executions.reverse()[0].submitted;
+    const lastExecutionTs = new Date(executions.reverse()[0].submitted);
+    
+    const options = { 
+      hour: '2-digit',  
+      minute: '2-digit',
+      second: '2-digit'
+    };
+
+    const formattedTs = lastExecutionTs.toLocaleString(undefined, options); 
     const lastExecutionTsHTML = document.getElementById("last-execution-ts-wrapper").innerHTML;
-    const newHTML = lastExecutionTsHTML.replace(/.*/, `Last run: ${lastExecutionTs}`);
+    const newHTML = lastExecutionTsHTML.replace(/.*/, `Last run: ${formattedTs}`);
     document.getElementById("last-execution-ts-wrapper").innerHTML = newHTML;
   }
 }
@@ -94,15 +114,27 @@ function updateJobActive(jobName) {
     })
 }
 
+function lastN(array, n) {
+  reversed = array.toReversed()
+  sliced = reversed.slice(0, n)
+  return sliced.toReversed()
+}
+
 function readTaskStream(jobName) {
+
   var stream = new EventSource(`/stream`);
   stream.addEventListener("message", function(e) {
+
+    // n = display last n executions
+    const n = getDropdownValue();
     const d = JSON.parse(e.data);
+
     if (jobName == d.jobName) {
-      updateTaskStateCircles(d.executions);
+      updateTaskStateCircles(lastN(d.executions, n));
       updateGraphViz(d.executions);
       updateLastRunTs(d.executions);
     }
+
   });
 }
 
