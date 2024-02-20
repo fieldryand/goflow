@@ -5,31 +5,31 @@ import (
 	"net/http"
 	"text/template"
 	"time"
-
-	"github.com/julienschmidt/httprouter"
 )
 
 func (g *Goflow) addTestRoute() {
-	g.Router.GET("/api/jobs", g.handleJobs)
-	g.Router.GET("/api/jobs/:name", g.handleParameterizedJobs)
-	g.Router.POST("/api/jobs/:name/submit", g.handleSubmittedJobs)
-	g.Router.POST("/api/jobs/:name/toggle", g.handleToggledJobs)
-	g.Router.GET("/api/executions", g.handleExecutions)
-	g.Router.GET("/", g.handleRedirect)
-	g.Router.GET("/ui", g.handleRoot)
-	g.Router.GET("/ui/jobs/:name", g.handleJobsPage)
-	g.Router.ServeFiles("/static/*filepath", http.Dir(g.Options.UIPath))
+	g.Router.HandleFunc("GET /api/jobs", g.handleJobs)
+	g.Router.HandleFunc("GET /api/jobs/{name}", g.handleParameterizedJobs)
+	g.Router.HandleFunc("POST /api/jobs/{name}/submit", g.handleSubmittedJobs)
+	g.Router.HandleFunc("POST /api/jobs/{name}/toggle", g.handleToggledJobs)
+	g.Router.HandleFunc("GET /api/executions", g.handleExecutions)
+	g.Router.HandleFunc("GET /{$}", g.handleRedirect)
+	g.Router.HandleFunc("GET /ui", g.handleRoot)
+	g.Router.HandleFunc("GET /ui/jobs/{name}", g.handleJobsPage)
+	g.Router.HandleFunc("/events", g.handleStream)
+	g.Router.HandleFunc("/events/{name}", g.handleStream)
+	g.Router.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(g.Options.UIPath))))
 }
 
 //func (g *Goflow) addStreamRoute(keepOpen bool) {
 //	g.router.GET("/stream", g.stream(keepOpen))
 //}
 
-func (g *Goflow) handleRedirect(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (g *Goflow) handleRedirect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/ui", http.StatusMovedPermanently)
 }
 
-func (g *Goflow) handleJobs(w http.ResponseWriter, r *http.Request, _ httprouter.Params) {
+func (g *Goflow) handleJobs(w http.ResponseWriter, r *http.Request) {
 	var msg struct {
 		Jobs []string `json:"jobs"`
 	}
@@ -38,8 +38,8 @@ func (g *Goflow) handleJobs(w http.ResponseWriter, r *http.Request, _ httprouter
 	w.Write(out)
 }
 
-func (g *Goflow) handleParameterizedJobs(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("name")
+func (g *Goflow) handleParameterizedJobs(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
 	jobFn, ok := g.Jobs[name]
 
 	var msg struct {
@@ -70,8 +70,8 @@ func (g *Goflow) handleParameterizedJobs(w http.ResponseWriter, r *http.Request,
 	}
 }
 
-func (g *Goflow) handleSubmittedJobs(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("name")
+func (g *Goflow) handleSubmittedJobs(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
 	_, ok := g.Jobs[name]
 
 	var msg struct {
@@ -92,8 +92,8 @@ func (g *Goflow) handleSubmittedJobs(w http.ResponseWriter, r *http.Request, ps 
 	}
 }
 
-func (g *Goflow) handleToggledJobs(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("name")
+func (g *Goflow) handleToggledJobs(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
 	_, ok := g.Jobs[name]
 
 	var msg struct {
@@ -114,9 +114,9 @@ func (g *Goflow) handleToggledJobs(w http.ResponseWriter, r *http.Request, ps ht
 	}
 }
 
-func (g *Goflow) handleExecutions(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	jobName := ps.ByName("jobname")
-	stateQuery := ps.ByName("state")
+func (g *Goflow) handleExecutions(w http.ResponseWriter, r *http.Request) {
+	jobName := r.PathValue("jobname")
+	stateQuery := r.PathValue("state")
 
 	executions := make([]*Execution, 0)
 
@@ -140,7 +140,7 @@ func (g *Goflow) handleExecutions(w http.ResponseWriter, r *http.Request, ps htt
 	w.Write(out)
 }
 
-func (g *Goflow) handleRoot(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
+func (g *Goflow) handleRoot(w http.ResponseWriter, r *http.Request) {
 	jobs := make([]*Job, 0)
 	for _, job := range g.jobs {
 
@@ -162,8 +162,8 @@ func (g *Goflow) handleRoot(w http.ResponseWriter, r *http.Request, ps httproute
 	tmpl.Execute(w, map[string]any{"jobs": jobs})
 }
 
-func (g *Goflow) handleJobsPage(w http.ResponseWriter, r *http.Request, ps httprouter.Params) {
-	name := ps.ByName("name")
+func (g *Goflow) handleJobsPage(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
 	jobFn, ok := g.Jobs[name]
 
 	if ok {

@@ -5,7 +5,6 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/julienschmidt/httprouter"
 	"github.com/philippgille/gokv/gomap"
 )
 
@@ -199,7 +198,7 @@ func TestToggleRaceCondition(t *testing.T) {
 	router.ServeHTTP(w, req)
 }
 
-func exampleRouter() *httprouter.Router {
+func exampleRouter() *http.ServeMux {
 	g := New(Options{UIPath: "ui/", ShowExamples: true, WithSeconds: true})
 	g.addTestRoute()
 	return g.Router
