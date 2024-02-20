@@ -1,6 +1,7 @@
 github.com/ef-ds/deque v1.0.4 h1:iFAZNmveMT9WERAkqLJ+oaABF9AcVQ5AjXem/hroniI=
 github.com/ef-ds/deque v1.0.4/go.mod h1:gXDnTC3yqvBcHbq2lcExjtAcVrOnJCbMcZXmuj8Z4tg=
 github.com/go-test/deep v1.1.0 h1:WOcxcdHcvdgThNXjw0t76K42FXTU7HpNQWHpA2HHNlg=
+github.com/go-test/deep v1.1.0/go.mod h1:5C2ZWiW0ErCdrYzpqxLbTX7MG14M9iiw8DgHncVwcsE=
 github.com/google/uuid v1.6.0 h1:NIvaJDMOsjHA8n1jAhLSgzrAzy1Hgr+hNrb57e+94F0=
 github.com/google/uuid v1.6.0/go.mod h1:TIyPZe4MgqvfeYDBFedMoGGpEw/LqOeaOT+nhxU+yHo=
 github.com/julienschmidt/httprouter v1.3.0 h1:U0609e9tgbseu3rBINet9P48AI/D3oJs4dN7jwJOQ1U=
@@ -12,6 +13,7 @@ github.com/philippgille/gokv/encoding v0.7.0/go.mod h1:yncOBBUciyniPI8t5ECF8XSCw
 github.com/philippgille/gokv/gomap v0.7.0 h1:RR+cgJl1aMxw8CkxGczRwCbC42tHJ7cRwaaD4Ycgg9k=
 github.com/philippgille/gokv/gomap v0.7.0/go.mod h1:HJ+PC2y/knRG2RrdH81N+BkjDhmbPQMUj+tRHgarvSg=
 github.com/philippgille/gokv/test v0.7.0 h1:0wBKnKaFZlSeHxLXcmUJqK//IQGUMeu+o8B876KCiOM=
+github.com/philippgille/gokv/test v0.7.0/go.mod h1:TP/VzO/qAoi6njsfKnRpXKno0hRuzD5wsLnHhtUcVkY=
 github.com/philippgille/gokv/util v0.7.0 h1:5avUK/a3aSj/aWjhHv4/FkqgMon2B7k2BqFgLcR+DYg=
 github.com/philippgille/gokv/util v0.7.0/go.mod h1:i9KLHbPxGiHLMhkix/CcDQhpPbCkJy5BkW+RKgwDHMo=
 github.com/robfig/cron/v3 v3.0.1 h1:WdRxkvbJztn8LMz/QEvLN5sBU+xKpSqwwUO1Pjr4qDs=
