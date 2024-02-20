@@ -3,9 +3,10 @@ package goflow
 
 import (
 	"errors"
+	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/julienschmidt/httprouter"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/gomap"
 	"github.com/robfig/cron/v3"
@@ -16,7 +17,7 @@ type Goflow struct {
 	Store   gokv.Store
 	Options Options
 	Jobs    map[string](func() *Job)
-	router  *gin.Engine
+	Router  *httprouter.Router
 	cron    *cron.Cron
 	jobs    []string
 }
@@ -24,7 +25,6 @@ type Goflow struct {
 // Options to control various Goflow behavior.
 type Options struct {
 	Store        gokv.Store
-	Server       *gin.Engine
 	UIPath       string
 	Streaming    bool
 	ShowExamples bool
@@ -39,11 +39,6 @@ func New(opts Options) *Goflow {
 		opts.Store = gomap.NewStore(gomap.DefaultOptions)
 	}
 
-	// Add a default webserver if necessary
-	if opts.Server == nil {
-		opts.Server = gin.New()
-	}
-
 	// Add the cron schedule
 	var c *cron.Cron
 	if opts.WithSeconds {
@@ -56,7 +51,7 @@ func New(opts Options) *Goflow {
 		Store:   opts.Store,
 		Options: opts,
 		Jobs:    make(map[string](func() *Job)),
-		router:  opts.Server,
+		Router:  httprouter.New(),
 		cron:    c,
 	}
 
@@ -153,12 +148,8 @@ func (g *Goflow) execute(job string) uuid.UUID {
 
 // Run runs the webserver.
 func (g *Goflow) Run(port string) error {
-	g.addStreamRoute(true)
-	g.addAPIRoutes()
-	if g.Options.UIPath != "" {
-		g.addUIRoutes()
-		g.addStaticRoutes()
-	}
+	//	g.addStreamRoute(true)
+	g.addTestRoute()
 	g.cron.Start()
-	return g.router.Run(port)
+	return http.ListenAndServe(port, g.Router)
 }
