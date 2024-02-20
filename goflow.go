@@ -6,7 +6,6 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
-	"github.com/julienschmidt/httprouter"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/gomap"
 	"github.com/robfig/cron/v3"
@@ -17,7 +16,7 @@ type Goflow struct {
 	Store   gokv.Store
 	Options Options
 	Jobs    map[string](func() *Job)
-	Router  *httprouter.Router
+	Router  *http.ServeMux
 	cron    *cron.Cron
 	jobs    []string
 }
@@ -51,7 +50,7 @@ func New(opts Options) *Goflow {
 		Store:   opts.Store,
 		Options: opts,
 		Jobs:    make(map[string](func() *Job)),
-		Router:  httprouter.New(),
+		Router:  http.NewServeMux(),
 		cron:    c,
 	}
 

@@ -15,8 +15,8 @@
         <div id="schedule-badge-{{ .jobName }}">{{ .schedule }}</div>
       </div>
       <div class="button-container-job-page">
-        <button id="button-toggle-{{ .jobName }}" class="button" onclick="buttonPress('toggle', {{ .jobName }})">Toggle scheduling</button>
-        <button id="button-submit-{{ .jobName }}" class="button" onclick="buttonPress('submit', {{ .jobName }})">Execute</button>
+        <button id="button-toggle-{{ .jobName }}" class="button" onclick="buttonPress('toggle', '{{ .jobName }}')">Toggle scheduling</button>
+        <button id="button-submit-{{ .jobName }}" class="button" onclick="buttonPress('submit', '{{ .jobName }}')">Execute</button>
         <div class="div-select-n-executions">
           <select name="select-n-executions" id="select-n-executions">
             <option value="10">Display last 10 executions</option>
@@ -43,7 +43,7 @@
     </div>
   </body>
 </html>
-<script src="/dist/dist.js"></script>
-<script>goflowUI.graphViz({{ .jobName }})</script>
-<script>updateJobActive({{ .jobName }})</script>
-<script>jobPageEventListener({{ .jobName }})</script>
+<script src="/static/dist/dist.js"></script>
+<script>goflowUI.graphViz('{{ .jobName }}')</script>
+<script>updateJobActive('{{ .jobName }}')</script>
+<script>jobPageEventListener('{{ .jobName }}')</script>

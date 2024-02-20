@@ -4,12 +4,12 @@ function getDropdownValue() {
 }
 
 function indexPageEventListener() {
-  var stream = new EventSource(`/stream`);
+  var stream = new EventSource(`/events?stream=messages`);
   stream.addEventListener("message", indexPageEventHandler)
 }
 
 function jobPageEventListener(job) {
-  var stream = new EventSource(`/stream?jobname=${job}`);
+  var stream = new EventSource(`/events/${job}?stream=messages`);
   stream.addEventListener("message", jobPageEventHandler)
 }
 
