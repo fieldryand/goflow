@@ -1,23 +1,26 @@
 package goflow
 
 import (
-	"io"
+	"encoding/json"
+	"net/http"
 	"time"
 
-	"github.com/gin-gonic/gin"
+	sse "github.com/r3labs/sse/v2"
 )
 
 // Set keepOpen to false when testing--one event will be sent and
 // then the channel is closed by the server.
-func (g *Goflow) stream(keepOpen bool) func(*gin.Context) {
+func (g *Goflow) handleStream(w http.ResponseWriter, r *http.Request) {
+	job := r.PathValue("name")
 
-	return func(c *gin.Context) {
-		job := c.Query("jobname")
+	server := sse.New()
+	server.CreateStream("messages")
 
-		history := make([]*Execution, 0)
+	history := make([]*Execution, 0)
 
-		// periodically push the list of job runs into the stream
-		c.Stream(func(w io.Writer) bool {
+	// periodically push the list of job runs into the stream
+	go func() {
+		for {
 			for jobname := range g.Jobs {
 				executions, _ := readExecutions(g.Store, jobname)
 				for _, e := range executions {
@@ -32,19 +35,27 @@ func (g *Goflow) stream(keepOpen bool) func(*gin.Context) {
 					}
 
 					if !inHistory {
-						if (job != "" && job == e.JobName) || job == "" {
-							c.SSEvent("message", e)
+						if job != "" && job == e.JobName {
+							out, _ := json.Marshal(e)
+							server.Publish("messages", &sse.Event{
+								Data: []byte(out),
+							})
+							history = append(history, e)
+						} else if job == "" {
+							out, _ := json.Marshal(e)
+							server.Publish("messages", &sse.Event{
+								Data: []byte(out),
+							})
 							history = append(history, e)
 						}
 					}
 
 				}
 			}
-
 			time.Sleep(time.Second * 1)
+		}
+	}()
 
-			return keepOpen
-		})
-	}
+	server.ServeHTTP(w, r)
 
 }
