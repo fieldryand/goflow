@@ -4,8 +4,10 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 
 	"github.com/philippgille/gokv/gomap"
+	sse "github.com/r3labs/sse/v2"
 )
 
 var router = exampleRouter()
@@ -173,23 +175,59 @@ func TestJobOverviewRoute(t *testing.T) {
 	}
 }
 
-//func TestStreamRoute(t *testing.T) {
-//	var w = CreateTestResponseRecorder()
-//	req, _ := http.NewRequest("GET", "/stream", nil)
-//	router.ServeHTTP(w, req)
-//
-//	if w.Code != http.StatusOK {
-//		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-//	}
-//
-//	w = CreateTestResponseRecorder()
-//	req, _ = http.NewRequest("GET", "/stream?jobname=example-complex-analytics", nil)
-//	router.ServeHTTP(w, req)
-//
-//	if w.Code != http.StatusOK {
-//		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-//	}
-//}
+func TestStreamRoute(t *testing.T) {
+	g := New(Options{ShowExamples: true})
+	g.execute("example-complex-analytics")
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/events", g.handleStream)
+	server := httptest.NewServer(mux)
+
+	c := sse.NewClient(server.URL + "/events")
+
+	events := make(chan *sse.Event)
+	var cErr error
+	go func() {
+		cErr = c.Subscribe("messages", func(msg *sse.Event) {
+			if msg.Data != nil {
+				events <- msg
+				return
+			}
+		})
+	}()
+
+	if cErr != nil {
+		t.Errorf("subscriber received unexpected error: %d", cErr)
+	}
+}
+
+func TestStreamWithParamRoute(t *testing.T) {
+	g := New(Options{ShowExamples: true})
+	g.execute("example-complex-analytics")
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/events/{name}", g.handleStream)
+	server := httptest.NewServer(mux)
+
+	c := sse.NewClient(server.URL + "/events/example-complex-analytics")
+
+	time.Sleep(1 * time.Second)
+
+	events := make(chan *sse.Event)
+	var cErr error
+	go func() {
+		cErr = c.Subscribe("messages", func(msg *sse.Event) {
+			if msg.Data != nil {
+				events <- msg
+				return
+			}
+		})
+	}()
+
+	if cErr != nil {
+		t.Errorf("subscriber received unexpected error: %d", cErr)
+	}
+}
 
 // check for a race against /stream
 func TestToggleRaceCondition(t *testing.T) {
