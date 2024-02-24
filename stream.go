@@ -32,10 +32,7 @@ func (g *Goflow) stream(keepOpen bool) func(*gin.Context) {
 					}
 
 					if !inHistory {
-						if job != "" && job == e.JobName {
-							c.SSEvent("message", e)
-							history = append(history, e)
-						} else if job == "" {
+						if (job != "" && job == e.JobName) || job == "" {
 							c.SSEvent("message", e)
 							history = append(history, e)
 						}

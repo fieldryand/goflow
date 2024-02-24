@@ -50,7 +50,7 @@ function updateTaskStateCircles(execution) {
   for (i in execution.tasks) {
     const t = execution.tasks[i];
     const s = stateColor(t.state);
-    updateStateCircles("task-table", `${execution.id}-${t}`, t.name, s, execution.submitted);
+    updateStateCircles("task-table", `${execution.id}-${t.name}`, t.name, s, execution.submitted);
   }
 }
 
