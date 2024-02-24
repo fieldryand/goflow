@@ -55,7 +55,7 @@ func TestGetNotFound(t *testing.T) {
 
 func TestGetInvalid(t *testing.T) {
 	client := &http.Client{}
-	_, err := Get{client, ""}.Run()
+	_, err := Get{client, ""}.Run(j.newExecution())
 
 	if err == nil {
 		t.Errorf("Expected an error")
@@ -97,7 +97,7 @@ func TestPostNotFound(t *testing.T) {
 
 func TestPostInvalid(t *testing.T) {
 	client := &http.Client{}
-	_, err := Post{client, "", bytes.NewBuffer([]byte(""))}.Run()
+	_, err := Post{client, "", bytes.NewBuffer([]byte(""))}.Run(j.newExecution())
 
 	if err == nil {
 		t.Errorf("Expected an error")
