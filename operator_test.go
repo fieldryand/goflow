@@ -51,6 +51,15 @@ func TestGetNotFound(t *testing.T) {
 	}
 }
 
+func TestGetInvalid(t *testing.T) {
+	client := &http.Client{}
+	_, err := Get{client, ""}.Run()
+
+	if err == nil {
+		t.Errorf("Expected an error")
+	}
+}
+
 func TestPostSuccess(t *testing.T) {
 	expected := "OK"
 	srv := httptest.NewServer(
@@ -78,6 +87,15 @@ func TestPostNotFound(t *testing.T) {
 
 	client := &http.Client{}
 	_, err := Post{client, srv.URL, bytes.NewBuffer([]byte(""))}.Run()
+
+	if err == nil {
+		t.Errorf("Expected an error")
+	}
+}
+
+func TestPostInvalid(t *testing.T) {
+	client := &http.Client{}
+	_, err := Post{client, "", bytes.NewBuffer([]byte(""))}.Run()
 
 	if err == nil {
 		t.Errorf("Expected an error")

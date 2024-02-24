@@ -16,48 +16,34 @@ func (g *Goflow) stream(keepOpen bool) func(*gin.Context) {
 
 		history := make([]*execution, 0)
 
-		// open a channel for live executions
-		chanStream := make(chan *execution)
-
 		// periodically push the list of job runs into the stream
-		go func() {
-			defer close(chanStream)
-			for {
-				for jobname := range g.Jobs {
-					executions, _ := readExecutions(g.Store, jobname)
-					for _, e := range executions {
-
-						// make sure it wasn't already sent
-						inHistory := false
-
-						for _, h := range history {
-							if e.ID == h.ID && e.ModifiedTimestamp == h.ModifiedTimestamp {
-								inHistory = true
-							}
-						}
-
-						if !inHistory {
-							if job != "" && job == e.JobName {
-								chanStream <- e
-								history = append(history, e)
-							} else if job == "" {
-								chanStream <- e
-								history = append(history, e)
-							}
-						}
-
-					}
-				}
-				time.Sleep(time.Second * 1)
-			}
-		}()
-
 		c.Stream(func(w io.Writer) bool {
-			if msg, ok := <-chanStream; ok {
-				c.SSEvent("message", msg)
-				return keepOpen
+			for jobname := range g.Jobs {
+				executions, _ := readExecutions(g.Store, jobname)
+				for _, e := range executions {
+
+					// make sure it wasn't already sent
+					inHistory := false
+
+					for _, h := range history {
+						if e.ID == h.ID && e.ModifiedTimestamp == h.ModifiedTimestamp {
+							inHistory = true
+						}
+					}
+
+					if !inHistory {
+						if (job != "" && job == e.JobName) || job == "" {
+							c.SSEvent("message", e)
+							history = append(history, e)
+						}
+					}
+
+				}
 			}
-			return false
+
+			time.Sleep(time.Second * 1)
+
+			return keepOpen
 		})
 	}
 
