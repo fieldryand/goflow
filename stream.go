@@ -2,25 +2,35 @@ package goflow
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"time"
-
-	sse "github.com/r3labs/sse/v2"
 )
 
 // Set keepOpen to false when testing--one event will be sent and
 // then the channel is closed by the server.
 func (g *Goflow) handleStream(w http.ResponseWriter, r *http.Request) {
 	job := r.PathValue("name")
+	keepOpen := r.URL.Query().Get("keepopen")
 
-	server := sse.New()
-	server.CreateStream("messages")
+	flusher, err := w.(http.Flusher)
+	if !err {
+		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
 
 	history := make([]*Execution, 0)
 
-	// periodically push the list of job runs into the stream
-	go func() {
-		for {
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		default:
 			for jobname := range g.Jobs {
 				executions, _ := readExecutions(g.Store, jobname)
 				for _, e := range executions {
@@ -35,27 +45,24 @@ func (g *Goflow) handleStream(w http.ResponseWriter, r *http.Request) {
 					}
 
 					if !inHistory {
-						if job != "" && job == e.JobName {
+						if (job != "" && job == e.JobName) || job == "" {
 							out, _ := json.Marshal(e)
-							server.Publish("messages", &sse.Event{
-								Data: []byte(out),
-							})
-							history = append(history, e)
-						} else if job == "" {
-							out, _ := json.Marshal(e)
-							server.Publish("messages", &sse.Event{
-								Data: []byte(out),
-							})
+							w.Write([]byte(fmt.Sprintf("data: %s\n", out)))
+							w.Write([]byte("\n"))
+							flusher.Flush()
 							history = append(history, e)
 						}
 					}
 
 				}
 			}
+
+			if keepOpen == "false" {
+				return
+			}
+
 			time.Sleep(time.Second * 1)
 		}
-	}()
-
-	server.ServeHTTP(w, r)
+	}
 
 }
