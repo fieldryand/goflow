@@ -38,13 +38,15 @@ func (o Get) Run(e *Execution) (any, error) {
 	res, err := o.Client.Get(o.URL)
 	if err != nil {
 		return nil, err
-	} else if res.StatusCode < 200 || res.StatusCode > 299 {
-		return nil, fmt.Errorf("Received status code %v", res.StatusCode)
-	} else {
-		content, err := io.ReadAll(res.Body)
-		res.Body.Close()
-		return string(content), err
 	}
+	defer res.Body.Close()
+
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return nil, fmt.Errorf("Received status code %v", res.StatusCode)
+	}
+
+	content, err := io.ReadAll(res.Body)
+	return string(content), err
 }
 
 // Post makes a POST request.
@@ -60,11 +62,13 @@ func (o Post) Run(e *Execution) (any, error) {
 	res, err := o.Client.Post(o.URL, "application/json", o.Body)
 	if err != nil {
 		return nil, err
-	} else if res.StatusCode < 200 || res.StatusCode > 299 {
-		return nil, fmt.Errorf("Received status code %v", res.StatusCode)
-	} else {
-		content, err := io.ReadAll(res.Body)
-		res.Body.Close()
-		return string(content), err
 	}
+	defer res.Body.Close()
+
+	if res.StatusCode < 200 || res.StatusCode > 299 {
+		return nil, fmt.Errorf("Received status code %v", res.StatusCode)
+	}
+
+	content, err := io.ReadAll(res.Body)
+	return string(content), err
 }

@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/philippgille/gokv/gomap"
-	sse "github.com/r3labs/sse/v2"
 )
 
 var router = exampleRouter()
@@ -176,56 +175,23 @@ func TestJobOverviewRoute(t *testing.T) {
 }
 
 func TestStreamRoute(t *testing.T) {
-	g := New(Options{ShowExamples: true})
-	g.execute("example-complex-analytics")
+	var w = CreateTestResponseRecorder()
+	req, _ := http.NewRequest("GET", "/events?stream=messages&keepopen=false", nil)
+	router.ServeHTTP(w, req)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/events", g.handleStream)
-	server := httptest.NewServer(mux)
-
-	c := sse.NewClient(server.URL + "/events")
-
-	events := make(chan *sse.Event)
-	var cErr error
-	go func() {
-		cErr = c.Subscribe("messages", func(msg *sse.Event) {
-			if msg.Data != nil {
-				events <- msg
-				return
-			}
-		})
-	}()
-
-	if cErr != nil {
-		t.Errorf("subscriber received unexpected error: %d", cErr)
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
-}
 
-func TestStreamWithParamRoute(t *testing.T) {
-	g := New(Options{ShowExamples: true})
-	g.execute("example-complex-analytics")
+	w = CreateTestResponseRecorder()
+	req, _ = http.NewRequest("GET", "/events/jobname=example-complex-analytics?stream=messages&keepopen=false", nil)
+	router.ServeHTTP(w, req)
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/events/{name}", g.handleStream)
-	server := httptest.NewServer(mux)
+	// wait for all goroutines to exit
+	time.Sleep(2 * time.Second)
 
-	c := sse.NewClient(server.URL + "/events/example-complex-analytics")
-
-	time.Sleep(1 * time.Second)
-
-	events := make(chan *sse.Event)
-	var cErr error
-	go func() {
-		cErr = c.Subscribe("messages", func(msg *sse.Event) {
-			if msg.Data != nil {
-				events <- msg
-				return
-			}
-		})
-	}()
-
-	if cErr != nil {
-		t.Errorf("subscriber received unexpected error: %d", cErr)
+	if w.Code != http.StatusOK {
+		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 }
 

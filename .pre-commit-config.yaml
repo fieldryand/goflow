@@ -1,6 +1,6 @@
 repos:
         - repo: https://github.com/golangci/golangci-lint
-          rev: v1.53.2
+          rev: v1.56.2
           hooks:
                   - id: golangci-lint
         - repo: https://github.com/dnephin/pre-commit-golang
