@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/fieldryand/goflow/v2"
+	"github.com/fieldryand/goflow/v3"
 )
 
 func main() {
