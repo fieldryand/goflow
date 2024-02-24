@@ -1,7 +1,7 @@
 package main
 
 //import (
-//	"github.com/fieldryand/goflow/v2"
+//	"github.com/fieldryand/goflow/v3"
 //	"github.com/philippgille/gokv/encoding"
 //	"github.com/philippgille/gokv/postgresql"
 //)
