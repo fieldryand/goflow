@@ -39,7 +39,7 @@ func (g *Goflow) handleStream(w http.ResponseWriter, r *http.Request) {
 					inHistory := false
 
 					for _, h := range history {
-						if e.ID == h.ID && e.ModifiedTimestamp == h.ModifiedTimestamp {
+						if e.ID == h.ID && e.ModifiedTs == h.ModifiedTs {
 							inHistory = true
 						}
 					}

@@ -75,16 +75,16 @@ func (g *Goflow) handleSubmittedJobs(w http.ResponseWriter, r *http.Request) {
 	_, ok := g.Jobs[name]
 
 	var msg struct {
-		Job       string `json:"job"`
-		Success   bool   `json:"success"`
-		Submitted string `json:"submitted"`
+		Job     string `json:"job"`
+		Success bool   `json:"success"`
+		StartTs string `json:"startTs"`
 	}
 	msg.Job = name
 
 	if ok {
 		g.Execute(name)
 		msg.Success = true
-		msg.Submitted = time.Now().UTC().Format(time.RFC3339Nano)
+		msg.StartTs = time.Now().UTC().Format(time.RFC3339Nano)
 		out, _ := json.Marshal(msg)
 		w.Write(out)
 	} else {
