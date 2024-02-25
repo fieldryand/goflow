@@ -4,19 +4,19 @@ body {
 
 .job-table {
   display: grid;
-  grid-template-columns: 1fr 1fr 2fr 0.5fr;
+  grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 }
 
 .job-table > div {
   padding: .5em
 }
 
-.job-table>div:nth-child(-n+5) {
+.job-table>div:nth-child(-n+6) {
   background-color: mediumslateblue;
   color:white;
 }
 
-.job-table>div:nth-child(8n+5), .job-table>div:nth-child(8n+6), .job-table>div:nth-child(8n+7), .job-table>div:nth-child(8n+8) {
+.job-table>div:nth-child(10n+6), .job-table>div:nth-child(10n+7), .job-table>div:nth-child(10n+8), .job-table>div:nth-child(10n+9), .job-table>div:nth-child(10n+10) {
   background-color: whitesmoke
 }
 
