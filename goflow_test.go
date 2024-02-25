@@ -223,3 +223,12 @@ func TestInvalidJobName(t *testing.T) {
 		t.Errorf("Expected error adding a job with an invalid name")
 	}
 }
+
+func TestExecutionOfNonexistentJob(t *testing.T) {
+	g := New(Options{})
+	_, err := g.Execute("job")
+
+	if err == nil {
+		t.Errorf("Expected error executing a nonexistent job")
+	}
+}

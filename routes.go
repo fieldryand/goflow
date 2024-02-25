@@ -82,7 +82,7 @@ func (g *Goflow) handleSubmittedJobs(w http.ResponseWriter, r *http.Request) {
 	msg.Job = name
 
 	if ok {
-		g.execute(name)
+		g.Execute(name)
 		msg.Success = true
 		msg.Submitted = time.Now().UTC().Format(time.RFC3339Nano)
 		out, _ := json.Marshal(msg)

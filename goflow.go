@@ -3,6 +3,7 @@ package goflow
 
 import (
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -128,11 +129,15 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 	return true, nil
 }
 
-// execute tells the engine to run a given job in a new goroutine.
-func (g *Goflow) execute(job string) uuid.UUID {
+// Execute tells the engine to run a given job in a new goroutine.
+func (g *Goflow) Execute(job string) (*uuid.UUID, error) {
 
-	// create job
-	j := g.Jobs[job]()
+	jobFunc, ok := g.Jobs[job]
+	if !ok {
+		return nil, fmt.Errorf("job %s does not exist", job)
+	}
+
+	j := jobFunc()
 
 	// create and persist a new execution
 	e := j.newExecution()
@@ -142,7 +147,7 @@ func (g *Goflow) execute(job string) uuid.UUID {
 	// start running the job
 	go j.run(g.Store, e)
 
-	return e.ID
+	return &e.ID, nil
 }
 
 // Run runs the webserver.
