@@ -226,7 +226,7 @@ func (j *Job) run(store gokv.Store, e *Execution) error {
 
 		// Sync to store
 		e.State = j.loadState()
-		e.ModifiedTimestamp = time.Now().UTC().Format(time.RFC3339Nano)
+		e.ModifiedTs = time.Now().UTC()
 		e = syncResultToExecution(e, write.key, write.val, write.result, write.err)
 		store.Set(e.ID.String(), e)
 

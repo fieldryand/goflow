@@ -9,12 +9,12 @@ import (
 
 // Execution of a job.
 type Execution struct {
-	ID                uuid.UUID       `json:"id"`
-	JobName           string          `json:"job"`
-	StartedAt         string          `json:"submitted"`
-	ModifiedTimestamp string          `json:"modifiedTimestamp"`
-	State             state           `json:"state"`
-	Tasks             []TaskExecution `json:"tasks"`
+	ID         uuid.UUID       `json:"id"`
+	JobName    string          `json:"job"`
+	StartTs    time.Time       `json:"startTs"`
+	ModifiedTs time.Time       `json:"modifiedTs"`
+	State      state           `json:"state"`
+	Tasks      []TaskExecution `json:"tasks"`
 }
 
 // TaskExecution represents the execution of a task.
@@ -33,12 +33,12 @@ func (j *Job) newExecution() *Execution {
 		taskExecutions = append(taskExecutions, taskrun)
 	}
 	return &Execution{
-		ID:                uuid.New(),
-		JobName:           j.Name,
-		StartedAt:         time.Now().UTC().Format(time.RFC3339Nano),
-		ModifiedTimestamp: time.Now().UTC().Format(time.RFC3339Nano),
-		State:             None,
-		Tasks:             taskExecutions}
+		ID:         uuid.New(),
+		JobName:    j.Name,
+		StartTs:    time.Now().UTC(),
+		ModifiedTs: time.Now().UTC(),
+		State:      None,
+		Tasks:      taskExecutions}
 }
 
 // Persist a new execution.

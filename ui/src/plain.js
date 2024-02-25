@@ -16,7 +16,7 @@ function jobPageEventListener(job) {
 function indexPageEventHandler(message) {
   const d = JSON.parse(message.data);
   const s = stateColor(d.state);
-  updateStateCircles("job-table", d.id, d.job, s, d.submitted);
+  updateStateCircles("job-table", d.id, d.job, s, d.startTs);
   updateLastStart(d);
 }
 
@@ -57,7 +57,7 @@ function updateTaskStateCircles(execution) {
   for (i in execution.tasks) {
     const t = execution.tasks[i];
     const s = stateColor(t.state);
-    updateStateCircles("task-table", `${execution.id}-${t.name}`, t.name, s, execution.submitted);
+    updateStateCircles("task-table", `${execution.id}-${t.name}`, t.name, s, execution.startTs);
   }
 }
 
@@ -66,7 +66,7 @@ function updateLastStart(execution) {
     dateStyle: 'medium',
     timeStyle: 'medium'
   };
-  const startTs = new Date(execution.submitted);
+  const startTs = new Date(execution.startTs);
   const formattedTs = startTs.toLocaleString(undefined, options);
   const job = execution.job;
   document.getElementById(`last-start-${job}`).innerHTML = formattedTs;
@@ -88,7 +88,7 @@ function updateGraphViz(execution) {
 }
 
 function updateLastRunTs(execution) {
-  const lastExecutionTs = execution.submitted;
+  const lastExecutionTs = execution.startTs;
   const lastExecutionTsHTML = document.getElementById("last-execution-ts-wrapper").innerHTML;
   const newHTML = lastExecutionTsHTML.replace(/.*/, `Last run: ${lastExecutionTs}`);
   document.getElementById("last-execution-ts-wrapper").innerHTML = newHTML;
