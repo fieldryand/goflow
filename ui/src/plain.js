@@ -17,6 +17,7 @@ function indexPageEventHandler(message) {
   const d = JSON.parse(message.data);
   const s = stateColor(d.state);
   updateStateCircles("job-table", d.id, d.job, s, d.submitted);
+  updateLastStart(d);
 }
 
 function jobPageEventHandler(message) {
@@ -27,10 +28,9 @@ function jobPageEventHandler(message) {
 }
 
 function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamp) {
-  const options = { 
-    hour: '2-digit',  
-    minute: '2-digit',
-    second: '2-digit'
+  const options = {
+    dateStyle: 'medium',
+    timeStyle: 'medium'
   };
   const limit = getDropdownValue();
   const wrapper = document.getElementById(wrapperId);
@@ -59,6 +59,17 @@ function updateTaskStateCircles(execution) {
     const s = stateColor(t.state);
     updateStateCircles("task-table", `${execution.id}-${t.name}`, t.name, s, execution.submitted);
   }
+}
+
+function updateLastStart(execution) {
+  const options = {
+    dateStyle: 'medium',
+    timeStyle: 'medium'
+  };
+  const startTs = new Date(execution.submitted);
+  const formattedTs = startTs.toLocaleString(undefined, options);
+  const job = execution.job;
+  document.getElementById(`last-start-${job}`).innerHTML = formattedTs;
 }
 
 function updateGraphViz(execution) {

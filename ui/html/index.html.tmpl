@@ -26,6 +26,7 @@
       <div class="job-table" id="job-table">
         <div>Job</div>
         <div>Schedule</div>
+        <div>Last execution time</div>
         <div>State</div>
         <div></div>
         {{ range .jobs }}
@@ -33,6 +34,7 @@
         <div>
           <div id="schedule-badge-{{ .Name }}" class="schedule-badge-active-{{ .Active }}">{{ .Schedule }}</div>
         </div>
+        <div id="last-start-{{ .Name }}"></div>
         <div class="status-wrapper" id="{{ .Name }}"></div>
         <div class="button-container">
           <button id="button-toggle-{{ .Name }}" class="button" onclick="buttonPress('toggle', '{{ .Name }}')">Toggle scheduling</button>
