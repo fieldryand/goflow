@@ -33,10 +33,12 @@
     <div class="job-container">
       <div class="task-table", id="task-table">
         <div>Task</div>
+        <div>Last Execution Time</div>
         <div>State</div>
         <div>Result</div>
         {{ range $ix, $taskName := .taskNames }}
         <div>{{ $taskName }}</div>
+        <div id="last-start-{{ $taskName }}"></div>
         <div class="status-wrapper" id="{{ $taskName }}"></div>
         <div id="last-result-{{ $taskName }}"></div>
         {{ end }}
