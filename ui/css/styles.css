@@ -22,19 +22,19 @@ body {
 
 .task-table {
   display: grid;
-  grid-template-columns: max-content auto;
+  grid-template-columns: 1fr 1fr 1fr;
 }
 
 .task-table > div {
   padding: .5em
 }
 
-.task-table>div:nth-child(-n+2) {
+.task-table>div:nth-child(-n+3) {
   background-color: mediumslateblue;
   color:white;
 }
 
-.task-table>div:nth-child(4n+3), .task-table>div:nth-child(4n+4) {
+.task-table>div:nth-child(6n+4), .task-table>div:nth-child(6n+5), .task-table>div:nth-child(6n+6) {
   background-color: whitesmoke
 }
 
