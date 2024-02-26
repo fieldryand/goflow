@@ -28,6 +28,7 @@ function indexPageEventHandler(message) {
 function jobPageEventHandler(message) {
   const d = JSON.parse(message.data);
   updateTaskStateCircles(d);
+  updateLastResult(d);
 }
 
 function diagramPageEventHandler(message) {
@@ -79,6 +80,13 @@ function updateLastStart(execution) {
   const formattedTs = startTs.toLocaleString(undefined, options);
   const job = execution.job;
   document.getElementById(`last-start-${job}`).innerHTML = formattedTs;
+}
+
+function updateLastResult(execution) {
+  for (i in execution.tasks) {
+    const t = execution.tasks[i];
+    document.getElementById(`last-result-${t.name}`).innerHTML = t.result;
+  }
 }
 
 function updateGraphViz(execution) {
