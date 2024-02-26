@@ -13,6 +13,11 @@ function jobPageEventListener(job) {
   stream.addEventListener("message", jobPageEventHandler)
 }
 
+function diagramPageEventListener(job) {
+  var stream = new EventSource(`/events/${job}?stream=messages`);
+  stream.addEventListener("message", diagramPageEventHandler)
+}
+
 function indexPageEventHandler(message) {
   const d = JSON.parse(message.data);
   const s = stateColor(d.state);
@@ -23,8 +28,12 @@ function indexPageEventHandler(message) {
 function jobPageEventHandler(message) {
   const d = JSON.parse(message.data);
   updateTaskStateCircles(d);
-  updateGraphViz(d);
+}
+
+function diagramPageEventHandler(message) {
+  const d = JSON.parse(message.data);
   updateLastRunTs(d);
+  updateGraphViz(d);
 }
 
 function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamp) {
@@ -88,9 +97,14 @@ function updateGraphViz(execution) {
 }
 
 function updateLastRunTs(execution) {
-  const lastExecutionTs = execution.startTs;
+  const options = {
+    dateStyle: 'medium',
+    timeStyle: 'medium'
+  };
+  const startTs = new Date(execution.startTs);
+  const formattedTs = startTs.toLocaleString(undefined, options);
   const lastExecutionTsHTML = document.getElementById("last-execution-ts-wrapper").innerHTML;
-  const newHTML = lastExecutionTsHTML.replace(/.*/, `Last run: ${lastExecutionTs}`);
+  const newHTML = lastExecutionTsHTML.replace(/.*/, `Last run: ${formattedTs}`);
   document.getElementById("last-execution-ts-wrapper").innerHTML = newHTML;
 }
 

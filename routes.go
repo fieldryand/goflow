@@ -16,6 +16,7 @@ func (g *Goflow) addTestRoute() {
 	g.Router.HandleFunc("GET /{$}", g.handleRedirect)
 	g.Router.HandleFunc("GET /ui", g.handleRoot)
 	g.Router.HandleFunc("GET /ui/jobs/{name}", g.handleJobsPage)
+	g.Router.HandleFunc("GET /ui/diagrams/{name}", g.handleDiagramsPage)
 	g.Router.HandleFunc("/events", g.handleStream)
 	g.Router.HandleFunc("/events/{name}", g.handleStream)
 	g.Router.Handle("GET /static/", http.StripPrefix("/static/", http.FileServer(http.Dir(g.Options.UIPath))))
@@ -168,6 +169,23 @@ func (g *Goflow) handleJobsPage(w http.ResponseWriter, r *http.Request) {
 
 	if ok {
 		tmpl, _ := template.ParseFiles("ui/html/job.html.tmpl")
+		tmpl.Execute(w,
+			map[string]any{
+				"jobName":   name,
+				"taskNames": jobFn().tasks,
+				"schedule":  g.Jobs[name]().Schedule,
+			})
+	} else {
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+	}
+}
+
+func (g *Goflow) handleDiagramsPage(w http.ResponseWriter, r *http.Request) {
+	name := r.PathValue("name")
+	jobFn, ok := g.Jobs[name]
+
+	if ok {
+		tmpl, _ := template.ParseFiles("ui/html/diagram.html.tmpl")
 		tmpl.Execute(w,
 			map[string]any{
 				"jobName":   name,
