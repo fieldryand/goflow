@@ -28,6 +28,7 @@ function indexPageEventHandler(message) {
 function jobPageEventHandler(message) {
   const d = JSON.parse(message.data);
   updateTaskStateCircles(d);
+  updateLastTaskStart(d);
   updateLastResult(d);
 }
 
@@ -80,6 +81,22 @@ function updateLastStart(execution) {
   const formattedTs = startTs.toLocaleString(undefined, options);
   const job = execution.job;
   document.getElementById(`last-start-${job}`).innerHTML = formattedTs;
+}
+
+function updateLastTaskStart(execution) {
+  const options = {
+    dateStyle: 'medium',
+    timeStyle: 'medium'
+  };
+  for (i in execution.tasks) {
+    const t = execution.tasks[i];
+    const startTs = new Date(t.startTs);
+    var formattedTs = ""
+    if (startTs.getUTCFullYear() > 1) {
+      formattedTs = startTs.toLocaleString(undefined, options);
+    }
+    document.getElementById(`last-start-${t.name}`).innerHTML = formattedTs;
+  }
 }
 
 function updateLastResult(execution) {

@@ -19,17 +19,24 @@ type Execution struct {
 
 // TaskExecution represents the execution of a task.
 type TaskExecution struct {
-	Name     string `json:"name"`
-	State    state  `json:"state"`
-	Result   any    `json:"result"`
-	Error    string `json:"error"`
-	Operator any    `json:"operator"`
+	Name     string    `json:"name"`
+	State    state     `json:"state"`
+	StartTs  time.Time `json:"startTs"`
+	Result   any       `json:"result"`
+	Error    string    `json:"error"`
+	Operator any       `json:"operator"`
 }
 
 func (j *Job) newExecution() *Execution {
 	taskExecutions := make([]TaskExecution, 0)
 	for _, task := range j.Tasks {
-		taskrun := TaskExecution{task.Name, None, nil, "", task.Operator}
+		taskrun := TaskExecution{
+			Name:     task.Name,
+			State:    None,
+			StartTs:  time.Time{},
+			Result:   nil,
+			Error:    "",
+			Operator: task.Operator}
 		taskExecutions = append(taskExecutions, taskrun)
 	}
 	return &Execution{
@@ -98,6 +105,18 @@ func syncResultToExecution(e *Execution, task string, s state, r any, err error)
 			e.Tasks[ix].State = s
 			e.Tasks[ix].Result = r
 			e.Tasks[ix].Error = errString
+		}
+	}
+
+	return e
+}
+
+// Sync the starting timestamp of a task to an execution
+func syncStartTsToExecution(e *Execution, task string) *Execution {
+
+	for ix, t := range e.Tasks {
+		if t.Name == task {
+			e.Tasks[ix].StartTs = time.Now().UTC()
 		}
 	}
 
