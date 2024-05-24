@@ -86,7 +86,7 @@ func (j *Job) storeTaskState(task string, value state, result any, err error) {
 type writeOp struct {
 	key    string
 	val    state
-	result any
+	result string
 	err    error
 }
 
