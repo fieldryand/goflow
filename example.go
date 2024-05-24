@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"math/rand"
-	"net/http"
 )
 
 // Crunch some numbers
@@ -15,10 +14,6 @@ func complexAnalyticsJob() *Job {
 		Active:   false,
 	}
 
-	j.AddTask(&Task{
-		Name:     "get-google",
-		Operator: Get{Client: &http.Client{}, URL: "https://google.com"},
-	})
 	j.AddTask(&Task{
 		Name:     "sleep-one",
 		Operator: Command{Cmd: "sleep", Args: []string{"1"}},
@@ -62,7 +57,6 @@ func complexAnalyticsJob() *Job {
 		TriggerRule: "allDone",
 	})
 
-	j.SetDownstream("get-google", "add-one-one")
 	j.SetDownstream("sleep-one", "add-one-one")
 	j.SetDownstream("add-one-one", "sleep-two")
 	j.SetDownstream("sleep-two", "add-two-four")
