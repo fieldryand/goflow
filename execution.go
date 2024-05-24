@@ -1,6 +1,7 @@
 package goflow
 
 import (
+	"reflect"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,7 +37,7 @@ func (j *Job) newExecution() *Execution {
 			StartTs:  time.Time{},
 			Result:   "",
 			Error:    "",
-			Operator: task.Operator}
+			Operator: reflect.TypeOf(task.Operator).String()}
 		taskExecutions = append(taskExecutions, taskrun)
 	}
 	return &Execution{
