@@ -22,7 +22,7 @@ type TaskExecution struct {
 	Name     string    `json:"name"`
 	State    state     `json:"state"`
 	StartTs  time.Time `json:"startTs"`
-	Result   any       `json:"result"`
+	Result   string    `json:"result"`
 	Error    string    `json:"error"`
 	Operator any       `json:"operator"`
 }
@@ -34,7 +34,7 @@ func (j *Job) newExecution() *Execution {
 			Name:     task.Name,
 			State:    None,
 			StartTs:  time.Time{},
-			Result:   nil,
+			Result:   "",
 			Error:    "",
 			Operator: task.Operator}
 		taskExecutions = append(taskExecutions, taskrun)
@@ -92,7 +92,7 @@ func readExecutions(s gokv.Store, j string) ([]*Execution, error) {
 }
 
 // Sync the task result and state to an execution
-func syncResultToExecution(e *Execution, task string, s state, r any, err error) *Execution {
+func syncResultToExecution(e *Execution, task string, s state, r string, err error) *Execution {
 
 	// if there is an error, convert it to a string
 	errString := ""

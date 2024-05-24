@@ -48,7 +48,7 @@ func (t *Task) run(e *Execution, writes chan writeOp) error {
 }
 
 func (t *Task) skip(writes chan writeOp) error {
-	writes <- writeOp{t.Name, Skipped, nil, nil}
+	writes <- writeOp{t.Name, Skipped, "", nil}
 	return nil
 }
 
