@@ -10,7 +10,7 @@ import (
 // An Operator implements a Run() method. When a job executes a task that
 // uses the operator, the Run() method is called.
 type Operator interface {
-	Run(*Execution) (any, error)
+	Run(*Execution) (string, error)
 }
 
 // Command executes a shell command.
@@ -21,7 +21,7 @@ type Command struct {
 
 // Run passes the command and arguments to exec.Command and captures the
 // output.
-func (o Command) Run(e *Execution) (any, error) {
+func (o Command) Run(e *Execution) (string, error) {
 	out, err := exec.Command(o.Cmd, o.Args...).Output()
 	return string(out), err
 }
@@ -34,15 +34,15 @@ type Get struct {
 
 // Run sends the request and returns an error if the status code is
 // outside the 2xx range.
-func (o Get) Run(e *Execution) (any, error) {
+func (o Get) Run(e *Execution) (string, error) {
 	res, err := o.Client.Get(o.URL)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return nil, fmt.Errorf("Received status code %v", res.StatusCode)
+		return "", fmt.Errorf("Received status code %v", res.StatusCode)
 	}
 
 	content, err := io.ReadAll(res.Body)
@@ -58,15 +58,15 @@ type Post struct {
 
 // Run sends the request and returns an error if the status code is
 // outside the 2xx range.
-func (o Post) Run(e *Execution) (any, error) {
+func (o Post) Run(e *Execution) (string, error) {
 	res, err := o.Client.Post(o.URL, "application/json", o.Body)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	defer res.Body.Close()
 
 	if res.StatusCode < 200 || res.StatusCode > 299 {
-		return nil, fmt.Errorf("Received status code %v", res.StatusCode)
+		return "", fmt.Errorf("Received status code %v", res.StatusCode)
 	}
 
 	content, err := io.ReadAll(res.Body)

@@ -2,8 +2,9 @@ package goflow
 
 import (
 	"errors"
-	"log"
+	"fmt"
 	"math/rand"
+	"net/http"
 )
 
 // Crunch some numbers
@@ -14,6 +15,10 @@ func complexAnalyticsJob() *Job {
 		Active:   false,
 	}
 
+	j.AddTask(&Task{
+		Name:     "get-google",
+		Operator: Get{Client: &http.Client{}, URL: "https://google.com"},
+	})
 	j.AddTask(&Task{
 		Name:     "sleep-one",
 		Operator: Command{Cmd: "sleep", Args: []string{"1"}},
@@ -57,6 +62,7 @@ func complexAnalyticsJob() *Job {
 		TriggerRule: "allDone",
 	})
 
+	j.SetDownstream("get-google", "add-one-one")
 	j.SetDownstream("sleep-one", "add-one-one")
 	j.SetDownstream("add-one-one", "sleep-two")
 	j.SetDownstream("sleep-two", "add-two-four")
@@ -77,14 +83,14 @@ type randomFailure struct{ n int }
 var r = rand.New(rand.NewSource(1))
 
 // Run implements failures at random intervals.
-func (o randomFailure) Run(e *Execution) (any, error) {
+func (o randomFailure) Run(e *Execution) (string, error) {
 	x := r.Intn(o.n)
 
 	if x == o.n-1 {
-		return nil, errors.New("unlucky")
+		return "randomly failed", errors.New("unlucky")
 	}
 
-	return x, nil
+	return fmt.Sprintf("the result is %v", x), nil
 }
 
 func randomFailureJob() *Job {
@@ -100,7 +106,7 @@ type summation struct {
 }
 
 // Run performs summation.
-func (o summation) Run(e *Execution) (any, error) {
+func (o summation) Run(e *Execution) (string, error) {
 
 	result := o.Value
 
@@ -112,9 +118,7 @@ func (o summation) Run(e *Execution) (any, error) {
 		}
 	}
 
-	log.Printf("sum value=%v", result)
-
-	return result, nil
+	return fmt.Sprintf("sum value=%v", result), nil
 }
 
 func summationJob() *Job {
