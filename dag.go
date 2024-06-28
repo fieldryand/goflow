@@ -69,10 +69,11 @@ func (d dag) validate() bool {
 		} else {
 			node := popped.(string)
 			l = append(l, node)
-			for ds := range d {
-				degree[ds]--
-				if degree[ds] == 0 {
-					deq.PushFront(ds)
+			dsNodes := d[node]
+			for _, dsNode := range dsNodes {
+				degree[dsNode]--
+				if degree[dsNode] == 0 {
+					deq.PushFront(dsNode)
 				}
 			}
 		}
