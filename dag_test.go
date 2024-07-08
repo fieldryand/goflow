@@ -36,6 +36,8 @@ func TestDag(t *testing.T) {
 
 	e.addNode("a")
 	e.addNode("b")
+	e.addNode("c")
+	e.setDownstream("c", "a")
 	e.setDownstream("a", "b")
 	e.setDownstream("b", "a")
 
