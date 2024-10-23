@@ -111,7 +111,8 @@ function updateGraphViz(execution) {
   for (i in tasks) {
     if (document.getElementsByClassName("output")) {
       try {
-        const rect = document.getElementById("node-" + tasks[i].name).querySelector("rect");
+        const taskElem = document.querySelector("[data-id=\""+tasks[i].name+"\"]");
+	let rect = taskElem.querySelector("rect");
         rect.setAttribute("style", "stroke-width: 2; stroke: " + stateColor(tasks[i].state));
       }
       catch(err) {

@@ -4,6 +4,7 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <title>Goflow</title>
     <script src="/static/src/plain.js"></script>
+    <script type="module" src="/static/src/graph.js"></script>
   </head>
   <body>
     <div class="top-nav">
@@ -23,14 +24,11 @@
       </div>
     </div>
     <div class="job-container">
-      <div class="graph-container">
-        <div id="last-execution-ts-wrapper">Last run:</div>
-        <svg class="graph" width="100%"><g/></svg>
+      <div id="last-execution-ts-wrapper">Last run:</div>
+      <div class="graph-container" data-job="{{ .jobName }}">
       </div>
     </div>
   </body>
 </html>
-<script src="/static/dist/dist.js"></script>
-<script>goflowUI.graphViz('{{ .jobName }}')</script>
 <script>updateJobActive('{{ .jobName }}')</script>
 <script>diagramPageEventListener('{{ .jobName }}')</script>
