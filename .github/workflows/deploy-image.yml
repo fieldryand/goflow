@@ -30,12 +30,6 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Set up Node
-        uses: actions/setup-node@v2
-
-      - name: Compile UI
-        run: cd ui && npm install && npm run build
-
       - name: Build goflow-example
         run: go build example/goflow-example.go
 
