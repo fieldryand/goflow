@@ -23,7 +23,13 @@ async function drawGraph() {
   }
 
   const { svg } = await mermaid.render("graph", graphDefinition);
-  element.innerHTML = svg;
+  element.innerHTML = svg.replace(/[ ]*max-width:[ 0-9\.]*px;/i , '');
+  var panZoomTiger = svgPanZoom('#graph', {
+    zoomEnabled: true,
+    controlIconsEnabled: true,
+    fit: true,
+    center: true
+  })
 };
 
 drawGraph();
