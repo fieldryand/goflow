@@ -7,8 +7,8 @@ name: Create and publish a Docker image
 
 on:
   push:
-    branch:
-      - "v3"
+    branches:
+      - v3
     tags:
       - "v*.*.*"
 
