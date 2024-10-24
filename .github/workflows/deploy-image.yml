@@ -7,8 +7,6 @@ name: Create and publish a Docker image
 
 on:
   push:
-    branches:
-      - v3
     tags:
       - "v*.*.*"
 
@@ -60,6 +58,6 @@ jobs:
         run: tar -czvf goflow-ui.tar.gz ui
 
       - name: Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: goflow-ui.tar.gz
