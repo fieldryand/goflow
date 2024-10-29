@@ -15,7 +15,7 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
       - name: golangci-lint
         uses: golangci/golangci-lint-action@v6
         with:
@@ -26,7 +26,7 @@ jobs:
           # working-directory: somedir
 
           # Optional: golangci-lint command line arguments.
-          args: --exclude-dirs-use-default false
+          args: --exclude-dirs examples
 
           # Optional: show only new issues if it's a pull request. The default value is `false`.
           # only-new-issues: true
