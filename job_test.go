@@ -1,6 +1,7 @@
 package goflow
 
 import (
+	"context"
 	"testing"
 
 	"github.com/philippgille/gokv/gomap"
@@ -9,61 +10,62 @@ import (
 func TestJob(t *testing.T) {
 	j := &Job{Name: "example", Schedule: "* * * * *"}
 
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "add-one-one",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "sleep-two",
 		Operator: Command{Cmd: "sleep", Args: []string{"2"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "add-two-four",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "add-three-four",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:       "whoops-with-constant-delay",
 		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    5,
 		RetryDelay: ConstantDelay{1},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:       "whoops-with-exponential-backoff",
 		Operator:   Command{Cmd: "whoops", Args: []string{}},
 		Retries:    1,
 		RetryDelay: ExponentialBackoff{},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:        "totally-skippable",
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
 		TriggerRule: "allSuccessful",
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:        "clean-up",
 		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
 		TriggerRule: "allDone",
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "failure",
-		Operator: RandomFailure{1},
+		Operator: randomFailure{1},
 	})
 
-	j.SetDownstream(j.Task("add-one-one"), j.Task("sleep-two"))
-	j.SetDownstream(j.Task("sleep-two"), j.Task("add-two-four"))
-	j.SetDownstream(j.Task("add-one-one"), j.Task("add-three-four"))
-	j.SetDownstream(j.Task("add-one-one"), j.Task("whoops-with-constant-delay"))
-	j.SetDownstream(j.Task("add-one-one"), j.Task("whoops-with-exponential-backoff"))
-	j.SetDownstream(j.Task("whoops-with-constant-delay"), j.Task("totally-skippable"))
-	j.SetDownstream(j.Task("whoops-with-exponential-backoff"), j.Task("totally-skippable"))
-	j.SetDownstream(j.Task("totally-skippable"), j.Task("clean-up"))
+	j.SetDownstream("add-one-one", "sleep-two")
+	j.SetDownstream("sleep-two", "add-two-four")
+	j.SetDownstream("add-one-one", "add-three-four")
+	j.SetDownstream("add-one-one", "whoops-with-constant-delay")
+	j.SetDownstream("add-one-one", "whoops-with-exponential-backoff")
+	j.SetDownstream("whoops-with-constant-delay", "totally-skippable")
+	j.SetDownstream("whoops-with-exponential-backoff", "totally-skippable")
+	j.SetDownstream("totally-skippable", "clean-up")
 
 	store := gomap.NewStore(gomap.DefaultOptions)
 
-	go j.run(store, j.newExecution())
+	ctx := context.Background()
+	go j.run(ctx, store, j.newExecution())
 
 	for {
 		if j.allDone() {
@@ -104,19 +106,60 @@ func TestJob(t *testing.T) {
 func TestCyclicJob(t *testing.T) {
 	j := &Job{Name: "cyclic", Schedule: "* * * * *"}
 
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "add-two-four",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
 	})
-	j.Add(&Task{
+	j.AddTask(&Task{
 		Name:     "add-three-four",
 		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
 	})
 
-	j.SetDownstream(j.Task("add-two-four"), j.Task("add-three-four"))
-	j.SetDownstream(j.Task("add-three-four"), j.Task("add-two-four"))
+	j.SetDownstream("add-two-four", "add-three-four")
+	err := j.SetDownstream("add-three-four", "add-two-four")
 
-	store := gomap.NewStore(gomap.DefaultOptions)
+	if err == nil {
+		t.Errorf("Expected error creating a cyclic dag")
+	}
 
-	j.run(store, j.newExecution())
+}
+
+func TestSetDownstream(t *testing.T) {
+	j := &Job{Name: "test-downstream", Schedule: "* * * * *"}
+
+	j.AddTask(&Task{
+		Name:     "add-two-four",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+	})
+	j.AddTask(&Task{
+		Name:     "add-three-four",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
+	})
+
+	err := j.SetDownstream("does-not-exist", "add-three-four")
+
+	if err == nil {
+		t.Errorf("Expected error setting a dependency on a non-existent task")
+	}
+
+	err = j.SetDownstream("add-two-four", "does-not-exist")
+
+	if err == nil {
+		t.Errorf("Expected error setting a non-existent task as a dependency")
+	}
+
+}
+
+func TestInvalidTaskName(t *testing.T) {
+	j := &Job{Name: "test-invalid-task-name", Schedule: "* * * * *"}
+
+	err := j.AddTask(&Task{
+		Name:     "",
+		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+	})
+
+	if err == nil {
+		t.Errorf("Expected error creating a task with an invalid name")
+	}
+
 }

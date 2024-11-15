@@ -1,50 +1,70 @@
 package goflow
 
 import (
-	"io"
+	"encoding/json"
+	"fmt"
+	"net/http"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
-// Set keepOpen to false when testing--one event will be sent and
-// then the channel is closed by the server.
-func (g *Goflow) stream(keepOpen bool) func(*gin.Context) {
+func (g *Goflow) handleStream(w http.ResponseWriter, r *http.Request) {
+	job := r.PathValue("name")
+	date := r.URL.Query().Get("date")
+	keepOpen := r.URL.Query().Get("keepopen")
 
-	return func(c *gin.Context) {
-		job := c.Query("jobname")
+	flusher, ok := w.(http.Flusher)
+	if !ok {
+		http.Error(w, "Streaming unsupported!", http.StatusInternalServerError)
+		return
+	}
 
-		history := make([]*execution, 0)
+	d, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusBadRequest), http.StatusBadRequest)
+		return
+	}
 
-		// periodically push the list of job runs into the stream
-		c.Stream(func(w io.Writer) bool {
-			for jobname := range g.Jobs {
-				executions, _ := readExecutions(g.Store, jobname)
-				for _, e := range executions {
+	w.Header().Set("Content-Type", "text/event-stream")
+	w.Header().Set("Cache-Control", "no-cache")
+	w.Header().Set("Connection", "keep-alive")
+	w.WriteHeader(http.StatusOK)
 
-					// make sure it wasn't already sent
-					inHistory := false
+	history := make([]*execution, 0)
 
-					for _, h := range history {
-						if e.ID == h.ID && e.ModifiedTimestamp == h.ModifiedTimestamp {
-							inHistory = true
-						}
+	for {
+		select {
+		case <-r.Context().Done():
+			return
+		default:
+			executions, _ := readExecutions(g.Store, d)
+			for _, e := range executions {
+
+				// make sure it wasn't already sent
+				inHistory := false
+
+				for _, h := range history {
+					if e.ID == h.ID && e.ModifiedTs == h.ModifiedTs {
+						inHistory = true
 					}
-
-					if !inHistory {
-						if (job != "" && job == e.JobName) || job == "" {
-							c.SSEvent("message", e)
-							history = append(history, e)
-						}
-					}
-
 				}
+
+				if !inHistory {
+					if (job != "" && job == e.Job) || job == "" {
+						out, _ := json.Marshal(e)
+						w.Write([]byte(fmt.Sprintf("data: %s\n", out)))
+						w.Write([]byte("\n"))
+						flusher.Flush()
+						history = append(history, e)
+					}
+				}
+
+			}
+
+			if keepOpen == "false" {
+				return
 			}
 
 			time.Sleep(time.Second * 1)
-
-			return keepOpen
-		})
+		}
 	}
-
 }

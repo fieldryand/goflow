@@ -1,6 +1,8 @@
 package goflow
 
 import (
+	"context"
+	"errors"
 	"math"
 	"time"
 )
@@ -24,9 +26,16 @@ const (
 	allSuccessful triggerRule = "allSuccessful"
 )
 
-func (t *Task) run(writes chan writeOp) error {
+func (t *Task) run(ctx context.Context, writes chan writeOp) error {
 
-	_, err := t.Operator.Run()
+	select {
+	case <-ctx.Done():
+		writes <- writeOp{t.Name, cancelled}
+		return errors.New("context cancelled")
+	default:
+	}
+
+	_, err := t.Operator.Run(ctx)
 
 	// retry
 	if err != nil && t.remaining > 0 {
@@ -45,7 +54,7 @@ func (t *Task) run(writes chan writeOp) error {
 	return nil
 }
 
-func (t *Task) skip(writes chan writeOp) error {
+func (t *Task) skip(ctx context.Context, writes chan writeOp) error {
 	writes <- writeOp{t.Name, skipped}
 	return nil
 }
