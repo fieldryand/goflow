@@ -2,7 +2,7 @@ package goflow
 
 import (
 	"context"
-	"errors"
+	"log"
 	"math"
 	"time"
 )
@@ -28,14 +28,11 @@ const (
 
 func (t *Task) run(ctx context.Context, writes chan writeOp) error {
 
-	select {
-	case <-ctx.Done():
-		writes <- writeOp{t.Name, cancelled}
-		return errors.New("context cancelled")
-	default:
-	}
-
 	_, err := t.Operator.Run(ctx)
+
+	if err != nil {
+		log.Printf("task error: %v", err)
+	}
 
 	// retry
 	if err != nil && t.remaining > 0 {

@@ -173,9 +173,6 @@ function stateColor(taskState) {
     case "failed":
       var color = "#ff4020";
       break;
-    case "cancelled":
-      var color = "black";
-      break;
     case "notstarted":
       var color = "white";
       break;

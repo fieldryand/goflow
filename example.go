@@ -79,12 +79,15 @@ var r = rand.New(rand.NewSource(1))
 
 // Run implements failures at random intervals.
 func (o randomFailure) Run(ctx context.Context) (any, error) {
+	select {
+	case <-ctx.Done():
+		return nil, errors.New("context cancelled")
+	default:
+	}
 	x := r.Intn(o.n)
-
 	if x == o.n-1 {
 		return "randomly failed", errors.New("unlucky")
 	}
-
 	return fmt.Sprintf("the result is %v", x), nil
 }
 

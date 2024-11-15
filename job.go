@@ -34,13 +34,9 @@ const (
 	skipped    state = "skipped"
 	failed     state = "failed"
 	successful state = "successful"
-	cancelled  state = "cancelled"
 )
 
 func (j *Job) loadState() state {
-	if j.anyCancelled() {
-		j.storeState(cancelled)
-	}
 	if !j.allDone() {
 		j.storeState(running)
 	}
@@ -266,18 +262,6 @@ func (j *Job) anyFailed() bool {
 	out := false
 	for _, t := range j.Tasks {
 		if t.state == failed {
-			out = true
-		}
-	}
-	j.RUnlock()
-	return out
-}
-
-func (j *Job) anyCancelled() bool {
-	j.RLock()
-	out := false
-	for _, t := range j.Tasks {
-		if t.state == cancelled {
 			out = true
 		}
 	}
