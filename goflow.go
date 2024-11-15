@@ -121,7 +121,7 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 }
 
 // Execute tells the engine to run a given job in a new goroutine.
-func (g *Goflow) Execute(ctx context.Context, job string) (*uuid.UUID, error) {
+func (g *Goflow) execute(ctx context.Context, job string) (*uuid.UUID, error) {
 
 	// find the job if it exists and create a new execution instance
 	jobFunc, ok := g.Jobs[job]
@@ -145,7 +145,7 @@ func (g *Goflow) start(ctx context.Context) {
 	go func() {
 		for {
 			i := <-g.queue
-			g.Execute(ctx, i)
+			g.execute(ctx, i)
 		}
 	}()
 }

@@ -215,7 +215,7 @@ func TestInvalidJobName(t *testing.T) {
 func TestExecutionOfNonexistentJob(t *testing.T) {
 	g := New(Options{})
 	ctx := context.Background()
-	_, err := g.Execute(ctx, "job")
+	_, err := g.execute(ctx, "job")
 
 	if err == nil {
 		t.Errorf("Expected error executing a nonexistent job")
