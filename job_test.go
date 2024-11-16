@@ -108,53 +108,6 @@ func TestJob(t *testing.T) {
 
 }
 
-func TestCyclicJob(t *testing.T) {
-	j := &Job{Name: "cyclic", Schedule: "* * * * *"}
-
-	j.AddTask(&Task{
-		Name:     "add-two-four",
-		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
-	})
-	j.AddTask(&Task{
-		Name:     "add-three-four",
-		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
-	})
-
-	j.SetDownstream("add-two-four", "add-three-four")
-	err := j.SetDownstream("add-three-four", "add-two-four")
-
-	if err == nil {
-		t.Errorf("Expected error creating a cyclic dag")
-	}
-
-}
-
-func TestSetDownstream(t *testing.T) {
-	j := &Job{Name: "test-downstream", Schedule: "* * * * *"}
-
-	j.AddTask(&Task{
-		Name:     "add-two-four",
-		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
-	})
-	j.AddTask(&Task{
-		Name:     "add-three-four",
-		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
-	})
-
-	err := j.SetDownstream("does-not-exist", "add-three-four")
-
-	if err == nil {
-		t.Errorf("Expected error setting a dependency on a non-existent task")
-	}
-
-	err = j.SetDownstream("add-two-four", "does-not-exist")
-
-	if err == nil {
-		t.Errorf("Expected error setting a non-existent task as a dependency")
-	}
-
-}
-
 func TestInvalidTaskName(t *testing.T) {
 	j := &Job{Name: "test-invalid-task-name", Schedule: "* * * * *"}
 

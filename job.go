@@ -3,7 +3,6 @@ package goflow
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -130,35 +129,8 @@ func (j *Job) addTask(t *Task) error {
 // The dependent task is downstream of the independent task and
 // waits for the independent task to finish before starting
 // execution.
-func (j *Job) SetDownstream(ind, dep string) error {
-
-	indExists := false
-	depExists := false
-
-	for _, t := range j.Tasks {
-		if ind == t.Name {
-			indExists = true
-		}
-		if dep == t.Name {
-			depExists = true
-		}
-	}
-
-	if !indExists {
-		return fmt.Errorf("Job does not contain task %s", ind)
-	}
-
-	if !depExists {
-		return fmt.Errorf("Job does not contain task %s", dep)
-	}
-
+func (j *Job) SetDownstream(ind, dep string) {
 	j.Dag.setDownstream(ind, dep)
-
-	if !j.Dag.validate() {
-		return fmt.Errorf("Invalid Dag for job %s", j.Name)
-	}
-
-	return nil
 }
 
 func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {

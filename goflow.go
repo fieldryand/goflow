@@ -90,7 +90,10 @@ func (g *Goflow) addJob(jobFunc func() *Job) error {
 		return errors.New("\"\" is not a valid job name")
 	}
 
-	// Register the job
+	// Validate and register the job
+	if !j.Dag.validate() {
+		return fmt.Errorf("Invalid Dag for job %s", j.Name)
+	}
 	g.Jobs[j.Name] = jobFunc
 	g.jobs = append(g.jobs, j.Name)
 
