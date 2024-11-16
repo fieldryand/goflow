@@ -3,6 +3,7 @@ package goflow
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -198,7 +199,12 @@ func exampleRouter() *http.ServeMux {
 	ctx := context.Background()
 	g := New(Options{UIPath: "ui/", ShowExamples: true, WithSeconds: true})
 	g.addRoutes()
-	g.Run(ctx)
+	go func() {
+		err := g.Run(ctx)
+		if err != nil {
+			log.Printf("goflow error: %v", err)
+		}
+	}()
 	return g.Router
 }
 

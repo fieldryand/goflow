@@ -18,7 +18,7 @@ func main() {
 		WithSeconds:  true,
 	}
 	gf := goflow.New(options)
-	go gf.RunWithWebserver(ctx, ":8181")
+	go gf.Run(ctx)
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)

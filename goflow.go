@@ -141,26 +141,33 @@ func (g *Goflow) Execute(ctx context.Context, job string) (*uuid.UUID, error) {
 	return &e.ID, nil
 }
 
-// Run tells the engine to listen for jobs in a new goroutine.
-func (g *Goflow) Run(ctx context.Context) {
+// Run is a blocking call that listens for jobs.
+func (g *Goflow) Run(ctx context.Context) error {
 	g.cron.Start()
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				g.cron.Stop()
-				log.Println("context cancelled: goflow is stopping")
-			default:
-			}
-			i := <-g.queue
-			g.Execute(ctx, i)
+	for {
+		select {
+		case <-ctx.Done():
+			g.cron.Stop()
+			log.Println("goflow error: context cancelled")
+			return errors.New("context cancelled")
+		default:
 		}
-	}()
+		i := <-g.queue
+		_, err := g.Execute(ctx, i)
+		if err != nil {
+			return err
+		}
+	}
 }
 
 // RunWithWebserver will listen for jobs and web requests.
 func (g *Goflow) RunWithWebserver(ctx context.Context, port string) error {
-	g.Run(ctx)
+	go func() {
+		err := g.Run(ctx)
+		if err != nil {
+			log.Printf("goflow error: %v", err)
+		}
+	}()
 	g.addRoutes()
 	return http.ListenAndServe(port, g.Router)
 }
