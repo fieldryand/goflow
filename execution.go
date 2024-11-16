@@ -17,18 +17,20 @@ type execution struct {
 }
 
 type taskExecution struct {
-	Name    string    `json:"name"`
-	State   state     `json:"state"`
-	StartTs time.Time `json:"startTs"`
+	Name       string    `json:"name"`
+	State      state     `json:"state"`
+	StartTs    time.Time `json:"startTs"`
+	ModifiedTs time.Time `json:"modifiedTs"`
 }
 
 func (j *Job) newExecution() *execution {
 	taskExecutions := make([]taskExecution, 0)
 	for _, task := range j.Tasks {
 		taskrun := taskExecution{
-			Name:    task.Name,
-			State:   none,
-			StartTs: time.Time{}}
+			Name:       task.Name,
+			State:      none,
+			StartTs:    time.Time{},
+			ModifiedTs: time.Time{}}
 		taskExecutions = append(taskExecutions, taskrun)
 	}
 	return &execution{
@@ -105,6 +107,7 @@ func (e *execution) setTaskState(task string, s state) {
 	for ix, t := range e.Tasks {
 		if t.Name == task {
 			e.Tasks[ix].State = s
+			e.Tasks[ix].ModifiedTs = time.Now().UTC()
 		}
 	}
 }
