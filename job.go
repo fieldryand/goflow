@@ -93,7 +93,17 @@ func (j *Job) initialize() *Job {
 }
 
 // AddTask adds a task to a job.
-func (j *Job) AddTask(t *Task) error {
+func (j *Job) AddTask(t ...*Task) error {
+	for _, k := range t {
+		err := j.addTask(k)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (j *Job) addTask(t *Task) error {
 
 	if t.Name == "" {
 		return errors.New("\"\" is not a valid task name")
