@@ -14,5 +14,5 @@ func main() {
 		WithSeconds:  true,
 	}
 	gf := goflow.New(options)
-	gf.Run(ctx, ":8181")
+	gf.RunWithWebserver(ctx, ":8181")
 }

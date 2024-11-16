@@ -197,8 +197,8 @@ func TestToggleRaceCondition(t *testing.T) {
 func exampleRouter() *http.ServeMux {
 	ctx := context.Background()
 	g := New(Options{UIPath: "ui/", ShowExamples: true, WithSeconds: true})
-	g.addTestRoute()
-	g.start(ctx)
+	g.addRoutes()
+	g.Run(ctx)
 	return g.Router
 }
 
@@ -215,7 +215,7 @@ func TestInvalidJobName(t *testing.T) {
 func TestExecutionOfNonexistentJob(t *testing.T) {
 	g := New(Options{})
 	ctx := context.Background()
-	_, err := g.execute(ctx, "job")
+	_, err := g.Execute(ctx, "job")
 
 	if err == nil {
 		t.Errorf("Expected error executing a nonexistent job")

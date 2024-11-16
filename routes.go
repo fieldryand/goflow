@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func (g *Goflow) addTestRoute() {
+func (g *Goflow) addRoutes() {
 	g.Router.HandleFunc("GET /api/jobs", g.handleJobs)
 	g.Router.HandleFunc("GET /api/jobs/{name}", g.handleParameterizedJobs)
 	g.Router.HandleFunc("POST /api/jobs/{name}/submit", g.handleSubmittedJobs)

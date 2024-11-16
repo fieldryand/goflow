@@ -38,7 +38,7 @@ type Options struct {
 // New returns a Goflow engine.
 func New(opts Options) *Goflow {
 
-	// Add a defaults if necessary
+	// Add a default store if necessary
 	if opts.Store == nil {
 		opts.Store = gomap.NewStore(gomap.DefaultOptions)
 	}
@@ -121,7 +121,7 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 }
 
 // Execute tells the engine to run a given job in a new goroutine.
-func (g *Goflow) execute(ctx context.Context, job string) (*uuid.UUID, error) {
+func (g *Goflow) Execute(ctx context.Context, job string) (*uuid.UUID, error) {
 
 	// find the job if it exists and create a new execution instance
 	jobFunc, ok := g.Jobs[job]
@@ -141,25 +141,26 @@ func (g *Goflow) execute(ctx context.Context, job string) (*uuid.UUID, error) {
 	return &e.ID, nil
 }
 
-func (g *Goflow) start(ctx context.Context) {
+// Run tells the engine to listen for jobs in a new goroutine.
+func (g *Goflow) Run(ctx context.Context) {
+	g.cron.Start()
 	go func() {
 		for {
+			select {
+			case <-ctx.Done():
+				g.cron.Stop()
+				log.Println("context cancelled: goflow is stopping")
+			default:
+			}
 			i := <-g.queue
-			g.execute(ctx, i)
+			g.Execute(ctx, i)
 		}
 	}()
 }
 
-// Run starts listening for jobs and spins up the webserver.
-func (g *Goflow) Run(ctx context.Context, port string) error {
-	g.start(ctx)
-	g.addTestRoute()
-	g.cron.Start()
+// RunWithWebserver will listen for jobs and web requests.
+func (g *Goflow) RunWithWebserver(ctx context.Context, port string) error {
+	g.Run(ctx)
+	g.addRoutes()
 	return http.ListenAndServe(port, g.Router)
-}
-
-// Shutdown cancels any running jobs and shuts down the webserver.
-func (g *Goflow) Shutdown() error {
-	log.Println("Goflow is shutting down. Goodbye!")
-	return nil
 }

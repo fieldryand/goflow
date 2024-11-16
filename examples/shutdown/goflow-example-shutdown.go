@@ -18,7 +18,7 @@ func main() {
 		WithSeconds:  true,
 	}
 	gf := goflow.New(options)
-	go gf.Run(ctx, ":8181")
+	go gf.RunWithWebserver(ctx, ":8181")
 
 	interrupt := make(chan os.Signal, 1)
 	signal.Notify(interrupt, os.Interrupt)
@@ -27,7 +27,7 @@ func main() {
 	case <-interrupt:
 		log.Println("interrupt")
 		cancelCtx()
-		time.Sleep(5 * time.Second)
+		time.Sleep(1 * time.Second)
 		return
 	}
 }
