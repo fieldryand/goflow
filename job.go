@@ -191,7 +191,10 @@ func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
 			}
 
 			// Need to persist the execution since it has the task start times
-			store.Set(e.ID.String(), e)
+			err := store.Set(e.ID.String(), e)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Receive updates on task state
@@ -203,7 +206,10 @@ func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
 		e.State = j.loadState()
 		e.ModifiedTs = time.Now().UTC()
 		e.setTaskState(write.key, write.val)
-		store.Set(e.ID.String(), e)
+		err := store.Set(e.ID.String(), e)
+		if err != nil {
+			return err
+		}
 
 		if j.allDone() {
 			break
