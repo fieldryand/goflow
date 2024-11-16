@@ -71,7 +71,17 @@ func New(opts Options) *Goflow {
 
 // AddJob takes a job-emitting function and registers it
 // with the engine.
-func (g *Goflow) AddJob(jobFunc func() *Job) error {
+func (g *Goflow) AddJob(jobFunc ...func() *Job) error {
+	for _, k := range jobFunc {
+		err := g.addJob(k)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (g *Goflow) addJob(jobFunc func() *Job) error {
 
 	j := jobFunc()
 
