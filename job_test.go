@@ -10,48 +10,53 @@ import (
 func TestJob(t *testing.T) {
 	j := &Job{Name: "example", Schedule: "* * * * *"}
 
-	j.AddTask(&Task{
-		Name:     "add-one-one",
-		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
-	})
-	j.AddTask(&Task{
-		Name:     "sleep-two",
-		Operator: Command{Cmd: "sleep", Args: []string{"2"}},
-	})
-	j.AddTask(&Task{
-		Name:     "add-two-four",
-		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
-	})
-	j.AddTask(&Task{
-		Name:     "add-three-four",
-		Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
-	})
-	j.AddTask(&Task{
-		Name:       "whoops-with-constant-delay",
-		Operator:   Command{Cmd: "whoops", Args: []string{}},
-		Retries:    5,
-		RetryDelay: ConstantDelay{1},
-	})
-	j.AddTask(&Task{
-		Name:       "whoops-with-exponential-backoff",
-		Operator:   Command{Cmd: "whoops", Args: []string{}},
-		Retries:    1,
-		RetryDelay: ExponentialBackoff{},
-	})
-	j.AddTask(&Task{
-		Name:        "totally-skippable",
-		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
-		TriggerRule: "allSuccessful",
-	})
-	j.AddTask(&Task{
-		Name:        "clean-up",
-		Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
-		TriggerRule: "allDone",
-	})
-	j.AddTask(&Task{
-		Name:     "failure",
-		Operator: randomFailure{1},
-	})
+	err := j.AddTask(
+		&Task{
+			Name:     "add-one-one",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((1 + 1))"}},
+		},
+		&Task{
+			Name:     "sleep-two",
+			Operator: Command{Cmd: "sleep", Args: []string{"2"}},
+		},
+		&Task{
+			Name:     "add-two-four",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		},
+		&Task{
+			Name:     "add-three-four",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((3 + 4))"}},
+		},
+		&Task{
+			Name:       "whoops-with-constant-delay",
+			Operator:   Command{Cmd: "whoops", Args: []string{}},
+			Retries:    5,
+			RetryDelay: ConstantDelay{1},
+		},
+		&Task{
+			Name:       "whoops-with-exponential-backoff",
+			Operator:   Command{Cmd: "whoops", Args: []string{}},
+			Retries:    1,
+			RetryDelay: ExponentialBackoff{},
+		},
+		&Task{
+			Name:        "totally-skippable",
+			Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'everything succeeded'"}},
+			TriggerRule: "allSuccessful",
+		},
+		&Task{
+			Name:        "clean-up",
+			Operator:    Command{Cmd: "sh", Args: []string{"-c", "echo 'cleaning up now'"}},
+			TriggerRule: "allDone",
+		},
+		&Task{
+			Name:     "failure",
+			Operator: randomFailure{1},
+		})
+
+	if err != nil {
+		t.Errorf("Error adding tasks")
+	}
 
 	j.SetDownstream("add-one-one", "sleep-two")
 	j.SetDownstream("sleep-two", "add-two-four")
