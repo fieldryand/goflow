@@ -100,6 +100,9 @@ func (o randomFailure) Run(ctx context.Context) (any, error) {
 
 func randomFailureJob() *Job {
 	j := &Job{Name: "example-random-failure", Schedule: "* * * * * *", Active: true}
-	j.AddTask(&Task{Name: "random-failure", Operator: randomFailure{4}})
+	err := j.AddTask(&Task{Name: "random-failure", Operator: randomFailure{4}})
+	if err != nil {
+		log.Printf("error adding task: %v", err)
+	}
 	return j
 }

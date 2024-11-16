@@ -132,8 +132,14 @@ func (g *Goflow) Execute(ctx context.Context, job string) (*uuid.UUID, error) {
 	e := j.newExecution()
 
 	// write it to the storage layer
-	persistNewExecution(g.Store, e)
-	indexExecutions(g.Store, e)
+	err := persistNewExecution(g.Store, e)
+	if err != nil {
+		return &e.ID, err
+	}
+	err = indexExecutions(g.Store, e)
+	if err != nil {
+		return &e.ID, err
+	}
 
 	// start the job
 	go j.run(ctx, g.Store, e)
