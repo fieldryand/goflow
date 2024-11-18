@@ -115,7 +115,10 @@ func (g *Goflow) handleToggledJobs(w http.ResponseWriter, r *http.Request) {
 		msg.Success = true
 		msg.Active = isActive
 		out, _ := json.Marshal(msg)
-		w.Write(out)
+		_, err := w.Write(out)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
@@ -149,7 +152,10 @@ func (g *Goflow) handleExecutions(w http.ResponseWriter, r *http.Request) {
 	msg.Executions = executions
 
 	out, _ := json.Marshal(msg)
-	w.Write(out)
+	_, err = w.Write(out)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
 }
 
 func (g *Goflow) handleRoot(w http.ResponseWriter, r *http.Request) {
