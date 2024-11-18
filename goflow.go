@@ -157,7 +157,12 @@ func (g *Goflow) Execute(ctx context.Context, job string) (*uuid.UUID, error) {
 	}
 
 	// start the job
-	go j.run(ctx, g.Store, e)
+	go func() {
+		err = j.run(ctx, g.Store, e)
+		if err != nil {
+			log.Printf("execution error: %v", err)
+		}
+	}()
 
 	return &e.ID, nil
 }
