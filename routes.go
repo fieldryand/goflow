@@ -32,7 +32,10 @@ func (g *Goflow) handleJobs(w http.ResponseWriter, r *http.Request) {
 	}
 	msg.Jobs = g.jobs
 	out, _ := json.Marshal(msg)
-	w.Write(out)
+	_, err := w.Write(out)
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
 }
 
 func (g *Goflow) handleParameterizedJobs(w http.ResponseWriter, r *http.Request) {
@@ -61,7 +64,11 @@ func (g *Goflow) handleParameterizedJobs(w http.ResponseWriter, r *http.Request)
 		}
 
 		out, _ := json.Marshal(msg)
-		w.Write(out)
+		_, err := w.Write(out)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
+
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
@@ -83,7 +90,10 @@ func (g *Goflow) handleSubmittedJobs(w http.ResponseWriter, r *http.Request) {
 		msg.Success = true
 		msg.StartTs = time.Now().UTC().Format(time.RFC3339Nano)
 		out, _ := json.Marshal(msg)
-		w.Write(out)
+		_, err := w.Write(out)
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
