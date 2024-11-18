@@ -161,7 +161,10 @@ func (g *Goflow) handleRoot(w http.ResponseWriter, r *http.Request) {
 	}
 
 	tmpl, _ := template.ParseFiles("ui/html/index.html.tmpl")
-	tmpl.Execute(w, map[string]any{"jobs": jobs})
+	err := tmpl.Execute(w, map[string]any{"jobs": jobs})
+	if err != nil {
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+	}
 }
 
 func (g *Goflow) handleJobsPage(w http.ResponseWriter, r *http.Request) {
@@ -170,12 +173,15 @@ func (g *Goflow) handleJobsPage(w http.ResponseWriter, r *http.Request) {
 
 	if ok {
 		tmpl, _ := template.ParseFiles("ui/html/job.html.tmpl")
-		tmpl.Execute(w,
+		err := tmpl.Execute(w,
 			map[string]any{
 				"jobName":   name,
 				"taskNames": jobFn().tasks,
 				"schedule":  g.Jobs[name]().Schedule,
 			})
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}
@@ -187,12 +193,15 @@ func (g *Goflow) handleDiagramsPage(w http.ResponseWriter, r *http.Request) {
 
 	if ok {
 		tmpl, _ := template.ParseFiles("ui/html/diagram.html.tmpl")
-		tmpl.Execute(w,
+		err := tmpl.Execute(w,
 			map[string]any{
 				"jobName":   name,
 				"taskNames": jobFn().tasks,
 				"schedule":  g.Jobs[name]().Schedule,
 			})
+		if err != nil {
+			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		}
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
 	}

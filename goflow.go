@@ -62,8 +62,10 @@ func New(opts Options) *Goflow {
 	}
 
 	if opts.ShowExamples {
-		g.AddJob(complexAnalyticsJob)
-		g.AddJob(randomFailureJob)
+		err := g.AddJob(complexAnalyticsJob, randomFailureJob)
+		if err != nil {
+			log.Println("error adding example jobs")
+		}
 	}
 
 	return g
