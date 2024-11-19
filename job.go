@@ -3,7 +3,6 @@ package goflow
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -93,7 +92,17 @@ func (j *Job) initialize() *Job {
 }
 
 // AddTask adds a task to a job.
-func (j *Job) AddTask(t *Task) error {
+func (j *Job) AddTask(t ...*Task) error {
+	for _, k := range t {
+		err := j.addTask(k)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (j *Job) addTask(t *Task) error {
 
 	if t.Name == "" {
 		return errors.New("\"\" is not a valid task name")
@@ -120,38 +129,11 @@ func (j *Job) AddTask(t *Task) error {
 // The dependent task is downstream of the independent task and
 // waits for the independent task to finish before starting
 // execution.
-func (j *Job) SetDownstream(ind, dep string) error {
-
-	indExists := false
-	depExists := false
-
-	for _, t := range j.Tasks {
-		if ind == t.Name {
-			indExists = true
-		}
-		if dep == t.Name {
-			depExists = true
-		}
-	}
-
-	if !indExists {
-		return fmt.Errorf("Job does not contain task %s", ind)
-	}
-
-	if !depExists {
-		return fmt.Errorf("Job does not contain task %s", dep)
-	}
-
+func (j *Job) SetDownstream(ind, dep string) {
 	j.Dag.setDownstream(ind, dep)
-
-	if !j.Dag.validate() {
-		return fmt.Errorf("Invalid Dag for job %s", j.Name)
-	}
-
-	return nil
 }
 
-func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
+func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) {
 
 	writes := make(chan writeOp)
 
@@ -209,7 +191,10 @@ func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
 			}
 
 			// Need to persist the execution since it has the task start times
-			store.Set(e.ID.String(), e)
+			err := store.Set(e.ID.String(), e)
+			if err != nil {
+				log.Printf("key-value store error: %v", err)
+			}
 		}
 
 		// Receive updates on task state
@@ -221,7 +206,10 @@ func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
 		e.State = j.loadState()
 		e.ModifiedTs = time.Now().UTC()
 		e.setTaskState(write.key, write.val)
-		store.Set(e.ID.String(), e)
+		err := store.Set(e.ID.String(), e)
+		if err != nil {
+			log.Printf("key-value store error: %v", err)
+		}
 
 		if j.allDone() {
 			break
@@ -229,8 +217,6 @@ func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
 	}
 
 	log.Printf("jobID=%v, job=%v, state=%v", e.ID, j.Name, j.loadState())
-
-	return nil
 }
 
 func (j *Job) allDone() bool {

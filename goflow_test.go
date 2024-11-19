@@ -227,3 +227,58 @@ func TestExecutionOfNonexistentJob(t *testing.T) {
 		t.Errorf("Expected error executing a nonexistent job")
 	}
 }
+
+func TestNonexistentTask(t *testing.T) {
+	g := New(Options{})
+
+	j := &Job{Name: "non-existent-task", Schedule: "* * * * *"}
+	err := j.AddTask(
+		&Task{
+			Name:     "a",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		},
+		&Task{
+			Name:     "b",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		},
+	)
+	if err != nil {
+		t.Errorf("Error adding tasks to job")
+	}
+
+	j.SetDownstream("a", "c")
+
+	err = g.AddJob(func() *Job { return j })
+
+	if err == nil {
+		t.Errorf("Expected error setting an edge on a non-existent task")
+	}
+}
+
+func TestCyclicJob(t *testing.T) {
+	g := New(Options{})
+
+	j := &Job{Name: "cyclic", Schedule: "* * * * *"}
+	err := j.AddTask(
+		&Task{
+			Name:     "a",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		},
+		&Task{
+			Name:     "b",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		},
+	)
+	if err != nil {
+		t.Errorf("Error adding tasks to job")
+	}
+
+	j.SetDownstream("a", "b")
+	j.SetDownstream("b", "a")
+
+	err = g.AddJob(func() *Job { return j })
+
+	if err == nil {
+		t.Errorf("Expected error adding a cyclic job")
+	}
+}

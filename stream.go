@@ -3,6 +3,7 @@ package goflow
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
@@ -51,8 +52,14 @@ func (g *Goflow) handleStream(w http.ResponseWriter, r *http.Request) {
 				if !inHistory {
 					if (job != "" && job == e.Job) || job == "" {
 						out, _ := json.Marshal(e)
-						w.Write([]byte(fmt.Sprintf("data: %s\n", out)))
-						w.Write([]byte("\n"))
+						_, err := w.Write([]byte(fmt.Sprintf("data: %s\n", out)))
+						if err != nil {
+							log.Printf("write failed: %v", err)
+						}
+						_, err = w.Write([]byte("\n"))
+						if err != nil {
+							log.Printf("write failed: %v", err)
+						}
 						flusher.Flush()
 						history = append(history, e)
 					}

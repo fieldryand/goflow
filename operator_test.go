@@ -26,7 +26,10 @@ func TestGetSuccess(t *testing.T) {
 	srv := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write([]byte(expected))
+			_, err := w.Write([]byte(expected))
+			if err != nil {
+				t.Errorf("Error writing response: %s", expected)
+			}
 		}))
 	defer srv.Close()
 
@@ -42,7 +45,10 @@ func TestGetNotFound(t *testing.T) {
 	srv := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(404)
-			w.Write([]byte("Page not found"))
+			_, err := w.Write([]byte("Page not found"))
+			if err != nil {
+				t.Errorf("Error writing response: Page not found")
+			}
 		}))
 	defer srv.Close()
 
@@ -68,7 +74,10 @@ func TestPostSuccess(t *testing.T) {
 	srv := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write([]byte(expected))
+			_, err := w.Write([]byte(expected))
+			if err != nil {
+				t.Errorf("Error writing response: %s", expected)
+			}
 		}))
 	defer srv.Close()
 
@@ -84,7 +93,10 @@ func TestPostNotFound(t *testing.T) {
 	srv := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(404)
-			w.Write([]byte("Page not found"))
+			_, err := w.Write([]byte("Page not found"))
+			if err != nil {
+				t.Errorf("Error writing response: Page not found")
+			}
 		}))
 	defer srv.Close()
 

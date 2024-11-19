@@ -60,7 +60,10 @@ func timeToDatestring(t time.Time) string {
 func indexExecutions(s gokv.Store, e *execution) error {
 	date := timeToDatestring(e.StartTs)
 	i := executionIndex{}
-	s.Get(date, &i)
+	_, err := s.Get(date, &i)
+	if err != nil {
+		return err
+	}
 	i.ExecutionIDs = append(i.ExecutionIDs, e.ID.String())
 	return s.Set(date, i)
 }
@@ -79,7 +82,10 @@ func readExecutions(s gokv.Store, d time.Time) ([]*execution, error) {
 		if found {
 			for _, key := range i.ExecutionIDs {
 				val := execution{}
-				s.Get(key, &val)
+				_, err := s.Get(key, &val)
+				if err != nil {
+					return nil, err
+				}
 				executions = append(executions, &val)
 			}
 		}

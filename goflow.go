@@ -62,8 +62,10 @@ func New(opts Options) *Goflow {
 	}
 
 	if opts.ShowExamples {
-		g.AddJob(complexAnalyticsJob)
-		g.AddJob(randomFailureJob)
+		err := g.AddJob(complexAnalyticsJob, randomFailureJob)
+		if err != nil {
+			log.Println("error adding example jobs")
+		}
 	}
 
 	return g
@@ -71,7 +73,17 @@ func New(opts Options) *Goflow {
 
 // AddJob takes a job-emitting function and registers it
 // with the engine.
-func (g *Goflow) AddJob(jobFunc func() *Job) error {
+func (g *Goflow) AddJob(jobFunc ...func() *Job) error {
+	for _, k := range jobFunc {
+		err := g.addJob(k)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (g *Goflow) addJob(jobFunc func() *Job) error {
 
 	j := jobFunc()
 
@@ -80,7 +92,10 @@ func (g *Goflow) AddJob(jobFunc func() *Job) error {
 		return errors.New("\"\" is not a valid job name")
 	}
 
-	// Register the job
+	// Validate and register the job
+	if !j.Dag.validate() {
+		return fmt.Errorf("Invalid Dag for job %s", j.Name)
+	}
 	g.Jobs[j.Name] = jobFunc
 	g.jobs = append(g.jobs, j.Name)
 
@@ -132,8 +147,14 @@ func (g *Goflow) Execute(ctx context.Context, job string) (*uuid.UUID, error) {
 	e := j.newExecution()
 
 	// write it to the storage layer
-	persistNewExecution(g.Store, e)
-	indexExecutions(g.Store, e)
+	err := persistNewExecution(g.Store, e)
+	if err != nil {
+		return &e.ID, err
+	}
+	err = indexExecutions(g.Store, e)
+	if err != nil {
+		return &e.ID, err
+	}
 
 	// start the job
 	go j.run(ctx, g.Store, e)
