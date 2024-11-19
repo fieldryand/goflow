@@ -2,6 +2,7 @@ package goflow
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"text/template"
 	"time"
@@ -34,7 +35,7 @@ func (g *Goflow) handleJobs(w http.ResponseWriter, r *http.Request) {
 	out, _ := json.Marshal(msg)
 	_, err := w.Write(out)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		log.Printf("write failed: %v", err)
 	}
 }
 
@@ -66,7 +67,7 @@ func (g *Goflow) handleParameterizedJobs(w http.ResponseWriter, r *http.Request)
 		out, _ := json.Marshal(msg)
 		_, err := w.Write(out)
 		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			log.Printf("write failed: %v", err)
 		}
 
 	} else {
@@ -92,7 +93,7 @@ func (g *Goflow) handleSubmittedJobs(w http.ResponseWriter, r *http.Request) {
 		out, _ := json.Marshal(msg)
 		_, err := w.Write(out)
 		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			log.Printf("write failed: %v", err)
 		}
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -117,7 +118,7 @@ func (g *Goflow) handleToggledJobs(w http.ResponseWriter, r *http.Request) {
 		out, _ := json.Marshal(msg)
 		_, err := w.Write(out)
 		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			log.Printf("write failed: %v", err)
 		}
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -154,7 +155,7 @@ func (g *Goflow) handleExecutions(w http.ResponseWriter, r *http.Request) {
 	out, _ := json.Marshal(msg)
 	_, err = w.Write(out)
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		log.Printf("write failed: %v", err)
 	}
 }
 
@@ -179,7 +180,7 @@ func (g *Goflow) handleRoot(w http.ResponseWriter, r *http.Request) {
 	tmpl, _ := template.ParseFiles("ui/html/index.html.tmpl")
 	err := tmpl.Execute(w, map[string]any{"jobs": jobs})
 	if err != nil {
-		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		log.Printf("write failed: %v", err)
 	}
 }
 
@@ -196,7 +197,7 @@ func (g *Goflow) handleJobsPage(w http.ResponseWriter, r *http.Request) {
 				"schedule":  g.Jobs[name]().Schedule,
 			})
 		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			log.Printf("write failed: %v", err)
 		}
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
@@ -216,7 +217,7 @@ func (g *Goflow) handleDiagramsPage(w http.ResponseWriter, r *http.Request) {
 				"schedule":  g.Jobs[name]().Schedule,
 			})
 		if err != nil {
-			http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+			log.Printf("write failed: %v", err)
 		}
 	} else {
 		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
