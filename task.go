@@ -26,7 +26,7 @@ const (
 	allSuccessful triggerRule = "allSuccessful"
 )
 
-func (t *Task) run(ctx context.Context, writes chan writeOp) error {
+func (t *Task) run(ctx context.Context, writes chan writeOp) {
 
 	_, err := t.Operator.Run(ctx)
 
@@ -37,18 +37,17 @@ func (t *Task) run(ctx context.Context, writes chan writeOp) error {
 	// retry
 	if err != nil && t.remaining > 0 {
 		writes <- writeOp{t.Name, upForRetry}
-		return nil
+		return
 	}
 
 	// failed
 	if err != nil && t.remaining <= 0 {
 		writes <- writeOp{t.Name, failed}
-		return err
+		return
 	}
 
 	// success
 	writes <- writeOp{t.Name, successful}
-	return nil
 }
 
 func (t *Task) skip(ctx context.Context, writes chan writeOp) error {
