@@ -50,9 +50,8 @@ func (t *Task) run(ctx context.Context, writes chan writeOp) {
 	writes <- writeOp{t.Name, successful}
 }
 
-func (t *Task) skip(ctx context.Context, writes chan writeOp) error {
+func (t *Task) skip(ctx context.Context, writes chan writeOp) {
 	writes <- writeOp{t.Name, skipped}
-	return nil
 }
 
 // RetryDelay is a type that implements a Wait() method, which is called in between
