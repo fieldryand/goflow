@@ -12,7 +12,7 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: fieldryand/goflow-example
+  IMAGE_NAME: fieldryand/goflow-example-simple
 
 jobs:
   build-and-push-image:
@@ -30,8 +30,8 @@ jobs:
         with:
           go-version: '1.22'
 
-      - name: Build goflow-example
-        run: go build example/goflow-example.go
+      - name: Build goflow-example-simple
+        run: go build examples/simple/goflow-example-simple.go
 
       - name: Log in to the Container registry
         uses: docker/login-action@v3
