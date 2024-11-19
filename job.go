@@ -133,7 +133,7 @@ func (j *Job) SetDownstream(ind, dep string) {
 	j.Dag.setDownstream(ind, dep)
 }
 
-func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
+func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) {
 
 	writes := make(chan writeOp)
 
@@ -193,7 +193,7 @@ func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
 			// Need to persist the execution since it has the task start times
 			err := store.Set(e.ID.String(), e)
 			if err != nil {
-				return err
+				log.Printf("key-value store error: %v", err)
 			}
 		}
 
@@ -208,7 +208,7 @@ func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
 		e.setTaskState(write.key, write.val)
 		err := store.Set(e.ID.String(), e)
 		if err != nil {
-			return err
+			log.Printf("key-value store error: %v", err)
 		}
 
 		if j.allDone() {
@@ -217,8 +217,6 @@ func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) error {
 	}
 
 	log.Printf("jobID=%v, job=%v, state=%v", e.ID, j.Name, j.loadState())
-
-	return nil
 }
 
 func (j *Job) allDone() bool {
