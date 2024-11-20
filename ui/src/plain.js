@@ -41,7 +41,6 @@ function jobPageEventHandler(message) {
   const d = JSON.parse(message.data);
   updateTaskStateCircles(d);
   updateLastTaskStartModified(d);
-  updateLastResult(d);
 }
 
 function diagramPageEventHandler(message) {
@@ -98,20 +97,16 @@ function updateLastTaskStartModified(execution) {
     const t = execution.tasks[i];
     const startTs = new Date(t.startTs);
     const modifiedTs = new Date(t.modifiedTs);
-    var formattedTs = ""
-    if (startTs.getUTCFullYear() > 1) {
-      formattedStartTs = startTs.toLocaleString(undefined, options);
-      formattedModifiedTs = modifiedTs.toLocaleString(undefined, options);
+    // check that both timestamps are not in year 1 (the 0-value)
+    if (startTs.getUTCFullYear() > 1 & modifiedTs.getUTCFullYear() > 1) {
+      const seconds = (modifiedTs - startTs) / 1000;
+      const duration = new Date(0);
+      duration.setSeconds(seconds);
+      const durationStr = duration.toISOString().substring(11, 19);
+      const formattedStartTs = startTs.toLocaleString(undefined, options);
+      document.getElementById(`last-start-${t.name}`).innerHTML = formattedStartTs;
+      document.getElementById(`last-duration-${t.name}`).innerHTML = durationStr;
     }
-    document.getElementById(`last-start-${t.name}`).innerHTML = formattedStartTs;
-    document.getElementById(`last-modified-${t.name}`).innerHTML = formattedModifiedTs;
-  }
-}
-
-function updateLastResult(execution) {
-  for (i in execution.tasks) {
-    const t = execution.tasks[i];
-    document.getElementById(`last-result-${t.name}`).innerHTML = t.result;
   }
 }
 

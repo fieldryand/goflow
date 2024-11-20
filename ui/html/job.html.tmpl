@@ -27,12 +27,12 @@
       <div class="task-table", id="task-table">
         <div>Task</div>
         <div>Last Execution Time</div>
-        <div>Last Modified Time</div>
+        <div>Execution Duration</div>
         <div>State</div>
         {{ range $ix, $taskName := .taskNames }}
         <div>{{ $taskName }}</div>
         <div id="last-start-{{ $taskName }}"></div>
-        <div id="last-modified-{{ $taskName }}"></div>
+        <div id="last-duration-{{ $taskName }}"></div>
         <div class="status-wrapper" id="{{ $taskName }}"></div>
         {{ end }}
       </div>
