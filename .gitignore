@@ -2,7 +2,10 @@
 *.out
 
 # The goflow-example binaries
-goflow-example-*
+goflow-example-chained
+goflow-example-simple
+goflow-example-shutdown
+goflow-example-store
 
 # Example store
 /gokv

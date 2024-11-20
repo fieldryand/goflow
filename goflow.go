@@ -135,6 +135,10 @@ func (g *Goflow) toggle(jobName string) (bool, error) {
 	return true, nil
 }
 
+// ContextKey allows the user to retrieve context values within a task. See
+// the examples folder for usage.
+type ContextKey string
+
 // Execute tells the engine to run a given job in a new goroutine.
 func (g *Goflow) Execute(ctx context.Context, job string) (*uuid.UUID, error) {
 
@@ -156,7 +160,8 @@ func (g *Goflow) Execute(ctx context.Context, job string) (*uuid.UUID, error) {
 		return &e.ID, err
 	}
 
-	// start the job
+	// add the jobID to the context and start the job
+	ctx = context.WithValue(ctx, ContextKey("jobID"), e.ID)
 	go j.run(ctx, g.Store, e)
 
 	return &e.ID, nil
