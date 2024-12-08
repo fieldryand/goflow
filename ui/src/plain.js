@@ -21,7 +21,13 @@ function jobPageEventListener(job) {
 }
 
 function diagramPageEventListener(job) {
-  var stream = new EventSource(`/events/${job}?stream=messages`);
+  const dateControl = document.querySelector('input[type="date"]');
+  if (dateControl.value == "") {
+    var date = today();
+  } else {
+    var date = dateControl.value;
+  }
+  var stream = new EventSource(`/events/${job}?date=${date}`);
   stream.addEventListener("message", diagramPageEventHandler)
 }
 
