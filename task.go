@@ -1,6 +1,8 @@
 package goflow
 
 import (
+	"context"
+	"log"
 	"math"
 	"time"
 )
@@ -24,30 +26,32 @@ const (
 	allSuccessful triggerRule = "allSuccessful"
 )
 
-func (t *Task) run(writes chan writeOp) error {
+func (t *Task) run(ctx context.Context, writes chan writeOp) {
 
-	_, err := t.Operator.Run()
+	_, err := t.Operator.Run(ctx)
+
+	if err != nil {
+		log.Printf("task error: %v", err)
+	}
 
 	// retry
 	if err != nil && t.remaining > 0 {
 		writes <- writeOp{t.Name, upForRetry}
-		return nil
+		return
 	}
 
 	// failed
 	if err != nil && t.remaining <= 0 {
 		writes <- writeOp{t.Name, failed}
-		return err
+		return
 	}
 
 	// success
 	writes <- writeOp{t.Name, successful}
-	return nil
 }
 
-func (t *Task) skip(writes chan writeOp) error {
+func (t *Task) skip(ctx context.Context, writes chan writeOp) {
 	writes <- writeOp{t.Name, skipped}
-	return nil
 }
 
 // RetryDelay is a type that implements a Wait() method, which is called in between

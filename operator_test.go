@@ -2,14 +2,17 @@ package goflow
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
+var ctx = context.Background()
+
 func TestCommand(t *testing.T) {
-	result, _ := Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}}.Run()
+	result, _ := Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}}.Run(ctx)
 	resultStr := fmt.Sprintf("%v", result)
 	expected := "6\n"
 
@@ -23,12 +26,15 @@ func TestGetSuccess(t *testing.T) {
 	srv := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write([]byte(expected))
+			_, err := w.Write([]byte(expected))
+			if err != nil {
+				t.Errorf("Error writing response: %s", expected)
+			}
 		}))
 	defer srv.Close()
 
 	client := &http.Client{}
-	result, _ := Get{client, srv.URL}.Run()
+	result, _ := Get{client, srv.URL}.Run(ctx)
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -39,12 +45,15 @@ func TestGetNotFound(t *testing.T) {
 	srv := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(404)
-			w.Write([]byte("Page not found"))
+			_, err := w.Write([]byte("Page not found"))
+			if err != nil {
+				t.Errorf("Error writing response: Page not found")
+			}
 		}))
 	defer srv.Close()
 
 	client := &http.Client{}
-	_, err := Get{client, srv.URL}.Run()
+	_, err := Get{client, srv.URL}.Run(ctx)
 
 	if err == nil {
 		t.Errorf("Expected an error")
@@ -53,7 +62,7 @@ func TestGetNotFound(t *testing.T) {
 
 func TestGetInvalid(t *testing.T) {
 	client := &http.Client{}
-	_, err := Get{client, ""}.Run()
+	_, err := Get{client, ""}.Run(ctx)
 
 	if err == nil {
 		t.Errorf("Expected an error")
@@ -65,12 +74,15 @@ func TestPostSuccess(t *testing.T) {
 	srv := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(200)
-			w.Write([]byte(expected))
+			_, err := w.Write([]byte(expected))
+			if err != nil {
+				t.Errorf("Error writing response: %s", expected)
+			}
 		}))
 	defer srv.Close()
 
 	client := &http.Client{}
-	result, _ := Post{client, srv.URL, bytes.NewBuffer([]byte(""))}.Run()
+	result, _ := Post{client, srv.URL, bytes.NewBuffer([]byte(""))}.Run(ctx)
 
 	if result != expected {
 		t.Errorf("Expected %s, got %s", expected, result)
@@ -81,12 +93,15 @@ func TestPostNotFound(t *testing.T) {
 	srv := httptest.NewServer(
 		http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(404)
-			w.Write([]byte("Page not found"))
+			_, err := w.Write([]byte("Page not found"))
+			if err != nil {
+				t.Errorf("Error writing response: Page not found")
+			}
 		}))
 	defer srv.Close()
 
 	client := &http.Client{}
-	_, err := Post{client, srv.URL, bytes.NewBuffer([]byte(""))}.Run()
+	_, err := Post{client, srv.URL, bytes.NewBuffer([]byte(""))}.Run(ctx)
 
 	if err == nil {
 		t.Errorf("Expected an error")
@@ -95,7 +110,7 @@ func TestPostNotFound(t *testing.T) {
 
 func TestPostInvalid(t *testing.T) {
 	client := &http.Client{}
-	_, err := Post{client, "", bytes.NewBuffer([]byte(""))}.Run()
+	_, err := Post{client, "", bytes.NewBuffer([]byte(""))}.Run(ctx)
 
 	if err == nil {
 		t.Errorf("Expected an error")

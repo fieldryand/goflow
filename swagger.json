@@ -119,67 +119,6 @@
         }
       }
     },
-    "/api/jobruns": {
-      "get": {
-        "operationId": "listJobRuns",
-        "summary": "query and list job runs",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "jobname",
-            "schema": {
-              "type": "string"
-            },
-            "description": "(optional) the job name"
-          },
-          {
-            "in": "query",
-            "name": "state",
-            "schema": {
-              "type": "string"
-            },
-            "description": "(optional) the job state, valid values are [running, failed, successful]"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "200 response",
-            "content": {
-              "application/json": {
-                "examples": {
-                  "exampleJobRuns": {
-                    "value": {
-                      "jobruns": [
-                        {
-                          "job": "exampleComplexAnalytics",
-                          "submitted": "2023-06-24T07:23:11.208506156Z",
-                          "state": {
-                            "job": "running",
-                            "tasks": {
-                              "state": {
-                                "addOneOne": "running",
-                                "addThreeFour": "notstarted",
-                                "addTwoFour": "notstarted",
-                                "cleanUp": "notstarted",
-                                "sleepOne": "successful",
-                                "sleepTwo": "notstarted",
-                                "totallySkippable": "notstarted",
-                                "whoopsWithConstantDelay": "running",
-                                "whoopsWithExponentialBackoff": "upforretry"
-                              }
-                            }
-                          }
-                        }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/executions": {
       "get": {
         "operationId": "listExecutions",
@@ -208,7 +147,7 @@
             "content": {
               "application/json": {
                 "examples": {
-                  "exampleJobRuns": {
+                  "exampleExecutions": {
                     "value": {
                       "executions": [
                         {

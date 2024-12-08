@@ -1,38 +1,65 @@
-function getDropdownValue() {
-  const selectDropdown = document.querySelector('select');
-  return selectDropdown.value
-}
-
 function indexPageEventListener() {
-  var stream = new EventSource(`/stream`);
+  const dateControl = document.querySelector('input[type="date"]');
+  if (dateControl.value == "") {
+    var date = today();
+  } else {
+    var date = dateControl.value;
+  }
+  var stream = new EventSource(`/events?date=${date}`);
   stream.addEventListener("message", indexPageEventHandler)
 }
 
 function jobPageEventListener(job) {
-  var stream = new EventSource(`/stream?jobname=${job}`);
+  const dateControl = document.querySelector('input[type="date"]');
+  if (dateControl.value == "") {
+    var date = today();
+  } else {
+    var date = dateControl.value;
+  }
+  var stream = new EventSource(`/events/${job}?date=${date}`);
   stream.addEventListener("message", jobPageEventHandler)
+}
+
+function diagramPageEventListener(job) {
+  const dateControl = document.querySelector('input[type="date"]');
+  if (dateControl.value == "") {
+    var date = today();
+  } else {
+    var date = dateControl.value;
+  }
+  var stream = new EventSource(`/events/${job}?date=${date}`);
+  stream.addEventListener("message", diagramPageEventHandler)
+}
+
+function today() {
+  let today = new Date().toISOString().slice(0, 10);
+  return today
 }
 
 function indexPageEventHandler(message) {
   const d = JSON.parse(message.data);
   const s = stateColor(d.state);
-  updateStateCircles("job-table", d.id, d.job, s, d.submitted);
+  updateStateCircles("job-table", d.id, d.job, s, d.startTs);
+  updateLastStart(d);
 }
 
 function jobPageEventHandler(message) {
   const d = JSON.parse(message.data);
   updateTaskStateCircles(d);
-  updateGraphViz(d);
+  updateLastTaskStartModified(d);
+}
+
+function diagramPageEventHandler(message) {
+  const d = JSON.parse(message.data);
   updateLastRunTs(d);
+  updateGraphViz(d);
 }
 
 function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamp) {
-  const options = { 
-    hour: '2-digit',  
-    minute: '2-digit',
-    second: '2-digit'
+  const options = {
+    dateStyle: 'medium',
+    timeStyle: 'medium'
   };
-  const limit = getDropdownValue();
   const wrapper = document.getElementById(wrapperId);
   const startTs = new Date(startTimestamp);
   const formattedTs = startTs.toLocaleString(undefined, options); 
@@ -44,12 +71,7 @@ function updateStateCircles(tableName, jobID, wrapperId, color, startTimestamp) 
   if (jobID in wrapper.children) {
     wrapper.replaceChild(div, document.getElementById(jobID));
   } else {
-    if (wrapper.childElementCount >= limit) {
-      wrapper.removeChild(wrapper.firstElementChild);
-      wrapper.appendChild(div);
-    } else {
-      wrapper.appendChild(div);
-    }
+    wrapper.appendChild(div);
   }
 }
 
@@ -57,7 +79,40 @@ function updateTaskStateCircles(execution) {
   for (i in execution.tasks) {
     const t = execution.tasks[i];
     const s = stateColor(t.state);
-    updateStateCircles("task-table", `${execution.id}-${t.name}`, t.name, s, execution.submitted);
+    updateStateCircles("task-table", `${execution.id}-${t.name}`, t.name, s, execution.startTs);
+  }
+}
+
+function updateLastStart(execution) {
+  const options = {
+    dateStyle: 'medium',
+    timeStyle: 'medium'
+  };
+  const startTs = new Date(execution.startTs);
+  const formattedTs = startTs.toLocaleString(undefined, options);
+  const job = execution.job;
+  document.getElementById(`last-start-${job}`).innerHTML = formattedTs;
+}
+
+function updateLastTaskStartModified(execution) {
+  const options = {
+    dateStyle: 'medium',
+    timeStyle: 'medium'
+  };
+  for (i in execution.tasks) {
+    const t = execution.tasks[i];
+    const startTs = new Date(t.startTs);
+    const modifiedTs = new Date(t.modifiedTs);
+    // check that both timestamps are not in year 1 (the 0-value)
+    if (startTs.getUTCFullYear() > 1 & modifiedTs.getUTCFullYear() > 1) {
+      const seconds = (modifiedTs - startTs) / 1000;
+      const duration = new Date(0);
+      duration.setSeconds(seconds);
+      const durationStr = duration.toISOString().substring(11, 19);
+      const formattedStartTs = startTs.toLocaleString(undefined, options);
+      document.getElementById(`last-start-${t.name}`).innerHTML = formattedStartTs;
+      document.getElementById(`last-duration-${t.name}`).innerHTML = durationStr;
+    }
   }
 }
 
@@ -66,7 +121,8 @@ function updateGraphViz(execution) {
   for (i in tasks) {
     if (document.getElementsByClassName("output")) {
       try {
-        const rect = document.getElementById("node-" + tasks[i].name).querySelector("rect");
+        const taskElem = document.querySelector("[data-id=\""+tasks[i].name+"\"]");
+	let rect = taskElem.querySelector("rect");
         rect.setAttribute("style", "stroke-width: 2; stroke: " + stateColor(tasks[i].state));
       }
       catch(err) {
@@ -77,9 +133,14 @@ function updateGraphViz(execution) {
 }
 
 function updateLastRunTs(execution) {
-  const lastExecutionTs = execution.submitted;
+  const options = {
+    dateStyle: 'medium',
+    timeStyle: 'medium'
+  };
+  const startTs = new Date(execution.startTs);
+  const formattedTs = startTs.toLocaleString(undefined, options);
   const lastExecutionTsHTML = document.getElementById("last-execution-ts-wrapper").innerHTML;
-  const newHTML = lastExecutionTsHTML.replace(/.*/, `Last run: ${lastExecutionTs}`);
+  const newHTML = lastExecutionTsHTML.replace(/.*/, `Last run: ${formattedTs}`);
   document.getElementById("last-execution-ts-wrapper").innerHTML = newHTML;
 }
 

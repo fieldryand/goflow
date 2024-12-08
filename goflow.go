@@ -2,9 +2,12 @@
 package goflow
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log"
+	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 	"github.com/philippgille/gokv"
 	"github.com/philippgille/gokv/gomap"
@@ -13,12 +16,14 @@ import (
 
 // Goflow contains job data and a router.
 type Goflow struct {
-	Store   gokv.Store
-	Options Options
-	Jobs    map[string](func() *Job)
-	router  *gin.Engine
-	cron    *cron.Cron
-	jobs    []string
+	Store       gokv.Store
+	Options     Options
+	Jobs        map[string](func() *Job)
+	Router      *http.ServeMux
+	cron        *cron.Cron
+	jobs        []string
+	cronEntries map[string]cron.EntryID
+	queue       chan string
 }
 
 // Options to control various Goflow behavior.
@@ -47,68 +52,63 @@ func New(opts Options) *Goflow {
 	}
 
 	g := &Goflow{
-		Store:   opts.Store,
-		Options: opts,
-		Jobs:    make(map[string](func() *Job)),
-		router:  gin.New(),
-		cron:    c,
+		Store:       opts.Store,
+		Options:     opts,
+		Jobs:        make(map[string](func() *Job)),
+		Router:      http.NewServeMux(),
+		cron:        c,
+		cronEntries: make(map[string]cron.EntryID),
+		queue:       make(chan string),
 	}
 
 	if opts.ShowExamples {
-		g.AddJob(complexAnalyticsJob)
-		g.AddJob(customOperatorJob)
+		err := g.AddJob(complexAnalyticsJob, randomFailureJob)
+		if err != nil {
+			log.Println("error adding example jobs")
+		}
 	}
 
 	return g
 }
 
-// scheduledExecution implements cron.Job
-type scheduledExecution struct {
-	store   gokv.Store
-	jobFunc func() *Job
-}
-
-func (schedExec *scheduledExecution) Run() {
-
-	// create job
-	job := schedExec.jobFunc()
-
-	// create and persist a new execution
-	e := job.newExecution()
-	persistNewExecution(schedExec.store, e)
-	indexExecutions(schedExec.store, e)
-
-	// start running the job
-	job.run(schedExec.store, e)
-}
-
 // AddJob takes a job-emitting function and registers it
 // with the engine.
-func (g *Goflow) AddJob(jobFunc func() *Job) *Goflow {
+func (g *Goflow) AddJob(jobFunc ...func() *Job) error {
+	for _, k := range jobFunc {
+		err := g.addJob(k)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (g *Goflow) addJob(jobFunc func() *Job) error {
 
 	j := jobFunc()
 
-	// TODO: change the return type here to error
 	// "" is not a valid key in the storage layer
-	//if j.Name == "" {
-	//		return errors.New("\"\" is not a valid job name")
-	//	}
+	if j.Name == "" {
+		return errors.New("\"\" is not a valid job name")
+	}
 
-	// Register the job
+	// Validate and register the job
+	if !j.Dag.validate() {
+		return fmt.Errorf("Invalid Dag for job %s", j.Name)
+	}
 	g.Jobs[j.Name] = jobFunc
 	g.jobs = append(g.jobs, j.Name)
 
 	// If the job is active by default, add it to the cron schedule
 	if j.Active {
-		e := &scheduledExecution{g.Store, jobFunc}
-		_, err := g.cron.AddJob(j.Schedule, e)
-
+		entryID, err := g.cron.AddFunc(j.Schedule, func() { g.queue <- j.Name })
 		if err != nil {
-			panic(err)
+			return err
 		}
+		g.cronEntries[j.Name] = entryID
 	}
 
-	return g
+	return nil
 }
 
 // toggle flips a job's cron schedule status from active to inactive
@@ -117,54 +117,83 @@ func (g *Goflow) AddJob(jobFunc func() *Job) *Goflow {
 func (g *Goflow) toggle(jobName string) (bool, error) {
 
 	// if the job is found in the list of entries, remove it
-	for _, entry := range g.cron.Entries() {
-		if name := entry.Job.(*scheduledExecution).jobFunc().Name; name == jobName {
-			g.cron.Remove(entry.ID)
+	for job, entryID := range g.cronEntries {
+		if job == jobName {
+			g.cron.Remove(entryID)
+			delete(g.cronEntries, job)
 			return false, nil
 		}
 	}
 
 	// else add a new entry
 	jobFunc := g.Jobs[jobName]
-	e := &scheduledExecution{g.Store, jobFunc}
-	g.cron.AddJob(jobFunc().Schedule, e)
+	entryID, err := g.cron.AddFunc(jobFunc().Schedule, func() { g.queue <- jobName })
+	if err != nil {
+		return false, err
+	}
+	g.cronEntries[jobName] = entryID
 	return true, nil
 }
 
-// execute tells the engine to run a given job in a new goroutine.
-func (g *Goflow) execute(job string) uuid.UUID {
+// ContextKey allows the user to retrieve context values within a task. See
+// the examples folder for usage.
+type ContextKey string
 
-	// create job
-	j := g.Jobs[job]()
+// Execute tells the engine to run a given job in a new goroutine.
+func (g *Goflow) Execute(ctx context.Context, job string) (*uuid.UUID, error) {
 
-	// create and persist a new execution
-	e := j.newExecution()
-	persistNewExecution(g.Store, e)
-	indexExecutions(g.Store, e)
-
-	// start running the job
-	go j.run(g.Store, e)
-
-	return e.ID
-}
-
-// Use middleware in the Gin router.
-func (g *Goflow) Use(middleware gin.HandlerFunc) *Goflow {
-	g.router.Use(middleware)
-	return g
-}
-
-// Run runs the webserver.
-func (g *Goflow) Run(port string) {
-	log.SetFlags(0)
-	log.SetOutput(new(logWriter))
-	g.router.Use(gin.Recovery())
-	g.addStreamRoute(true)
-	g.addAPIRoutes()
-	if g.Options.UIPath != "" {
-		g.addUIRoutes()
-		g.addStaticRoutes()
+	// find the job if it exists and create a new execution instance
+	jobFunc, ok := g.Jobs[job]
+	if !ok {
+		return nil, fmt.Errorf("job %s does not exist", job)
 	}
+	j := jobFunc()
+	e := j.newExecution()
+
+	// write it to the storage layer
+	err := persistNewExecution(g.Store, e)
+	if err != nil {
+		return &e.ID, err
+	}
+	err = indexExecutions(g.Store, e)
+	if err != nil {
+		return &e.ID, err
+	}
+
+	// add the jobID to the context and start the job
+	ctx = context.WithValue(ctx, ContextKey("jobID"), e.ID)
+	go j.run(ctx, g.Store, e)
+
+	return &e.ID, nil
+}
+
+// Run is a blocking call that listens for jobs.
+func (g *Goflow) Run(ctx context.Context) error {
 	g.cron.Start()
-	g.router.Run(port)
+	for {
+		select {
+		case <-ctx.Done():
+			g.cron.Stop()
+			log.Println("goflow error: context cancelled")
+			return errors.New("context cancelled")
+		default:
+		}
+		i := <-g.queue
+		_, err := g.Execute(ctx, i)
+		if err != nil {
+			return err
+		}
+	}
+}
+
+// RunWithWebserver will listen for jobs and web requests.
+func (g *Goflow) RunWithWebserver(ctx context.Context, port string) error {
+	go func() {
+		err := g.Run(ctx)
+		if err != nil {
+			log.Printf("goflow error: %v", err)
+		}
+	}()
+	g.addRoutes()
+	return http.ListenAndServe(port, g.Router)
 }

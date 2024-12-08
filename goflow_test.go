@@ -1,15 +1,17 @@
 package goflow
 
 import (
+	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"testing"
-
-	"github.com/gin-gonic/gin"
-	"github.com/philippgille/gokv/gomap"
+	"time"
 )
 
 var router = exampleRouter()
+var today = timeToDatestring(time.Now())
 
 type TestResponseRecorder struct {
 	*httptest.ResponseRecorder
@@ -29,11 +31,11 @@ func CreateTestResponseRecorder() *TestResponseRecorder {
 
 func TestIndexRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/ui/", nil)
+	req, _ := http.NewRequest("GET", "/ui", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
-		t.Errorf("/ui/ status is %d, expected %d", w.Code, http.StatusOK)
+		t.Errorf("/ui status is %d, expected %d", w.Code, http.StatusOK)
 	}
 
 	req, _ = http.NewRequest("GET", "/", nil)
@@ -41,16 +43,6 @@ func TestIndexRoute(t *testing.T) {
 
 	if w.Code != http.StatusOK {
 		t.Errorf("/ status is %d, expected %d", w.Code, http.StatusOK)
-	}
-}
-
-func TestHealthRoute(t *testing.T) {
-	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/health", nil)
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 }
 
@@ -71,19 +63,9 @@ func TestJobsRoute(t *testing.T) {
 	}
 }
 
-func TestJobRunsRoute(t *testing.T) {
-	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/jobruns", nil)
-	router.ServeHTTP(w, req)
-
-	if w.Code != http.StatusOK {
-		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
-	}
-}
-
 func TestExecutionsRoute(t *testing.T) {
 	var w = httptest.NewRecorder()
-	req, _ := http.NewRequest("GET", "/api/executions", nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/api/executions?date=%s", today), nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -102,7 +84,7 @@ func TestJobSubmitToRouter(t *testing.T) {
 	}
 
 	w = httptest.NewRecorder()
-	req, _ = http.NewRequest("POST", "/api/jobs/example-custom-operator/submit", nil)
+	req, _ = http.NewRequest("POST", "/api/jobs/example-random-failure/submit", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -127,7 +109,7 @@ func TestJobToggleActiveRoute(t *testing.T) {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
 	}
 
-	req, _ = http.NewRequest("POST", "/api/jobs/example-custom-operator/toggle", nil)
+	req, _ = http.NewRequest("POST", "/api/jobs/example-random-failure/toggle", nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -187,7 +169,7 @@ func TestJobOverviewRoute(t *testing.T) {
 
 func TestStreamRoute(t *testing.T) {
 	var w = CreateTestResponseRecorder()
-	req, _ := http.NewRequest("GET", "/stream", nil)
+	req, _ := http.NewRequest("GET", fmt.Sprintf("/events?stream=messages&date=%s&keepopen=false", today), nil)
 	router.ServeHTTP(w, req)
 
 	if w.Code != http.StatusOK {
@@ -195,8 +177,11 @@ func TestStreamRoute(t *testing.T) {
 	}
 
 	w = CreateTestResponseRecorder()
-	req, _ = http.NewRequest("GET", "/stream?jobname=example-complex-analytics", nil)
+	req, _ = http.NewRequest("GET", fmt.Sprintf("/events/jobname=example-complex-analytics?stream=messages&date=%s&keepopen=false", today), nil)
 	router.ServeHTTP(w, req)
+
+	// wait for all goroutines to exit
+	time.Sleep(2 * time.Second)
 
 	if w.Code != http.StatusOK {
 		t.Errorf("httpStatus is %d, expected %d", w.Code, http.StatusOK)
@@ -210,24 +195,90 @@ func TestToggleRaceCondition(t *testing.T) {
 	router.ServeHTTP(w, req)
 }
 
-func exampleRouter() *gin.Engine {
+func exampleRouter() *http.ServeMux {
+	ctx := context.Background()
 	g := New(Options{UIPath: "ui/", ShowExamples: true, WithSeconds: true})
-	g.execute("example-custom-operator")
-	g.Use(DefaultLogger())
-	g.addStaticRoutes()
-	g.addStreamRoute(false)
-	g.addUIRoutes()
-	g.addAPIRoutes()
-	return g.router
+	g.addRoutes()
+	go func() {
+		err := g.Run(ctx)
+		if err != nil {
+			log.Printf("goflow error: %v", err)
+		}
+	}()
+	return g.Router
 }
 
-func TestScheduledExecution(t *testing.T) {
-	store := gomap.NewStore(gomap.DefaultOptions)
-	schedExec := scheduledExecution{store, customOperatorJob}
-	schedExec.Run()
-}
-
-func TestGoflowWithoutOptions(t *testing.T) {
+func TestInvalidJobName(t *testing.T) {
 	g := New(Options{})
-	g.Use(DefaultLogger())
+
+	err := g.AddJob(func() *Job { return &Job{Name: "", Schedule: "* * * * *"} })
+
+	if err == nil {
+		t.Errorf("Expected error adding a job with an invalid name")
+	}
+}
+
+func TestExecutionOfNonexistentJob(t *testing.T) {
+	g := New(Options{})
+	ctx := context.Background()
+	_, err := g.Execute(ctx, "job")
+
+	if err == nil {
+		t.Errorf("Expected error executing a nonexistent job")
+	}
+}
+
+func TestNonexistentTask(t *testing.T) {
+	g := New(Options{})
+
+	j := &Job{Name: "non-existent-task", Schedule: "* * * * *"}
+	err := j.AddTask(
+		&Task{
+			Name:     "a",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		},
+		&Task{
+			Name:     "b",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		},
+	)
+	if err != nil {
+		t.Errorf("Error adding tasks to job")
+	}
+
+	j.SetDownstream("a", "c")
+
+	err = g.AddJob(func() *Job { return j })
+
+	if err == nil {
+		t.Errorf("Expected error setting an edge on a non-existent task")
+	}
+}
+
+func TestCyclicJob(t *testing.T) {
+	g := New(Options{})
+
+	j := &Job{Name: "cyclic", Schedule: "* * * * *"}
+	err := j.AddTask(
+		&Task{
+			Name:     "a",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		},
+		&Task{
+			Name:     "b",
+			Operator: Command{Cmd: "sh", Args: []string{"-c", "echo $((2 + 4))"}},
+		},
+	)
+	if err != nil {
+		t.Errorf("Error adding tasks to job")
+	}
+
+	j.SetDownstream("a", "b")
+	j.SetDownstream("b", "a")
+
+	err = g.AddJob(func() *Job { return j })
+
+	if err == nil {
+		t.Errorf("Expected error adding a cyclic job")
+	}
 }

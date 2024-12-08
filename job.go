@@ -1,7 +1,8 @@
 package goflow
 
 import (
-	"fmt"
+	"context"
+	"errors"
 	"log"
 	"sync"
 	"time"
@@ -90,8 +91,23 @@ func (j *Job) initialize() *Job {
 	return j
 }
 
-// Add a task to a job.
-func (j *Job) Add(t *Task) *Job {
+// AddTask adds a task to a job.
+func (j *Job) AddTask(t ...*Task) error {
+	for _, k := range t {
+		err := j.addTask(k)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (j *Job) addTask(t *Task) error {
+
+	if t.Name == "" {
+		return errors.New("\"\" is not a valid task name")
+	}
+
 	if j.Dag == nil {
 		j.initialize()
 	}
@@ -106,42 +122,31 @@ func (j *Job) Add(t *Task) *Job {
 	j.tasks = append(j.tasks, t.Name)
 	j.Dag.addNode(t.Name)
 	j.storeTaskState(t.Name, none)
-	return j
-}
-
-// Task getter
-func (j *Job) Task(name string) *Task {
-	return j.Tasks[name]
+	return nil
 }
 
 // SetDownstream sets a dependency relationship between two tasks in the job.
 // The dependent task is downstream of the independent task and
 // waits for the independent task to finish before starting
 // execution.
-func (j *Job) SetDownstream(ind, dep *Task) *Job {
-	j.Dag.setDownstream(ind.Name, dep.Name)
-	return j
+func (j *Job) SetDownstream(ind, dep string) {
+	j.Dag.setDownstream(ind, dep)
 }
 
-func (j *Job) run(store gokv.Store, e *execution) error {
-
-	if !j.Dag.validate() {
-		return fmt.Errorf("Invalid Dag for job %s", j.Name)
-	}
-
-	log.Printf("jobID=%v, jobname=%v, msg=starting", e.ID, j.Name)
+func (j *Job) run(ctx context.Context, store gokv.Store, e *execution) {
 
 	writes := make(chan writeOp)
 
 	for {
+
 		for _, task := range j.Tasks {
 
 			// Start the independent tasks
 			v := j.loadTaskState(task.Name)
 			if v == none && !j.Dag.isDownstream(task.Name) {
 				j.storeTaskState(task.Name, running)
-				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
-				go task.run(writes)
+				e.setTaskStartTs(task.Name)
+				go task.run(ctx, writes)
 			}
 
 			// Start the tasks that need to be re-tried
@@ -149,8 +154,7 @@ func (j *Job) run(store gokv.Store, e *execution) error {
 				task.RetryDelay.wait(task.Name, task.Retries-task.remaining)
 				task.remaining = task.remaining - 1
 				j.storeTaskState(task.Name, running)
-				log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
-				go task.run(writes)
+				go task.run(ctx, writes)
 			}
 
 			// If dependencies are done, start the dependent tasks
@@ -169,43 +173,50 @@ func (j *Job) run(store gokv.Store, e *execution) error {
 
 				if upstreamDone && task.TriggerRule == allDone {
 					j.storeTaskState(task.Name, running)
-					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
-					go task.run(writes)
+					e.setTaskStartTs(task.Name)
+					go task.run(ctx, writes)
 				}
 
 				if upstreamSuccessful && task.TriggerRule == allSuccessful {
 					j.storeTaskState(task.Name, running)
-					log.Printf("jobID=%v, job=%v, task=%v, msg=starting", e.ID, j.Name, task.Name)
-					go task.run(writes)
+					e.setTaskStartTs(task.Name)
+					go task.run(ctx, writes)
 				}
 
 				if upstreamDone && !upstreamSuccessful && task.TriggerRule == allSuccessful {
 					j.storeTaskState(task.Name, skipped)
-					log.Printf("jobID=%v, job=%v, task=%v, msg=skipping", e.ID, j.Name, task.Name)
-					go task.skip(writes)
+					go task.skip(ctx, writes)
 				}
 
+			}
+
+			// Need to persist the execution since it has the task start times
+			err := store.Set(e.ID.String(), e)
+			if err != nil {
+				log.Printf("key-value store error: %v", err)
 			}
 		}
 
 		// Receive updates on task state
 		write := <-writes
 		j.storeTaskState(write.key, write.val)
-		log.Printf("jobID=%v, job=%v, task=%v, msg=%v", e.ID, j.Name, write.key, write.val)
+		log.Printf("jobID=%v, job=%v, task=%v, state=%v", e.ID, j.Name, write.key, write.val)
 
 		// Sync to store
 		e.State = j.loadState()
-		e.ModifiedTimestamp = time.Now().UTC().Format(time.RFC3339Nano)
-		syncStateToStore(store, e, write.key, write.val)
+		e.ModifiedTs = time.Now().UTC()
+		e.setTaskState(write.key, write.val)
+		err := store.Set(e.ID.String(), e)
+		if err != nil {
+			log.Printf("key-value store error: %v", err)
+		}
 
 		if j.allDone() {
 			break
 		}
 	}
 
-	log.Printf("jobID=%v, job=%v, msg=%v", e.ID, j.Name, j.loadState())
-
-	return nil
+	log.Printf("jobID=%v, job=%v, state=%v", e.ID, j.Name, j.loadState())
 }
 
 func (j *Job) allDone() bool {

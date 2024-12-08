@@ -4,6 +4,8 @@
     <link rel="stylesheet" href="/static/css/styles.css">
     <title>Goflow</title>
     <script src="/static/src/plain.js"></script>
+    <script src="https://bumbu.me/svg-pan-zoom/dist/svg-pan-zoom.js"></script>
+    <script type="module" src="/static/src/graph.js"></script>
   </head>
   <body>
     <div class="top-nav">
@@ -15,7 +17,7 @@
         <div id="schedule-badge-{{ .jobName }}">{{ .schedule }}</div>
       </div>
       <div class="button-container-job-page">
-        <a href="/ui/diagrams/{{ .jobName}}">View diagram</a>
+        <a href="/ui/jobs/{{ .jobName}}">View tasks</a>
         <input type="date"></input>
       </div>
       <div class="button-container-job-page">
@@ -24,20 +26,11 @@
       </div>
     </div>
     <div class="job-container">
-      <div class="task-table", id="task-table">
-        <div>Task</div>
-        <div>Last Execution Time</div>
-        <div>Execution Duration</div>
-        <div>State</div>
-        {{ range $ix, $taskName := .taskNames }}
-        <div>{{ $taskName }}</div>
-        <div id="last-start-{{ $taskName }}"></div>
-        <div id="last-duration-{{ $taskName }}"></div>
-        <div class="status-wrapper" id="{{ $taskName }}"></div>
-        {{ end }}
+      <div id="last-execution-ts-wrapper">Last run:</div>
+      <div class="graph-container" data-job="{{ .jobName }}">
       </div>
     </div>
   </body>
 </html>
 <script>updateJobActive('{{ .jobName }}')</script>
-<script>jobPageEventListener('{{ .jobName }}')</script>
+<script>diagramPageEventListener('{{ .jobName }}')</script>

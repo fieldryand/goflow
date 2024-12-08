@@ -1,16 +1,18 @@
 package main
 
 import (
-	"github.com/fieldryand/goflow/v2"
+	"context"
+
+	"github.com/fieldryand/goflow/v3"
 )
 
 func main() {
+	ctx := context.Background()
 	options := goflow.Options{
 		UIPath:       "ui/",
 		ShowExamples: true,
 		WithSeconds:  true,
 	}
 	gf := goflow.New(options)
-	gf.Use(goflow.DefaultLogger())
-	gf.Run(":8181")
+	gf.RunWithWebserver(ctx, ":8181")
 }
